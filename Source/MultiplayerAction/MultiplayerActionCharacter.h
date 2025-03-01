@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "Weapon.h"
 #include "MultiplayerActionCharacter.generated.h"
 
 class USpringArmComponent;
@@ -52,6 +53,9 @@ class AMultiplayerActionCharacter : public ACharacter
     UInputAction* LookAction;
 
     UPROPERTY(EditAnywhere, Category = "Combat")
+    UWeapon* Weapon;
+
+    UPROPERTY(EditAnywhere, Category = "Combat")
     UAnimMontage* CombatMontage;
 
     UPROPERTY(EditAnywhere, Category = "Combat")
@@ -67,10 +71,7 @@ class AMultiplayerActionCharacter : public ACharacter
     float WeaponDamage = 20;
 
     UPROPERTY(EditAnywhere)
-    float SphareTraceLength = 100;
-
-    UPROPERTY(EditAnywhere)
-    float SphareTraceRadius = 50;
+    float SphereTraceRadius = 20;
 
     UPROPERTY(EditAnywhere)
     int Team = 0;
@@ -110,6 +111,14 @@ protected:
 
     UFUNCTION(NetMulticast, Reliable)
     void NetMulticastReliableRPC_Block();
+
+    FTimerHandle WeaponTraceTimer;
+    void PerformWeaponTrace();
+    void StartWeaponTrace();
+    void StopWeaponTrace();
+    const float WeaponTraceInterval = 0.01f;// 100 traces per second
+
+    TArray<AActor*> ActorsHit;
 
     UPROPERTY(EditAnywhere)
     float MaxHealth = 100;

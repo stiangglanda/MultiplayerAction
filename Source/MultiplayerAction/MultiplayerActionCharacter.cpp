@@ -60,6 +60,9 @@ AMultiplayerActionCharacter::AMultiplayerActionCharacter()
 
 	Health = MaxHealth;
 
+	Weapon = CreateDefaultSubobject<UWeapon>(TEXT("Weapon"));
+	Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, TEXT("WeaponSocket"));
+
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 }
@@ -183,6 +186,7 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 
 	if (IsDead())
 	{
+		GetMesh()->SetSimulatePhysics(true);
 		DetachFromControllerPendingDestroy();
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
@@ -247,6 +251,48 @@ float AMultiplayerActionCharacter::GetHeathPercent() const
 	return Health / MaxHealth;
 }
 
+void AMultiplayerActionCharacter::PerformWeaponTrace()
+{
+	TArray<FHitResult> hits;
+	TArray<AActor*> ignore = ActorsHit;
+	ignore.Add(this);
+	FVector WeaponStart = Weapon->GetSocketLocation("start");
+	FVector WeaponEnd = Weapon->GetSocketLocation("end");
+
+	bool bSuccess = UKismetSystemLibrary::SphereTraceMulti(GetWorld(), WeaponStart, WeaponEnd, SphereTraceRadius,
+		UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_GameTraceChannel1), false, ignore,
+		EDrawDebugTrace::None, hits, true, FLinearColor::Red, FLinearColor::Blue, 10.0f);
+
+	if (bSuccess)
+	{
+		for (int i = hits.Num() - 1; i >= 0; i--)
+		{
+			if (hits[i].GetActor() != nullptr)
+			{
+				AMultiplayerActionCharacter* unit = Cast<AMultiplayerActionCharacter>(hits[i].GetActor());
+				if (unit && unit->GetTeam() != GetTeam())
+				{
+					FPointDamageEvent DamageEvent(WeaponDamage, hits[i], -GetActorLocation(), nullptr);
+					unit->TakeDamage(WeaponDamage, DamageEvent, GetController(), this);
+					ActorsHit.Add(unit);
+				}
+			}
+		}
+	}
+}
+
+void AMultiplayerActionCharacter::StartWeaponTrace()
+{
+	ActorsHit.Empty();
+	GetWorld()->GetTimerManager().SetTimer(WeaponTraceTimer, this, &AMultiplayerActionCharacter::PerformWeaponTrace, WeaponTraceInterval, true);
+}
+
+void AMultiplayerActionCharacter::StopWeaponTrace()
+{
+	ActorsHit.Empty();
+	GetWorld()->GetTimerManager().ClearTimer(WeaponTraceTimer);
+}
+
 void AMultiplayerActionCharacter::ServerReliableRPC_Attack_Implementation()
 {
 	NetMulticastReliableRPC_Attack();
@@ -279,34 +325,7 @@ void AMultiplayerActionCharacter::NetMulticastReliableRPC_Attack_Implementation(
 			}
 
 			AttackAnim = !AttackAnim;
-		}
-
-
-		TArray<FHitResult> hits;
-		TArray<AActor*> ignore;
-		ignore.Add(this);
-
-		bool bSuccess = UKismetSystemLibrary::SphereTraceMulti(GetWorld(), GetActorLocation(), GetActorLocation() + GetActorForwardVector() * SphareTraceLength,
-			SphareTraceRadius, UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_GameTraceChannel1), false, ignore,
-			EDrawDebugTrace::None, hits, true, FLinearColor::Red, FLinearColor::Blue, 10.0f);
-
-		if (bSuccess)
-		{
-
-			for (int i = hits.Num() - 1; i >= 0; i--)
-			{
-
-				if (hits[i].GetActor() != nullptr)
-				{
-
-					AMultiplayerActionCharacter* unit = Cast<AMultiplayerActionCharacter>(hits[i].GetActor());
-					if (unit && unit->GetTeam() != GetTeam())
-					{
-						FPointDamageEvent DamageEvent(WeaponDamage, hits[i], -GetActorLocation(), nullptr);
-						unit->TakeDamage(WeaponDamage, DamageEvent, GetController(), this);
-					}
-				}
-			}
+			StartWeaponTrace();
 		}
 	}
 }
@@ -314,6 +333,7 @@ void AMultiplayerActionCharacter::NetMulticastReliableRPC_Attack_Implementation(
 void AMultiplayerActionCharacter::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	bIsAttacking = false;
+	StopWeaponTrace();
 }
 
 void AMultiplayerActionCharacter::ServerReliableRPC_Block_Implementation()
