@@ -16,6 +16,7 @@
 #include "Engine/DamageEvents.h"
 #include "Net/UnrealNetwork.h"
 #include "Engine/Engine.h"
+#include <Kismet/KismetMathLibrary.h>
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -29,7 +30,7 @@ AMultiplayerActionCharacter::AMultiplayerActionCharacter()
 
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
-	bUseControllerRotationYaw = false;
+	bUseControllerRotationYaw = true;
 	bUseControllerRotationRoll = false;
 
 	// Configure character movement
@@ -61,7 +62,10 @@ AMultiplayerActionCharacter::AMultiplayerActionCharacter()
 	Health = MaxHealth;
 
 	Weapon = CreateDefaultSubobject<UWeapon>(TEXT("Weapon"));
-	Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, TEXT("WeaponSocket"));
+	if (Weapon)
+	{
+		Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, TEXT("WeaponSocket"));
+	}
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
@@ -103,10 +107,33 @@ void AMultiplayerActionCharacter::SetupPlayerInputComponent(UInputComponent* Pla
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::AttackInputMapping);
 
 		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::Block);
+
+		EnhancedInputComponent->BindAction(LockAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::Lock);
 	}
 	else
 	{
 		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+	}
+}
+
+void AMultiplayerActionCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (IsLockedOn == true)
+	{
+		if (LockedOnTarget == nullptr || LockedOnTarget->IsDead())
+		{
+			IsLockedOn = false;
+			GetController()->ResetIgnoreLookInput();
+		}
+		else
+		{
+			FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), LockedOnTarget->GetActorLocation());
+			FRotator LookAtYawRotation = FRotator(0, LookAtRotation.Yaw, 0);
+			SetActorRotation(LookAtYawRotation);
+			GetController()->SetControlRotation(LookAtYawRotation);
+		}
 	}
 }
 
@@ -148,6 +175,42 @@ void AMultiplayerActionCharacter::Look(const FInputActionValue& Value)
 		// add yaw and pitch input to controller
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
+	}
+}
+
+void AMultiplayerActionCharacter::Lock(const FInputActionValue& Value)
+{
+	if (IsLockedOn == true)
+	{
+		GetController()->ResetIgnoreLookInput();
+		IsLockedOn = false;
+		LockedOnTarget = nullptr;
+		return;
+	}
+
+	TArray<FHitResult> hits;
+	TArray<AActor*> ignore;
+	ignore.Add(this);
+
+	bool bSuccess = UKismetSystemLibrary::SphereTraceMulti(GetWorld(), GetActorLocation(), GetActorLocation(), SphereTraceRadiusLockOn,
+		UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_GameTraceChannel1), false, ignore,
+		EDrawDebugTrace::ForDuration, hits, true, FLinearColor::Red, FLinearColor::Blue, 10.0f);
+
+	if (bSuccess)
+	{
+		for (int i = hits.Num() - 1; i >= 0; i--)
+		{
+			if (hits[i].GetActor() != nullptr)
+			{
+				AMultiplayerActionCharacter* unit = Cast<AMultiplayerActionCharacter>(hits[i].GetActor());
+				if (unit && unit->GetTeam() != GetTeam())
+				{
+					IsLockedOn = true;
+					GetController()->SetIgnoreLookInput(true);
+					LockedOnTarget = unit;
+				}
+			}
+		}
 	}
 }
 
@@ -253,13 +316,18 @@ float AMultiplayerActionCharacter::GetHeathPercent() const
 
 void AMultiplayerActionCharacter::PerformWeaponTrace()
 {
+	if (!IsValid(Weapon))
+	{
+		return;
+	}
+
 	TArray<FHitResult> hits;
 	TArray<AActor*> ignore = ActorsHit;
 	ignore.Add(this);
 	FVector WeaponStart = Weapon->GetSocketLocation("start");
 	FVector WeaponEnd = Weapon->GetSocketLocation("end");
 
-	bool bSuccess = UKismetSystemLibrary::SphereTraceMulti(GetWorld(), WeaponStart, WeaponEnd, SphereTraceRadius,
+	bool bSuccess = UKismetSystemLibrary::SphereTraceMulti(GetWorld(), WeaponStart, WeaponEnd, SphereTraceRadiusWeapon,
 		UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_GameTraceChannel1), false, ignore,
 		EDrawDebugTrace::None, hits, true, FLinearColor::Red, FLinearColor::Blue, 10.0f);
 
@@ -289,8 +357,8 @@ void AMultiplayerActionCharacter::StartWeaponTrace()
 
 void AMultiplayerActionCharacter::StopWeaponTrace()
 {
-	ActorsHit.Empty();
 	GetWorld()->GetTimerManager().ClearTimer(WeaponTraceTimer);
+	ActorsHit.Empty();
 }
 
 void AMultiplayerActionCharacter::ServerReliableRPC_Attack_Implementation()

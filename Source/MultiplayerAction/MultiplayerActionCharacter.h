@@ -41,6 +41,10 @@ class AMultiplayerActionCharacter : public ACharacter
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputAction* AttackAction;
 
+    /** Lock on Input Action */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* LockAction;
+
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputAction* BlockAction;
 
@@ -71,7 +75,10 @@ class AMultiplayerActionCharacter : public ACharacter
     float WeaponDamage = 20;
 
     UPROPERTY(EditAnywhere)
-    float SphereTraceRadius = 20;
+    float SphereTraceRadiusWeapon = 20;
+
+    UPROPERTY(EditAnywhere)
+    float SphereTraceRadiusLockOn = 900;
 
     UPROPERTY(EditAnywhere)
     int Team = 0;
@@ -92,6 +99,9 @@ protected:
     bool bIsAttacking = false;
     bool AttackAnim = false;
     bool IsBlocking = false;
+    bool IsLockedOn = false;
+
+	AMultiplayerActionCharacter* LockedOnTarget;
 
     FOnMontageEnded AttackMontageEndedDelegate;
 
@@ -138,6 +148,8 @@ protected:
 
     void Block(const FInputActionValue& Value);
 
+    void Lock(const FInputActionValue& Value);
+
     /** Called for Attack input */
     void AttackInputMapping(const FInputActionValue& Value);
 
@@ -158,6 +170,8 @@ protected:
 
     // To add mapping context
     virtual void BeginPlay();
+
+    virtual void Tick(float DeltaTime) override;
 
 public:
     /** Returns CameraBoom subobject **/
