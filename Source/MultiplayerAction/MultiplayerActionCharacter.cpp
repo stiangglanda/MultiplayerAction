@@ -129,10 +129,12 @@ void AMultiplayerActionCharacter::Tick(float DeltaTime)
 		}
 		else
 		{
-			FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), LockedOnTarget->GetActorLocation());
+			FVector LookAtVector = LockedOnTarget->GetActorLocation();
+			LookAtVector.Z -= 90;
+			FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), LookAtVector);
 			FRotator LookAtYawRotation = FRotator(0, LookAtRotation.Yaw, 0);
 			SetActorRotation(LookAtYawRotation);
-			GetController()->SetControlRotation(LookAtYawRotation);
+			GetController()->SetControlRotation(LookAtRotation);
 		}
 	}
 }
