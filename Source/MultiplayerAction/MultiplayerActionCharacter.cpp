@@ -109,6 +109,8 @@ void AMultiplayerActionCharacter::SetupPlayerInputComponent(UInputComponent* Pla
 		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::Block);
 
 		EnhancedInputComponent->BindAction(LockAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::Lock);
+
+		EnhancedInputComponent->BindAction(RollAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::Roll);
 	}
 	else
 	{
@@ -177,6 +179,36 @@ void AMultiplayerActionCharacter::Look(const FInputActionValue& Value)
 		// add yaw and pitch input to controller
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
+	}
+}
+
+void AMultiplayerActionCharacter::Roll(const FInputActionValue& Value)
+{
+	ServerReliableRPC_Roll();
+}
+
+void AMultiplayerActionCharacter::ServerReliableRPC_Roll_Implementation()
+{
+	NetMulticastReliableRPC_Roll();
+}
+
+void AMultiplayerActionCharacter::NetMulticastReliableRPC_Roll_Implementation()
+{
+	if (!IsBlocking && RollMontage)
+	{
+		IsBlocking = true;
+
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance)
+		{
+			if (!BlockMontageEndedDelegate.IsBound())
+			{
+				BlockMontageEndedDelegate.BindUObject(this, &AMultiplayerActionCharacter::OnBlockMontageEnded);
+			}
+
+			AnimInstance->Montage_Play(RollMontage);
+			AnimInstance->Montage_SetEndDelegate(BlockMontageEndedDelegate, RollMontage);
+		}
 	}
 }
 

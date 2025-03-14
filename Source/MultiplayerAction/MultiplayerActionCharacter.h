@@ -48,6 +48,9 @@ class AMultiplayerActionCharacter : public ACharacter
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputAction* BlockAction;
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* RollAction;
+
     /** Move Input Action */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputAction* MoveAction;
@@ -70,6 +73,9 @@ class AMultiplayerActionCharacter : public ACharacter
 
     UPROPERTY(EditAnywhere, Category = "Combat")
     UAnimMontage* BlockMontage;
+
+    UPROPERTY(EditAnywhere, Category = "Combat")
+    UAnimMontage* RollMontage;
 
     UPROPERTY(EditAnywhere)
     float WeaponDamage = 20;
@@ -122,6 +128,12 @@ protected:
     UFUNCTION(NetMulticast, Reliable)
     void NetMulticastReliableRPC_Block();
 
+    UFUNCTION(Server, Reliable)
+    void ServerReliableRPC_Roll();
+
+    UFUNCTION(NetMulticast, Reliable)
+    void NetMulticastReliableRPC_Roll();
+
     FTimerHandle WeaponTraceTimer;
     void PerformWeaponTrace();
     void StartWeaponTrace();
@@ -149,6 +161,8 @@ protected:
     void Block(const FInputActionValue& Value);
 
     void Lock(const FInputActionValue& Value);
+
+    void Roll(const FInputActionValue& Value);
 
     /** Called for Attack input */
     void AttackInputMapping(const FInputActionValue& Value);
