@@ -130,6 +130,11 @@ void AMultiplayerActionCharacter::Tick(float DeltaTime)
 	if (IsRolling)
 	{
 		FVector ForwardVector = GetCharacterMovement()->GetLastInputVector();
+		if (ForwardVector == FVector::ZeroVector)
+		{
+			ForwardVector = GetActorForwardVector();
+		}
+
 		AddMovementInput(ForwardVector, 1.0f);
 	}
 
