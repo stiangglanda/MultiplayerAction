@@ -122,7 +122,18 @@ void AMultiplayerActionCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (IsLockedOn == true)
+	if (IsDead())
+	{
+		return;
+	}
+
+	if (IsRolling)
+	{
+		FVector ForwardVector = GetCharacterMovement()->GetLastInputVector();
+		AddMovementInput(ForwardVector, 1.0f);
+	}
+
+	if (IsLockedOn)
 	{
 		if (LockedOnTarget == nullptr || LockedOnTarget->IsDead())
 		{
@@ -135,7 +146,11 @@ void AMultiplayerActionCharacter::Tick(float DeltaTime)
 			LookAtVector.Z -= 90;
 			FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), LookAtVector);
 			FRotator LookAtYawRotation = FRotator(0, LookAtRotation.Yaw, 0);
-			SetActorRotation(LookAtYawRotation);
+
+			if (!IsRolling)
+			{
+				SetActorRotation(LookAtYawRotation);
+			}
 			GetController()->SetControlRotation(LookAtRotation);
 		}
 	}
@@ -194,22 +209,32 @@ void AMultiplayerActionCharacter::ServerReliableRPC_Roll_Implementation()
 
 void AMultiplayerActionCharacter::NetMulticastReliableRPC_Roll_Implementation()
 {
-	if (!IsBlocking && RollMontage)
+	if (RollMontage)
 	{
 		IsBlocking = true;
+		IsRolling = true;
+
+		DisableInput(Cast<APlayerController>(GetController()));
 
 		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 		if (AnimInstance)
 		{
-			if (!BlockMontageEndedDelegate.IsBound())
+			if (!RollMontageEndedDelegate.IsBound())
 			{
-				BlockMontageEndedDelegate.BindUObject(this, &AMultiplayerActionCharacter::OnBlockMontageEnded);
+				RollMontageEndedDelegate.BindUObject(this, &AMultiplayerActionCharacter::OnRollMontageEnded);
 			}
 
 			AnimInstance->Montage_Play(RollMontage);
-			AnimInstance->Montage_SetEndDelegate(BlockMontageEndedDelegate, RollMontage);
+			AnimInstance->Montage_SetEndDelegate(RollMontageEndedDelegate, RollMontage);
 		}
 	}
+}
+
+void AMultiplayerActionCharacter::OnRollMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	IsBlocking = false;
+	IsRolling = false;
+	EnableInput(Cast<APlayerController>(GetController()));
 }
 
 void AMultiplayerActionCharacter::Lock(const FInputActionValue& Value)

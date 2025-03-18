@@ -103,6 +103,7 @@ public:
 
 protected:
     bool bIsAttacking = false;
+    bool IsRolling = false;
     bool AttackAnim = false;
     bool IsBlocking = false;
     bool IsLockedOn = false;
@@ -113,11 +114,16 @@ protected:
 
     FOnMontageEnded BlockMontageEndedDelegate;
 
+    FOnMontageEnded RollMontageEndedDelegate;
+
     UFUNCTION()
     void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
     UFUNCTION()
     void OnBlockMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+    UFUNCTION()
+    void OnRollMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
     UFUNCTION(NetMulticast, Reliable)
     void NetMulticastReliableRPC_Attack();
