@@ -111,6 +111,8 @@ void AMultiplayerActionCharacter::SetupPlayerInputComponent(UInputComponent* Pla
 		EnhancedInputComponent->BindAction(LockAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::Lock);
 
 		EnhancedInputComponent->BindAction(RollAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::Roll);
+
+		EnhancedInputComponent->BindAction(HeavyAttackAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::HeavyAttack);
 	}
 	else
 	{
@@ -282,6 +284,40 @@ void AMultiplayerActionCharacter::Block(const FInputActionValue& Value)
 {
 	ServerReliableRPC_Block();
 }
+
+void AMultiplayerActionCharacter::HeavyAttack(const FInputActionValue& Value)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("HeavyAttack"));
+	ServerReliableRPC_HeavyAttack();
+}
+
+void AMultiplayerActionCharacter::ServerReliableRPC_HeavyAttack_Implementation()
+{
+	NetMulticastReliableRPC_HeavyAttack();
+}
+
+void AMultiplayerActionCharacter::NetMulticastReliableRPC_HeavyAttack_Implementation()
+{
+	if (!bIsAttacking && HeavyAttackMontage)
+	{
+		bIsAttacking = true;
+
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance)
+		{
+			if (!AttackMontageEndedDelegate.IsBound())
+			{
+				AttackMontageEndedDelegate.BindUObject(this, &AMultiplayerActionCharacter::OnAttackMontageEnded);
+			}
+
+			AnimInstance->Montage_Play(HeavyAttackMontage);
+			AnimInstance->Montage_SetEndDelegate(AttackMontageEndedDelegate, HeavyAttackMontage);
+
+			StartWeaponTrace();
+		}
+	}
+}
+
 
 void AMultiplayerActionCharacter::AttackInputMapping(const FInputActionValue& Value)
 {
