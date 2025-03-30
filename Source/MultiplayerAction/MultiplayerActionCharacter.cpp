@@ -260,7 +260,7 @@ void AMultiplayerActionCharacter::Lock(const FInputActionValue& Value)
 
 	bool bSuccess = UKismetSystemLibrary::SphereTraceMulti(GetWorld(), GetActorLocation(), GetActorLocation(), SphereTraceRadiusLockOn,
 		UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_GameTraceChannel1), false, ignore,
-		EDrawDebugTrace::ForDuration, hits, true, FLinearColor::Red, FLinearColor::Blue, 10.0f);
+		EDrawDebugTrace::None, hits, true, FLinearColor::Red, FLinearColor::Blue, 10.0f);
 
 	if (bSuccess)
 	{

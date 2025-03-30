@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "Weapon.h"
+//#include "Inventory.h"
 #include "MultiplayerActionCharacter.generated.h"
 
 class USpringArmComponent;
@@ -109,6 +110,9 @@ public:
     void ServerReliableRPC_Attack();
 
 protected:
+    //UPROPERTY(EditAnywhere)
+    //UInventory* inventory;
+
     bool bIsAttacking = false;
     bool IsRolling = false;
     bool AttackAnim = false;
