@@ -6,14 +6,6 @@
 // Sets default values
 AChest::AChest()
 {
-	SphereCollider = CreateDefaultSubobject<USphereComponent>(TEXT("Chest Collider"));
-	SphereCollider->InitSphereRadius(SphereColliderRadius);
-
-	SphereCollider->CanCharacterStepUpOn = ECB_Yes;
-	SphereCollider->SetShouldUpdatePhysicsVolume(true);
-	SphereCollider->SetCanEverAffectNavigation(false);
-	RootComponent = SphereCollider;
-
 	PrimaryActorTick.bCanEverTick = true;
 
 	Mesh = CreateOptionalDefaultSubobject<USkeletalMeshComponent>(TEXT("Chest"));
@@ -29,24 +21,42 @@ AChest::AChest()
 		Mesh->SetupAttachment(RootComponent);
 		static FName MeshCollisionProfileName(TEXT("Chest"));
 		Mesh->SetCollisionProfileName(MeshCollisionProfileName);
-		Mesh->SetGenerateOverlapEvents(false);
-		Mesh->SetCanEverAffectNavigation(false);
-		Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		Mesh->SetGenerateOverlapEvents(true);
+		Mesh->SetCanEverAffectNavigation(true);
+		Mesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+
+		Mesh->SetCollisionObjectType(ECollisionChannel::ECC_WorldStatic);
+		Mesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+		Mesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+		Mesh->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
+
+		Mesh->CanCharacterStepUpOn = ECB_Yes;
+		Mesh->SetShouldUpdatePhysicsVolume(true);
 	}
 
 
+}
+
+void AChest::OpenChest()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("AChest OpenChest"));
+
+
+	UAnimInstance* AnimInstance = Mesh->GetAnimInstance();
+	if (AnimInstance)
+	{
+		if (OpenAnim)
+		{
+			AnimInstance->Montage_Play(OpenAnim);
+		}
+	}
 }
 
 // Called when the game starts or when spawned
 void AChest::BeginPlay()
 {
 	Super::BeginPlay();
-	Mesh->SetPlayRate(-1);
-	if (Animation)
-	{
-		Mesh->PlayAnimation(Animation, true);
-	}
-	
+
 }
 
 // Called every frame

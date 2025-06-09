@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include <Components/SphereComponent.h>
 #include "Chest.generated.h"
 
 UCLASS()
@@ -20,18 +19,15 @@ protected:
 	UPROPERTY(Category = Chest, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> Mesh;
 
-	UPROPERTY(Category = Chest, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<USphereComponent> SphereCollider;
-
 	UPROPERTY(EditAnywhere, Category = "Chest")
-	float SphereColliderRadius = 50.0f;
+	UAnimMontage* OpenAnim;
 
-	UPROPERTY(EditAnywhere, Category = "Chest")
-	UAnimationAsset* Animation;
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:	
+	UFUNCTION()
+	void OpenChest();
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 

@@ -16,6 +16,7 @@
 #include "Engine/DamageEvents.h"
 #include "Net/UnrealNetwork.h"
 #include "Engine/Engine.h"
+#include "Chest.h"
 #include <Kismet/KismetMathLibrary.h>
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -66,6 +67,24 @@ AMultiplayerActionCharacter::AMultiplayerActionCharacter()
 	{
 		Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, TEXT("WeaponSocket"));
 	}
+
+	SphereCollider = CreateDefaultSubobject<USphereComponent>(TEXT("Chest Collider"));
+	SphereCollider->InitSphereRadius(SphereColliderRadius);
+
+	// Add these lines to ensure proper collision setup
+	SphereCollider->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	SphereCollider->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	SphereCollider->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	SphereCollider->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	SphereCollider->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Overlap);
+
+	SphereCollider->CanCharacterStepUpOn = ECB_Yes;
+	SphereCollider->SetShouldUpdatePhysicsVolume(true);
+	SphereCollider->SetCanEverAffectNavigation(false);
+	SphereCollider->SetupAttachment(RootComponent);
+
+	SphereCollider->OnComponentBeginOverlap.AddDynamic(this, &AMultiplayerActionCharacter::OnOverlapBegin);
+
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
@@ -532,4 +551,19 @@ void AMultiplayerActionCharacter::NetMulticastReliableRPC_Block_Implementation()
 void AMultiplayerActionCharacter::OnBlockMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	IsBlocking = false;
+}
+
+void AMultiplayerActionCharacter::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
+	const FHitResult& SweepResult)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("AChest OnOverlapBegin"));
+
+	if (OtherActor && OtherActor->IsA(AChest::StaticClass()))
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("AChest OnOverlapBegin AMultiplayerActionCharacter"));
+		AChest* chest = Cast<AChest>(OtherActor);
+		chest->OpenChest();
+
+	}
 }
