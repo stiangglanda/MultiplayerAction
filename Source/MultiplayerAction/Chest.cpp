@@ -39,16 +39,21 @@ AChest::AChest()
 
 void AChest::OpenChest()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("AChest OpenChest"));
-
-
-	UAnimInstance* AnimInstance = Mesh->GetAnimInstance();
-	if (AnimInstance)
+	if (OpenCloseAnim)
 	{
-		if (OpenAnim)
-		{
-			AnimInstance->Montage_Play(OpenAnim);
-		}
+		Mesh->PlayAnimation(OpenCloseAnim, false);
+		Mesh->SetPlayRate(1);
+		Mesh->SetPosition(0);
+	}
+}
+
+void AChest::CloseChest()
+{
+	if (OpenCloseAnim)
+	{
+		Mesh->PlayAnimation(OpenCloseAnim, false);
+		Mesh->SetPlayRate(-1);
+		Mesh->SetPosition(OpenCloseAnim->GetPlayLength());
 	}
 }
 

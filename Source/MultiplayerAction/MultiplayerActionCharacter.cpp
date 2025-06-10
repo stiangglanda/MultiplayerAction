@@ -83,8 +83,6 @@ AMultiplayerActionCharacter::AMultiplayerActionCharacter()
 	SphereCollider->SetCanEverAffectNavigation(false);
 	SphereCollider->SetupAttachment(RootComponent);
 
-	SphereCollider->OnComponentBeginOverlap.AddDynamic(this, &AMultiplayerActionCharacter::OnOverlapBegin);
-
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
@@ -94,6 +92,9 @@ void AMultiplayerActionCharacter::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
+
+	SphereCollider->OnComponentBeginOverlap.AddDynamic(this, &AMultiplayerActionCharacter::OnOverlapBegin);
+	SphereCollider->OnComponentEndOverlap.AddDynamic(this, &AMultiplayerActionCharacter::OnOverlapEnd);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -557,13 +558,19 @@ void AMultiplayerActionCharacter::OnOverlapBegin(UPrimitiveComponent* Overlapped
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
 	const FHitResult& SweepResult)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("AChest OnOverlapBegin"));
-
 	if (OtherActor && OtherActor->IsA(AChest::StaticClass()))
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("AChest OnOverlapBegin AMultiplayerActionCharacter"));
 		AChest* chest = Cast<AChest>(OtherActor);
 		chest->OpenChest();
+	}
+}
 
+void AMultiplayerActionCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (OtherActor && OtherActor->IsA(AChest::StaticClass()))
+	{
+		AChest* chest = Cast<AChest>(OtherActor);
+		chest->CloseChest();
 	}
 }

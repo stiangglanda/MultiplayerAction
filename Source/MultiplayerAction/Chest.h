@@ -20,7 +20,7 @@ protected:
 	TObjectPtr<USkeletalMeshComponent> Mesh;
 
 	UPROPERTY(EditAnywhere, Category = "Chest")
-	UAnimMontage* OpenAnim;
+	UAnimationAsset* OpenCloseAnim;
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -28,6 +28,9 @@ protected:
 public:	
 	UFUNCTION()
 	void OpenChest();
+
+	UFUNCTION()
+	void CloseChest();
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
