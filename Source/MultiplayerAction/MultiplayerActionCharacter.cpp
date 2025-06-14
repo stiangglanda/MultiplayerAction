@@ -83,6 +83,9 @@ AMultiplayerActionCharacter::AMultiplayerActionCharacter()
 	SphereCollider->SetCanEverAffectNavigation(false);
 	SphereCollider->SetupAttachment(RootComponent);
 
+	OverlappingChest = nullptr;
+	LockedOnTarget = nullptr;
+
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
@@ -131,6 +134,8 @@ void AMultiplayerActionCharacter::SetupPlayerInputComponent(UInputComponent* Pla
 		EnhancedInputComponent->BindAction(LockAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::Lock);
 
 		EnhancedInputComponent->BindAction(RollAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::Roll);
+
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::Interact);
 
 		EnhancedInputComponent->BindAction(HeavyAttackAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::HeavyAttack);
 	}
@@ -181,6 +186,11 @@ void AMultiplayerActionCharacter::Tick(float DeltaTime)
 			GetController()->SetControlRotation(LookAtRotation);
 		}
 	}
+}
+
+AMultiplayerActionCharacter::~AMultiplayerActionCharacter()
+{
+
 }
 
 void AMultiplayerActionCharacter::OnRep_CurrentHealth()
@@ -338,6 +348,19 @@ void AMultiplayerActionCharacter::NetMulticastReliableRPC_HeavyAttack_Implementa
 	}
 }
 
+void AMultiplayerActionCharacter::Interact(const FInputActionValue& Value)
+{
+	if (OverlappingChest)
+	{
+		OverlappingChest->ToggleOpenClose();
+	}
+
+	if (InteractionWidget)
+	{
+		InteractionWidget->RemoveFromParent();
+		InteractionWidget = nullptr;
+	}
+}
 
 void AMultiplayerActionCharacter::AttackInputMapping(const FInputActionValue& Value)
 {
@@ -560,8 +583,22 @@ void AMultiplayerActionCharacter::OnOverlapBegin(UPrimitiveComponent* Overlapped
 {
 	if (OtherActor && OtherActor->IsA(AChest::StaticClass()))
 	{
+		// Create and show widget
+		if (InteractionWidgetClass && !InteractionWidget)
+		{
+			APlayerController* PC = Cast<APlayerController>(GetController());
+			if (PC)
+			{
+				InteractionWidget = CreateWidget<UUserWidget>(PC, InteractionWidgetClass);
+				if (InteractionWidget)
+				{
+					InteractionWidget->AddToViewport();
+				}
+			}
+		}
+
 		AChest* chest = Cast<AChest>(OtherActor);
-		chest->OpenChest();
+		OverlappingChest = chest;
 	}
 }
 
@@ -570,7 +607,13 @@ void AMultiplayerActionCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedCo
 {
 	if (OtherActor && OtherActor->IsA(AChest::StaticClass()))
 	{
-		AChest* chest = Cast<AChest>(OtherActor);
-		chest->CloseChest();
+		// Remove widget from viewport
+		if (InteractionWidget)
+		{
+			InteractionWidget->RemoveFromParent();
+			InteractionWidget = nullptr;
+		}
+		OverlappingChest->CloseChest(); // Close the chest if it was open
+		OverlappingChest = nullptr;
 	}
 }

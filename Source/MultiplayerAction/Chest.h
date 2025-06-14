@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Blueprint/UserWidget.h"
+#include "Runtime/UMG/Public/UMG.h"
 #include "Chest.generated.h"
 
 UCLASS()
@@ -20,7 +22,15 @@ protected:
 	TObjectPtr<USkeletalMeshComponent> Mesh;
 
 	UPROPERTY(EditAnywhere, Category = "Chest")
-	UAnimationAsset* OpenCloseAnim;
+	UAnimMontage* OpenCloseAnim;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<UUserWidget> ChestMenuWidgetClass;
+
+	UPROPERTY()
+	UUserWidget* ChestMenuWidget;
+
+	bool bOpen;
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -28,6 +38,9 @@ protected:
 public:	
 	UFUNCTION()
 	void OpenChest();
+
+	UFUNCTION()
+	void ToggleOpenClose();
 
 	UFUNCTION()
 	void CloseChest();

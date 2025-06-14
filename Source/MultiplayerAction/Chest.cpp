@@ -7,6 +7,7 @@
 AChest::AChest()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	bOpen = false;
 
 	Mesh = CreateOptionalDefaultSubobject<USkeletalMeshComponent>(TEXT("Chest"));
 	if (Mesh)
@@ -41,20 +42,66 @@ void AChest::OpenChest()
 {
 	if (OpenCloseAnim)
 	{
-		Mesh->PlayAnimation(OpenCloseAnim, false);
-		Mesh->SetPlayRate(1);
-		Mesh->SetPosition(0);
+		UAnimInstance* AnimInstance = Mesh->GetAnimInstance();
+		if (AnimInstance)
+		{
+			AnimInstance->Montage_Play(OpenCloseAnim, 1, EMontagePlayReturnType::MontageLength, AnimInstance->Montage_GetPosition(OpenCloseAnim), true);
+		}
+	}
+
+	// Create and show widget
+	if (ChestMenuWidgetClass && !ChestMenuWidget)
+	{
+		// Get the first local player controller
+		APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+
+		if (PC && PC->IsLocalController())
+		{
+			ChestMenuWidget = CreateWidget<UUserWidget>(PC, ChestMenuWidgetClass);
+			if (ChestMenuWidget)
+			{
+				ChestMenuWidget->AddToViewport();
+			}
+		}
+	}
+
+	bOpen = !bOpen;
+}
+
+void AChest::ToggleOpenClose()
+{
+	if(bOpen)
+	{
+		CloseChest();
+	}
+	else
+	{
+		OpenChest();
 	}
 }
 
 void AChest::CloseChest()
 {
+	if (!bOpen)
+		return;
+	
 	if (OpenCloseAnim)
 	{
-		Mesh->PlayAnimation(OpenCloseAnim, false);
-		Mesh->SetPlayRate(-1);
-		Mesh->SetPosition(OpenCloseAnim->GetPlayLength());
+		UAnimInstance* AnimInstance = Mesh->GetAnimInstance();
+		if (AnimInstance)
+		{
+			float CurrentPosition = AnimInstance->Montage_GetPosition(OpenCloseAnim) == 0 ? OpenCloseAnim->GetPlayLength() : AnimInstance->Montage_GetPosition(OpenCloseAnim);
+			AnimInstance->Montage_Play(OpenCloseAnim,-1,EMontagePlayReturnType::MontageLength, CurrentPosition, true);
+		}
 	}
+
+	if (ChestMenuWidget)
+	{
+		ChestMenuWidget->RemoveFromParent();
+		ChestMenuWidget = nullptr;
+	}
+
+	bOpen = !bOpen;
 }
 
 // Called when the game starts or when spawned

@@ -6,7 +6,8 @@
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "Weapon.h"
-//#include "Inventory.h"
+#include "Blueprint/UserWidget.h"
+#include "Runtime/UMG/Public/UMG.h"
 #include <Components/SphereComponent.h>
 #include "MultiplayerActionCharacter.generated.h"
 
@@ -59,7 +60,11 @@ class AMultiplayerActionCharacter : public ACharacter
 
     /** Look Input Action */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-    UInputAction* LookAction;    
+    UInputAction* LookAction;
+
+    /** Interact Input Action */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* InteractAction;
     
     /** Heavy Attack Input Action */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -107,6 +112,8 @@ class AMultiplayerActionCharacter : public ACharacter
 public:
     AMultiplayerActionCharacter();
 
+    ~AMultiplayerActionCharacter();
+
     UFUNCTION(BlueprintPure)
     bool IsDead();
 
@@ -117,8 +124,11 @@ public:
     void ServerReliableRPC_Attack();
 
 protected:
-    //UPROPERTY(EditAnywhere)
-    //UInventory* inventory;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+    TSubclassOf<UUserWidget> InteractionWidgetClass;
+
+    UPROPERTY()
+    UUserWidget* InteractionWidget;
 
     bool bIsAttacking = false;
     bool IsRolling = false;
@@ -127,6 +137,8 @@ protected:
     bool IsLockedOn = false;
 
 	AMultiplayerActionCharacter* LockedOnTarget;
+
+	class AChest* OverlappingChest;
 
     FOnMontageEnded AttackMontageEndedDelegate;
 
@@ -195,6 +207,8 @@ protected:
     void Roll(const FInputActionValue& Value);
 
     void HeavyAttack(const FInputActionValue& Value);
+
+    void Interact(const FInputActionValue& Value);
 
     /** Called for Attack input */
     void AttackInputMapping(const FInputActionValue& Value);
