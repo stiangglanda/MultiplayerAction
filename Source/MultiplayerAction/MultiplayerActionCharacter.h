@@ -71,9 +71,6 @@ class AMultiplayerActionCharacter : public ACharacter
     UInputAction* HeavyAttackAction;
 
     UPROPERTY(EditAnywhere, Category = "Combat")
-    UWeapon* Weapon;
-
-    UPROPERTY(EditAnywhere, Category = "Combat")
     UAnimMontage* HeavyAttackMontage;
 
     UPROPERTY(EditAnywhere, Category = "Combat")
@@ -110,6 +107,12 @@ class AMultiplayerActionCharacter : public ACharacter
     float SphereColliderRadius = 200.0f;
 
 public:
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+    TObjectPtr<UWeapon> Weapon;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+    TSubclassOf<UWeapon> WeaponClass;
+
     AMultiplayerActionCharacter();
 
     ~AMultiplayerActionCharacter();

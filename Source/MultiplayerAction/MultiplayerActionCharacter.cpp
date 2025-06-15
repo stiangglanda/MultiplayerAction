@@ -62,12 +62,6 @@ AMultiplayerActionCharacter::AMultiplayerActionCharacter()
 
 	Health = MaxHealth;
 
-	Weapon = CreateDefaultSubobject<UWeapon>(TEXT("Weapon"));
-	if (Weapon)
-	{
-		Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, TEXT("WeaponSocket"));
-	}
-
 	SphereCollider = CreateDefaultSubobject<USphereComponent>(TEXT("Chest Collider"));
 	SphereCollider->InitSphereRadius(SphereColliderRadius);
 
@@ -98,6 +92,16 @@ void AMultiplayerActionCharacter::BeginPlay()
 
 	SphereCollider->OnComponentBeginOverlap.AddDynamic(this, &AMultiplayerActionCharacter::OnOverlapBegin);
 	SphereCollider->OnComponentEndOverlap.AddDynamic(this, &AMultiplayerActionCharacter::OnOverlapEnd);
+
+	if (WeaponClass && !Weapon)
+	{
+		Weapon = NewObject<UWeapon>(this, WeaponClass);
+		if (Weapon)
+		{
+			Weapon->RegisterComponent();
+			Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, TEXT("WeaponSocket"));
+		}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
