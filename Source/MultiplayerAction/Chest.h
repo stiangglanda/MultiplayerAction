@@ -6,16 +6,28 @@
 #include "GameFramework/Actor.h"
 #include "Blueprint/UserWidget.h"
 #include "Runtime/UMG/Public/UMG.h"
+#include "Weapon.h"
+#include "ChestInterface.h"
+#include "ChestWidget.h"
 #include "Chest.generated.h"
 
 UCLASS()
-class MULTIPLAYERACTION_API AChest : public AActor
+class MULTIPLAYERACTION_API AChest : public AActor, public IChestInterface
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
 	AChest();
+
+	virtual FWeaponData* GetChestContents() override;
+	virtual FText GetChestName() const override;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+	FWeaponData WeaponClass;
+
+	UPROPERTY(EditAnywhere, Category = "Chest")
+	FText ChestName;
 
 protected:
 	UPROPERTY(Category = Chest, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -25,10 +37,10 @@ protected:
 	UAnimMontage* OpenCloseAnim;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
-	TSubclassOf<UUserWidget> ChestMenuWidgetClass;
+	TSubclassOf<UChestWidget> ChestMenuWidgetClass;
 
 	UPROPERTY()
-	UUserWidget* ChestMenuWidget;
+	UChestWidget* ChestMenuWidget;
 
 	bool bOpen;
 

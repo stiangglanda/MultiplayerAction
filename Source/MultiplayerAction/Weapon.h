@@ -7,9 +7,31 @@
 #include "Engine/Texture2D.h"
 #include "Weapon.generated.h"
 
-/**
- * 
- */
+USTRUCT(BlueprintType)
+struct FWeaponData
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+    TObjectPtr<UTexture2D> ThumbnailImage = nullptr;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+    FText WeaponName = FText::GetEmpty();
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+    FText WeaponDescription = FText::GetEmpty();
+
+    FWeaponData() = default;
+
+    FWeaponData(UTexture2D* InThumbnail, const FText& InName, const FText& InDescription)
+        : ThumbnailImage(InThumbnail)
+        , WeaponName(InName)
+        , WeaponDescription(InDescription)
+    {
+    }
+};
+
+
 UCLASS()
 class MULTIPLAYERACTION_API UWeapon : public USkeletalMeshComponent
 {
@@ -18,14 +40,9 @@ public:
 	// Sets default values for this actor's properties
 	UWeapon();
 
+    // Replace individual properties with the struct
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory")
-	TObjectPtr<UTexture2D> ThumbnailImage;
-
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory")
-    FText WeaponName;
-
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory")
-    FText WeaponDescription;
+    FWeaponData WeaponData;
 
 protected:
 

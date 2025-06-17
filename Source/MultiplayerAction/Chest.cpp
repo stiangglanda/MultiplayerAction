@@ -9,6 +9,8 @@ AChest::AChest()
 	PrimaryActorTick.bCanEverTick = true;
 	bOpen = false;
 
+	ChestName = FText::FromString("Default Chest Name");
+
 	Mesh = CreateOptionalDefaultSubobject<USkeletalMeshComponent>(TEXT("Chest"));
 	if (Mesh)
 	{
@@ -57,9 +59,10 @@ void AChest::OpenChest()
 
 		if (PC && PC->IsLocalController())
 		{
-			ChestMenuWidget = CreateWidget<UUserWidget>(PC, ChestMenuWidgetClass);
+			ChestMenuWidget = CreateWidget<UChestWidget>(PC, ChestMenuWidgetClass);
 			if (ChestMenuWidget)
 			{
+				ChestMenuWidget->SetChestReference(this);
 				ChestMenuWidget->AddToViewport();
 			}
 		}
@@ -105,14 +108,22 @@ void AChest::CloseChest()
 	bOpen = !bOpen;
 }
 
-// Called when the game starts or when spawned
+FWeaponData* AChest::GetChestContents()
+{
+	return &WeaponClass;
+}
+
+FText AChest::GetChestName() const
+{
+	return ChestName;
+}
+
 void AChest::BeginPlay()
 {
 	Super::BeginPlay();
 
 }
 
-// Called every frame
 void AChest::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);

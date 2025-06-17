@@ -5,9 +5,7 @@
 
 UWeapon::UWeapon()
 {
-	ThumbnailImage = nullptr;
-	WeaponName = FText::FromString(TEXT("Weapon"));
-	WeaponDescription = FText::FromString(TEXT("A weapon description"));
+	WeaponData = FWeaponData(nullptr, FText::FromString(TEXT("Weapon")), FText::FromString(TEXT("A weapon description")));
 }
 
 void UWeapon::BeginPlay()
