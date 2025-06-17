@@ -24,7 +24,10 @@ public:
 	virtual FText GetChestName() const override;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
-	FWeaponData WeaponClass;
+	TObjectPtr<UWeapon> Weapon;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+	TSubclassOf<UWeapon> WeaponClass;
 
 	UPROPERTY(EditAnywhere, Category = "Chest")
 	FText ChestName;

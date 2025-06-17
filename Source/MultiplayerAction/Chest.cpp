@@ -110,7 +110,7 @@ void AChest::CloseChest()
 
 FWeaponData* AChest::GetChestContents()
 {
-	return &WeaponClass;
+	return &Weapon->WeaponData;
 }
 
 FText AChest::GetChestName() const
@@ -121,6 +121,16 @@ FText AChest::GetChestName() const
 void AChest::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (WeaponClass && !Weapon)
+	{
+		Weapon = NewObject<UWeapon>(this, WeaponClass);
+		//if (Weapon)
+		//{
+		//	Weapon->RegisterComponent();
+		//	Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, TEXT("WeaponSocket"));
+		//}
+	}
 
 }
 
