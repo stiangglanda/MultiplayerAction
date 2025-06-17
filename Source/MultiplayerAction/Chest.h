@@ -40,7 +40,7 @@ public:
 	void OpenChest();
 
 	UFUNCTION()
-	void ToggleOpenClose();
+	bool ToggleOpenClose();//return true if opened, false if closed
 
 	UFUNCTION()
 	void CloseChest();

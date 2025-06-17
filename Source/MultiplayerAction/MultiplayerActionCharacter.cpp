@@ -354,15 +354,32 @@ void AMultiplayerActionCharacter::NetMulticastReliableRPC_HeavyAttack_Implementa
 
 void AMultiplayerActionCharacter::Interact(const FInputActionValue& Value)
 {
-	if (OverlappingChest)
-	{
-		OverlappingChest->ToggleOpenClose();
-	}
-
 	if (InteractionWidget)
 	{
 		InteractionWidget->RemoveFromParent();
 		InteractionWidget = nullptr;
+	}
+
+	if (!OverlappingChest)
+	{
+		return;
+	}
+
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (!PC)
+	{
+		return;
+	}
+
+	if (OverlappingChest->ToggleOpenClose())
+	{
+		PC->SetInputMode(FInputModeGameAndUI());
+		PC->bShowMouseCursor = true;
+	}
+	else
+	{
+		PC->SetInputMode(FInputModeGameOnly());
+		PC->bShowMouseCursor = false;
 	}
 }
 
@@ -617,6 +634,14 @@ void AMultiplayerActionCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedCo
 			InteractionWidget->RemoveFromParent();
 			InteractionWidget = nullptr;
 		}
+
+		APlayerController* PC = Cast<APlayerController>(GetController());
+		if (PC)
+		{
+			PC->SetInputMode(FInputModeGameOnly());
+			PC->bShowMouseCursor = false;
+		}
+
 		OverlappingChest->CloseChest(); // Close the chest if it was open
 		OverlappingChest = nullptr;
 	}

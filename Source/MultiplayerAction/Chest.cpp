@@ -68,7 +68,7 @@ void AChest::OpenChest()
 	bOpen = !bOpen;
 }
 
-void AChest::ToggleOpenClose()
+bool AChest::ToggleOpenClose()
 {
 	if(bOpen)
 	{
@@ -78,6 +78,7 @@ void AChest::ToggleOpenClose()
 	{
 		OpenChest();
 	}
+	return bOpen;
 }
 
 void AChest::CloseChest()
