@@ -128,7 +128,12 @@ void AChest::Swap()
 		AMultiplayerActionCharacter* PlayerPawn = Cast<AMultiplayerActionCharacter>(PC->GetPawn());
 		if (PlayerPawn)
 		{
-			PlayerPawn->SwapWeapon(WeaponClass);
+			WeaponClass = PlayerPawn->SwapWeapon(WeaponClass);
+			Weapon = nullptr;
+			if (WeaponClass)
+			{
+				Weapon = NewObject<UWeapon>(this, WeaponClass);
+			}
 		}
 	}
 }

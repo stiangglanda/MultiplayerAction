@@ -127,7 +127,7 @@ public:
     void ServerReliableRPC_Attack();
 
     UFUNCTION()
-	void SwapWeapon(TSubclassOf<UWeapon> NewWeaponClass);
+    TSubclassOf<UWeapon> SwapWeapon(TSubclassOf<UWeapon> NewWeaponClass);
 
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
