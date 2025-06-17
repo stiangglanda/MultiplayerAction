@@ -22,6 +22,7 @@ public:
 
 	virtual FWeaponData* GetChestContents() override;
 	virtual FText GetChestName() const override;
+	virtual void Swap() override;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
 	TObjectPtr<UWeapon> Weapon;

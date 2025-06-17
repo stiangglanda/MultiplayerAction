@@ -34,3 +34,11 @@ FText UChestWidget::GetChestName() const
     }
     return FText::GetEmpty();
 }
+
+void UChestWidget::Swap()
+{
+    if (ChestReference)
+    {
+        ChestReference->Swap();
+    }
+}

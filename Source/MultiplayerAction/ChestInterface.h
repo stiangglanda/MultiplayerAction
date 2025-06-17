@@ -20,4 +20,5 @@ class MULTIPLAYERACTION_API IChestInterface
 public:
     virtual struct FWeaponData* GetChestContents() = 0;
     virtual FText GetChestName() const = 0;
+	virtual void Swap() = 0;
 };

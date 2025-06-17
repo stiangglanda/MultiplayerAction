@@ -2,6 +2,7 @@
 
 
 #include "Chest.h"
+#include "MultiplayerActionCharacter.h"
 
 // Sets default values
 AChest::AChest()
@@ -118,6 +119,20 @@ FText AChest::GetChestName() const
 	return ChestName;
 }
 
+void AChest::Swap()
+{
+	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+
+	if (PC && PC->IsLocalController())
+	{
+		AMultiplayerActionCharacter* PlayerPawn = Cast<AMultiplayerActionCharacter>(PC->GetPawn());
+		if (PlayerPawn)
+		{
+			PlayerPawn->SwapWeapon(WeaponClass);
+		}
+	}
+}
+
 void AChest::BeginPlay()
 {
 	Super::BeginPlay();
@@ -125,11 +140,6 @@ void AChest::BeginPlay()
 	if (WeaponClass && !Weapon)
 	{
 		Weapon = NewObject<UWeapon>(this, WeaponClass);
-		//if (Weapon)
-		//{
-		//	Weapon->RegisterComponent();
-		//	Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, TEXT("WeaponSocket"));
-		//}
 	}
 
 }

@@ -478,6 +478,34 @@ float AMultiplayerActionCharacter::GetHeathPercent() const
 	return Health / MaxHealth;
 }
 
+void AMultiplayerActionCharacter::SwapWeapon(TSubclassOf<UWeapon> NewWeaponClass)
+{
+	if (WeaponClass == NewWeaponClass || !NewWeaponClass)
+	{
+		return;
+	}
+	if (Weapon)
+	{
+		Weapon->DestroyComponent();
+		Weapon = nullptr;
+	}
+	WeaponClass = NewWeaponClass;
+	if (WeaponClass)
+	{
+		Weapon = NewObject<UWeapon>(this, WeaponClass);
+		if (Weapon)
+		{
+			Weapon->RegisterComponent();
+			Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, TEXT("WeaponSocket"));
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Weapon swapped successfully."));
+		}
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Failed to swap weapon: Invalid weapon class."));
+	}
+}
+
 void AMultiplayerActionCharacter::PerformWeaponTrace()
 {
 	if (!IsValid(Weapon))

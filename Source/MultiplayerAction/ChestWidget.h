@@ -21,6 +21,9 @@ public:
     UFUNCTION(BlueprintPure, Category = "Chest")
     FText GetChestName() const;
 
+    UFUNCTION(BlueprintCallable, Category = "Chest")
+    void Swap();
+
 protected:
     virtual void NativeConstruct() override;
 
