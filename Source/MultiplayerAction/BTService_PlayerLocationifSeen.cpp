@@ -1,34 +1,71 @@
 #include "BTService_PlayerLocationifSeen.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "Kismet/GameplayStatics.h"
 #include "AIController.h"
+#include "Perception/AIPerceptionComponent.h"
+#include "Perception/AISense_Sight.h"
 
 UBTService_PlayerLocationifSeen::UBTService_PlayerLocationifSeen()
 {
-	NodeName = TEXT("Update Player Location if Seen");
+    NodeName = TEXT("Update Player Location if Seen");
 }
 
 void UBTService_PlayerLocationifSeen::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
-	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
-	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+    Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
-	if (PlayerPawn == nullptr)
-	{
-		return;
-	}
+    AAIController* AIController = OwnerComp.GetAIOwner();
+    if (!AIController)
+    {
+        return;
+    }
 
-	if (OwnerComp.GetAIOwner() == nullptr)
-	{
-		return;
-	}
+    // Get or create perception component
+    UAIPerceptionComponent* PerceptionComp = AIController->GetAIPerceptionComponent();
+    if (!PerceptionComp)
+    {
+        PerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AI Perception"));
+        AIController->SetPerceptionComponent(*PerceptionComp);
 
-	if (OwnerComp.GetAIOwner()->LineOfSightTo(PlayerPawn))
-	{
-		OwnerComp.GetBlackboardComponent()->SetValueAsObject(GetSelectedBlackboardKey(), PlayerPawn);
-	}
-	else
-	{
-		OwnerComp.GetBlackboardComponent()->ClearValue(GetSelectedBlackboardKey());
-	}
+        // Configure sight sense
+        UAISenseConfig_Sight* SightConfig = NewObject<UAISenseConfig_Sight>(AIController);
+        SightConfig->SightRadius = SightRadius;
+        SightConfig->LoseSightRadius = LoseSightRadius;
+        SightConfig->PeripheralVisionAngleDegrees = PeripheralVisionAngleDegrees;
+        SightConfig->SetMaxAge(5.0f);
+
+        PerceptionComp->ConfigureSense(*SightConfig);
+        PerceptionComp->SetDominantSense(SightConfig->GetSenseImplementation());
+    }
+
+    // Get currently perceived actors
+    TArray<AActor*> PerceivedActors;
+    PerceptionComp->GetCurrentlyPerceivedActors(UAISense_Sight::StaticClass(), PerceivedActors);
+
+    // Find closest perceived player
+    float ClosestDistance = MAX_FLT;
+    AActor* ClosestActor = nullptr;
+
+    for (AActor* Actor : PerceivedActors)
+    {
+        if (APawn* PawnActor = Cast<APawn>(Actor))
+        {
+            if (PawnActor->IsPlayerControlled())
+            {
+                float Distance = FVector::Distance(AIController->GetPawn()->GetActorLocation(), 
+                                                 PawnActor->GetActorLocation());
+                if (Distance < ClosestDistance)
+                {
+                    ClosestDistance = Distance;
+                    ClosestActor = PawnActor;
+                }
+            }
+        }
+    }
+
+    // Update blackboard
+    UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();
+    if (BlackboardComp)
+    {
+        BlackboardComp->SetValueAsObject(GetSelectedBlackboardKey(), ClosestActor);
+    }
 }
