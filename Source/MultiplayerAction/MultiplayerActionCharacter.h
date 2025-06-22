@@ -105,10 +105,13 @@ class AMultiplayerActionCharacter : public ACharacter
     float SphereColliderRadius = 200.0f;
 
 public:
-    UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
     TObjectPtr<UWeapon> Weapon;
 
-    UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+    UFUNCTION()
+    void OnRep_WeaponClass();
+
+    UPROPERTY(ReplicatedUsing = OnRep_WeaponClass, EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
     TSubclassOf<UWeapon> WeaponClass;
 
     AMultiplayerActionCharacter();
