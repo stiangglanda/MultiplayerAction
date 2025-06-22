@@ -105,10 +105,10 @@ class AMultiplayerActionCharacter : public ACharacter
     float SphereColliderRadius = 200.0f;
 
 public:
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+    UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
     TObjectPtr<UWeapon> Weapon;
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+    UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
     TSubclassOf<UWeapon> WeaponClass;
 
     AMultiplayerActionCharacter();
@@ -123,6 +123,12 @@ public:
 
     UFUNCTION(Server, Reliable)
     void ServerReliableRPC_Attack();
+
+    UFUNCTION(Server, Reliable)
+    void ServerReliableRPC_SwapWeapon(TSubclassOf<UWeapon> NewWeaponClass);
+
+    UFUNCTION(NetMulticast, Reliable)
+    void NetMulticastReliableRPC_SwapWeapon(TSubclassOf<UWeapon> NewWeaponClass);
 
     UFUNCTION()
     TSubclassOf<UWeapon> SwapWeapon(TSubclassOf<UWeapon> NewWeaponClass);
@@ -190,7 +196,7 @@ protected:
 
     UPROPERTY(EditAnywhere)
     float MaxHealth = 100;
-    /** The player's current health. When reduced to 0, they are considered dead.*/
+
     UPROPERTY(ReplicatedUsing = OnRep_CurrentHealth)
     float Health;
 

@@ -406,6 +406,7 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 	Health -= DamageApplied;
 
 	UE_LOG(LogTemp, Display, TEXT("Health: %f"), Health);
+	OnHealthUpdate();
 
 	PlayImpactAnimation();
 
@@ -433,6 +434,8 @@ void AMultiplayerActionCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePro
 
 	//Replicate current health.
 	DOREPLIFETIME(AMultiplayerActionCharacter, Health);
+	DOREPLIFETIME(AMultiplayerActionCharacter, Weapon);
+	DOREPLIFETIME(AMultiplayerActionCharacter, WeaponClass);
 }
 
 void AMultiplayerActionCharacter::OnHealthUpdate()
@@ -476,18 +479,68 @@ float AMultiplayerActionCharacter::GetHeathPercent() const
 	return Health / MaxHealth;
 }
 
+//TSubclassOf<UWeapon> AMultiplayerActionCharacter::SwapWeapon(TSubclassOf<UWeapon> NewWeaponClass)
+//{
+//	ServerReliableRPC_Block();
+//
+//	TSubclassOf<UWeapon> OldWeaponClass = WeaponClass;
+//	if (WeaponClass == NewWeaponClass || !NewWeaponClass)
+//	{
+//		return OldWeaponClass;
+//	}
+//	if (Weapon)
+//	{
+//		Weapon->DestroyComponent();
+//		Weapon = nullptr;
+//	}
+//	WeaponClass = NewWeaponClass;
+//	if (WeaponClass)
+//	{
+//		Weapon = NewObject<UWeapon>(this, NewWeaponClass);
+//		if (Weapon)
+//		{
+//			Weapon->RegisterComponent();
+//			Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, TEXT("WeaponSocket"));
+//		}
+//	}
+//	else
+//	{
+//		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Failed to swap weapon: Invalid weapon class."));
+//	}
+//	return OldWeaponClass;
+//}
+
 TSubclassOf<UWeapon> AMultiplayerActionCharacter::SwapWeapon(TSubclassOf<UWeapon> NewWeaponClass)
 {
+	if (GetLocalRole() < ROLE_Authority)
+	{
+		ServerReliableRPC_SwapWeapon(NewWeaponClass);
+		return WeaponClass; // Return current weapon class since the actual swap will happen via RPC
+	}
+
 	TSubclassOf<UWeapon> OldWeaponClass = WeaponClass;
 	if (WeaponClass == NewWeaponClass || !NewWeaponClass)
 	{
 		return OldWeaponClass;
 	}
+
+	NetMulticastReliableRPC_SwapWeapon(NewWeaponClass);
+	return OldWeaponClass;
+}
+
+void AMultiplayerActionCharacter::ServerReliableRPC_SwapWeapon_Implementation(TSubclassOf<UWeapon> NewWeaponClass)
+{
+	SwapWeapon(NewWeaponClass);
+}
+
+void AMultiplayerActionCharacter::NetMulticastReliableRPC_SwapWeapon_Implementation(TSubclassOf<UWeapon> NewWeaponClass)
+{
 	if (Weapon)
 	{
 		Weapon->DestroyComponent();
 		Weapon = nullptr;
 	}
+
 	WeaponClass = NewWeaponClass;
 	if (WeaponClass)
 	{
@@ -502,7 +555,6 @@ TSubclassOf<UWeapon> AMultiplayerActionCharacter::SwapWeapon(TSubclassOf<UWeapon
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Failed to swap weapon: Invalid weapon class."));
 	}
-	return OldWeaponClass;
 }
 
 void AMultiplayerActionCharacter::PerformWeaponTrace()

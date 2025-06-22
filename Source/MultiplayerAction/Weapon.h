@@ -37,16 +37,12 @@ class MULTIPLAYERACTION_API UWeapon : public USkeletalMeshComponent
 {
 	GENERATED_BODY()
 public:
-	// Sets default values for this actor's properties
 	UWeapon();
 
-    // Replace individual properties with the struct
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory")
     FWeaponData WeaponData;
 
 protected:
-
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	
 };

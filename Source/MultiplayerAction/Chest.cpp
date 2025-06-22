@@ -1,10 +1,6 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Chest.h"
 #include "MultiplayerActionCharacter.h"
 
-// Sets default values
 AChest::AChest()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -52,10 +48,8 @@ void AChest::OpenChest()
 		}
 	}
 
-	// Create and show widget
 	if (ChestMenuWidgetClass && !ChestMenuWidget)
 	{
-		// Get the first local player controller
 		APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 
 		if (PC && PC->IsLocalController())

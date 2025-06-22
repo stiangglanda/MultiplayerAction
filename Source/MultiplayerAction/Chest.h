@@ -17,7 +17,6 @@ class MULTIPLAYERACTION_API AChest : public AActor, public IChestInterface
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
 	AChest();
 
 	virtual FWeaponData* GetChestContents() override;
@@ -48,7 +47,6 @@ protected:
 
 	bool bOpen;
 
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:	
@@ -60,7 +58,7 @@ public:
 
 	UFUNCTION()
 	void CloseChest();
-	// Called every frame
+
 	virtual void Tick(float DeltaTime) override;
 
 };
