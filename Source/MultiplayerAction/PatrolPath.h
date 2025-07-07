@@ -12,6 +12,8 @@ class MULTIPLAYERACTION_API APatrolPath : public AActor
 public:	
 	APatrolPath();
 
+	virtual void OnConstruction(const FTransform& Transform) override;
+
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "AI|Patrol", meta = (MakeEditWidget = true))
 	TArray<FVector> PatrolPoints;
 

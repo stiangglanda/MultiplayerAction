@@ -21,6 +21,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	bool IsDead() const;
 
+	UPROPERTY(EditInstanceOnly, Category = "AI|Patrol")
+	class APatrolPath* PatrolPath;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
