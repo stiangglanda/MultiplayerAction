@@ -303,13 +303,18 @@ void AMultiplayerActionCharacter::Lock(const FInputActionValue& Value)
 				AMultiplayerActionCharacter* unit = Cast<AMultiplayerActionCharacter>(hits[i].GetActor());
 				if (unit && unit->GetTeam() != GetTeam())
 				{
-					IsLockedOn = true;
-					GetController()->SetIgnoreLookInput(true);
-					LockedOnTarget = unit;
+					SetLockedOnTarget(unit);
 				}
 			}
 		}
 	}
+}
+
+void AMultiplayerActionCharacter::SetLockedOnTarget(AMultiplayerActionCharacter* unit)
+{
+	IsLockedOn = true;
+	GetController()->SetIgnoreLookInput(true);
+	LockedOnTarget = unit;
 }
 
 void AMultiplayerActionCharacter::Block(const FInputActionValue& Value)

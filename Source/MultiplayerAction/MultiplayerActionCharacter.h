@@ -136,6 +136,8 @@ public:
     UFUNCTION()
     TSubclassOf<UWeapon> SwapWeapon(TSubclassOf<UWeapon> NewWeaponClass);
 
+    void SetLockedOnTarget(AMultiplayerActionCharacter* unit);
+
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<UUserWidget> InteractionWidgetClass;
