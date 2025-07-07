@@ -52,7 +52,7 @@ void ADefaultAIController::OnPossess(APawn* InPawn)
         if (GetBlackboardComponent())
         {
             GetBlackboardComponent()->SetValueAsObject(TEXT("PatrolPath"), AICharacter->PatrolPath);
-            GetBlackboardComponent()->SetValueAsInt(TEXT("CurrentPatrolIndex"), -1);
+            GetBlackboardComponent()->SetValueAsInt(TEXT("CurrentPatrolIndex"), 0);
         }
     }
 }
