@@ -7,6 +7,7 @@
 #include "Perception/AIPerceptionTypes.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
+#include "PatrolPath.h"
 #include "DefaultAIController.generated.h"
 
 /**
@@ -21,8 +22,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	bool IsDead() const;
 
-	UPROPERTY(EditInstanceOnly, Category = "AI|Patrol")
-	class APatrolPath* PatrolPath;
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "AI|Patrol")
+	APatrolPath* PatrolPath;
 
 protected:
 	// Called when the game starts or when spawned

@@ -5,7 +5,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Perception/AISense_Sight.h"
-#include "PatrolPath.h"
 
 ADefaultAIController::ADefaultAIController()
 {
