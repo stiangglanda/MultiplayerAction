@@ -22,9 +22,6 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	bool IsDead() const;
 
-	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "AI|Patrol")
-	APatrolPath* PatrolPath;
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -32,6 +29,8 @@ protected:
 	// Perception updated callback
 	UFUNCTION()
 	void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+
+	virtual void OnPossess(APawn* InPawn) override;
 
 private:
 	UPROPERTY(EditAnywhere)

@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Perception/AISense_Sight.h"
+#include "EnemyCharacter.h"
 
 ADefaultAIController::ADefaultAIController()
 {
@@ -37,9 +38,22 @@ void ADefaultAIController::BeginPlay()
         RunBehaviorTree(AIBehavior);
         GetBlackboardComponent()->SetValueAsVector(TEXT("Player Location"), PlayerPawn->GetActorLocation());
         GetBlackboardComponent()->SetValueAsVector(TEXT("Start Location"), GetPawn()->GetActorLocation());
+    }
+}
 
-        GetBlackboardComponent()->SetValueAsObject(TEXT("PatrolPath"), PatrolPath);
-        GetBlackboardComponent()->SetValueAsInt(TEXT("CurrentPatrolIndex"), -1);
+void ADefaultAIController::OnPossess(APawn* InPawn)
+{
+    Super::OnPossess(InPawn);
+
+    AEnemyCharacter* AICharacter = Cast<AEnemyCharacter>(InPawn);
+
+    if (AICharacter && AICharacter->PatrolPath)
+    {
+        if (GetBlackboardComponent())
+        {
+            GetBlackboardComponent()->SetValueAsObject(TEXT("PatrolPath"), AICharacter->PatrolPath);
+            GetBlackboardComponent()->SetValueAsInt(TEXT("CurrentPatrolIndex"), -1);
+        }
     }
 }
 
