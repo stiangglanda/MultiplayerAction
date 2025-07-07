@@ -10,7 +10,7 @@ FVector APatrolPath::GetPatrolPoint(int32 Index) const
 {
     if (PatrolPoints.IsValidIndex(Index))
     {
-        return PatrolPoints[Index];
+        return GetActorTransform().TransformPosition(PatrolPoints[Index]);
     }
     return FVector::ZeroVector;
 }

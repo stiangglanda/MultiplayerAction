@@ -38,23 +38,22 @@ void ADefaultAIController::BeginPlay()
         RunBehaviorTree(AIBehavior);
         GetBlackboardComponent()->SetValueAsVector(TEXT("Player Location"), PlayerPawn->GetActorLocation());
         GetBlackboardComponent()->SetValueAsVector(TEXT("Start Location"), GetPawn()->GetActorLocation());
+
+        AEnemyCharacter* AICharacter = Cast<AEnemyCharacter>(GetPawn());
+
+        if (AICharacter && AICharacter->PatrolPath)
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("OnPossess GetBlackboardComponent 2"));
+            GetBlackboardComponent()->SetValueAsObject(TEXT("PatrolPath"), AICharacter->PatrolPath);
+            GetBlackboardComponent()->SetValueAsInt(TEXT("CurrentPatrolIndex"), 0);
+            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("ADefaultAIController PatrolPath Num: %d"), AICharacter->PatrolPath->GetNumPoints()));
+        }
     }
 }
 
 void ADefaultAIController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
-
-    AEnemyCharacter* AICharacter = Cast<AEnemyCharacter>(InPawn);
-
-    if (AICharacter && AICharacter->PatrolPath)
-    {
-        if (GetBlackboardComponent())
-        {
-            GetBlackboardComponent()->SetValueAsObject(TEXT("PatrolPath"), AICharacter->PatrolPath);
-            GetBlackboardComponent()->SetValueAsInt(TEXT("CurrentPatrolIndex"), 0);
-        }
-    }
 }
 
 bool ADefaultAIController::IsDead() const
