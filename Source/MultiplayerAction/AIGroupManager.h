@@ -21,7 +21,33 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	UPROPERTY(EditInstanceOnly, Category = "AI Group")
+	TArray<FVector> FormationOffsets;
+
+	UPROPERTY(EditDefaultsOnly, Category = "AI Group|Blackboard")
+	FName IsLeaderKeyName = "IsLeader";
+
+	UPROPERTY(EditDefaultsOnly, Category = "AI Group|Blackboard")
+	FName PatrolPathKeyName = "PatrolPath";
+
+	UPROPERTY(EditDefaultsOnly, Category = "AI Group|Blackboard")
+	FName CurrentPatrolIndexKeyName = "CurrentPatrolIndex";
+
+	UPROPERTY(EditDefaultsOnly, Category = "AI Group|Blackboard")
+	FName PatrolLeaderKeyName = "PatrolLeader";
+
+	UPROPERTY(EditDefaultsOnly, Category = "AI Group|Blackboard")
+	FName FormationOffsetKeyName = "FormationOffset";
+
+	void AttemptGroupSetup();
+
 public:
 	virtual void Tick(float DeltaTime) override;
+
+private:
+	UPROPERTY()
+	TArray<TObjectPtr<class AEnemyCharacter>> PendingSetupMembers;
+
+	FTimerHandle SetupTimerHandle;
 
 };

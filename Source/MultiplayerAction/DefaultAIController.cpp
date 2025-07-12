@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "DefaultAIController.h"
 #include "MultiplayerAction/MultiplayerActionCharacter.h"
 #include "Kismet/GameplayStatics.h"
@@ -9,7 +7,6 @@
 
 ADefaultAIController::ADefaultAIController()
 {
-    // Create and configure perception component
     AIPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerceptionComponent"));
     SetPerceptionComponent(*AIPerceptionComponent);
 
@@ -27,7 +24,6 @@ ADefaultAIController::ADefaultAIController()
     AIPerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ADefaultAIController::OnTargetPerceptionUpdated);
 }
 
-// Called when the game starts or when spawned
 void ADefaultAIController::BeginPlay()
 {
     Super::BeginPlay();
@@ -38,14 +34,6 @@ void ADefaultAIController::BeginPlay()
         RunBehaviorTree(AIBehavior);
         GetBlackboardComponent()->SetValueAsVector(TEXT("Player Location"), PlayerPawn->GetActorLocation());
         GetBlackboardComponent()->SetValueAsVector(TEXT("Start Location"), GetPawn()->GetActorLocation());
-
-        AEnemyCharacter* AICharacter = Cast<AEnemyCharacter>(GetPawn());
-
-        if (AICharacter && AICharacter->PatrolPath)
-        {
-            GetBlackboardComponent()->SetValueAsObject(TEXT("PatrolPath"), AICharacter->PatrolPath);
-            GetBlackboardComponent()->SetValueAsInt(TEXT("CurrentPatrolIndex"), 0);
-        }
     }
 }
 
