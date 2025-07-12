@@ -5,11 +5,11 @@ void AEnemyCharacter::InitializeGroupMembership(TObjectPtr<class AAIGroupManager
 {
 	if (GroupManager)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("GroupManager initialized successfull"));
+		UE_LOG(LogTemplateCharacter, Log, TEXT("GroupManager initialized successfull"));
 		AIGroupManager = GroupManager;
 	}
 	else
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("GroupManager is null"));
+		UE_LOG(LogTemplateCharacter, Log, TEXT("GroupManager is null"));
 	}
 }
