@@ -16,6 +16,7 @@
 #include "Engine/Engine.h"
 #include "Chest.h"
 #include <Kismet/KismetMathLibrary.h>
+#include "AIGroupManager.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -721,5 +722,18 @@ void AMultiplayerActionCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedCo
 
 		OverlappingChest->CloseChest(); // Close the chest if it was open
 		OverlappingChest = nullptr;
+	}
+}
+
+void AMultiplayerActionCharacter::InitializeGroupMembership(TObjectPtr<class AAIGroupManager> GroupManager)
+{
+	if (GroupManager)
+	{
+		UE_LOG(LogTemplateCharacter, Log, TEXT("GroupManager initialized successfull"));
+		AIGroupManager = GroupManager;
+	}
+	else
+	{
+		UE_LOG(LogTemplateCharacter, Log, TEXT("GroupManager is null"));
 	}
 }

@@ -13,7 +13,7 @@ public:
 	AAIGroupManager();
 
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "AI|Group", meta = (MakeEditWidget = true))
-	TArray<TObjectPtr<class AEnemyCharacter>> GroupMembers;
+	TArray<TObjectPtr<class AMultiplayerActionCharacter>> GroupMembers;
 
 	UPROPERTY(EditInstanceOnly, Category = "AI Group")
 	TObjectPtr<class APatrolPath> PatrolPath;
@@ -46,7 +46,7 @@ public:
 
 private:
 	UPROPERTY()
-	TArray<TObjectPtr<class AEnemyCharacter>> PendingSetupMembers;
+	TArray<TObjectPtr<class AMultiplayerActionCharacter>> PendingSetupMembers;
 
 	FTimerHandle SetupTimerHandle;
 

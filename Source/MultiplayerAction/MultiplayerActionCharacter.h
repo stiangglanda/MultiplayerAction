@@ -105,6 +105,11 @@ class AMultiplayerActionCharacter : public ACharacter
     float SphereColliderRadius = 200.0f;
 
 public:
+    UPROPERTY(EditAnywhere)
+    TObjectPtr<class AAIGroupManager> AIGroupManager;
+
+    void InitializeGroupMembership(TObjectPtr<class AAIGroupManager> AIGroupManager);
+
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
     TObjectPtr<UWeapon> Weapon;
 

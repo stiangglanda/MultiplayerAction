@@ -1,5 +1,5 @@
 #include "AIGroupManager.h"
-#include "EnemyCharacter.h"
+#include "MultiplayerActionCharacter.h"
 #include "PatrolPath.h"
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -38,7 +38,7 @@ void AAIGroupManager::AttemptGroupSetup()
 
     for (int32 i = PendingSetupMembers.Num() - 1; i >= 0; --i)
     {
-        AEnemyCharacter* CurrentMember = PendingSetupMembers[i];
+        AMultiplayerActionCharacter* CurrentMember = PendingSetupMembers[i];
 
         if (!CurrentMember)
         {
@@ -65,7 +65,7 @@ void AAIGroupManager::AttemptGroupSetup()
             }
             else if (OriginalIndex != INDEX_NONE)// This is a Follower
             {
-                AEnemyCharacter* LeaderCharacter = GroupMembers[0];
+                AMultiplayerActionCharacter* LeaderCharacter = GroupMembers[0];
                 BlackboardComp->SetValueAsBool(IsLeaderKeyName, false);
                 BlackboardComp->SetValueAsObject(PatrolLeaderKeyName, LeaderCharacter);
 

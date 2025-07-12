@@ -10,10 +10,4 @@ class MULTIPLAYERACTION_API AEnemyCharacter : public AMultiplayerActionCharacter
 {
 	GENERATED_BODY()
 
-public:
-
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<class AAIGroupManager> AIGroupManager;
-
-	void InitializeGroupMembership(TObjectPtr<class AAIGroupManager> AIGroupManager);
 };

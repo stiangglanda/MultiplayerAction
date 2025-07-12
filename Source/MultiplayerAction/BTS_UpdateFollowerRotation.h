@@ -21,5 +21,5 @@ public:
     // How quickly the follower should turn to face the leader's direction.
     // Higher values mean faster turning.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
-    float InterpSpeed = 5.0f;
+    float InterpSpeed = 1.0f;
 };

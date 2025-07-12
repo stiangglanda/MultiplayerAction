@@ -7,7 +7,7 @@ UBTS_UpdateFollowerRotation::UBTS_UpdateFollowerRotation()
     NodeName = "Update Follower Rotation";
 
     bNotifyTick = true;
-    Interval = 3.0f;
+    Interval = 0.1f;
 }
 
 void UBTS_UpdateFollowerRotation::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
