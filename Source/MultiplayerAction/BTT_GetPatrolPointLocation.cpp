@@ -1,6 +1,5 @@
 #include "BTT_GetPatrolPointLocation.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "AIController.h"
 #include "PatrolPath.h"
 
 UBTT_GetPatrolPointLocation::UBTT_GetPatrolPointLocation()
