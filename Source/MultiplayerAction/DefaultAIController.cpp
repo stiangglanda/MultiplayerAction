@@ -43,10 +43,8 @@ void ADefaultAIController::BeginPlay()
 
         if (AICharacter && AICharacter->PatrolPath)
         {
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("OnPossess GetBlackboardComponent 2"));
             GetBlackboardComponent()->SetValueAsObject(TEXT("PatrolPath"), AICharacter->PatrolPath);
             GetBlackboardComponent()->SetValueAsInt(TEXT("CurrentPatrolIndex"), 0);
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("ADefaultAIController PatrolPath Num: %d"), AICharacter->PatrolPath->GetNumPoints()));
         }
     }
 }

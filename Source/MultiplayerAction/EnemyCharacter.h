@@ -13,4 +13,9 @@ class MULTIPLAYERACTION_API AEnemyCharacter : public AMultiplayerActionCharacter
 public:
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "AI|Patrol")
 	APatrolPath* PatrolPath;
+
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<class AAIGroupManager> AIGroupManager;
+
+	void InitializeGroupMembership(TObjectPtr<class AAIGroupManager> AIGroupManager);
 };
