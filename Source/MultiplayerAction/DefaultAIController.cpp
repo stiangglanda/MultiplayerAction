@@ -7,6 +7,8 @@
 
 ADefaultAIController::ADefaultAIController()
 {
+    bSetControlRotationFromPawnOrientation = false;
+
     AIPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerceptionComponent"));
     SetPerceptionComponent(*AIPerceptionComponent);
 
