@@ -11,6 +11,9 @@ struct FCombatPositionServiceMemory
 
 	UPROPERTY()
 	FVector LastMovedToLocation = FVector::ZeroVector;
+
+	UPROPERTY()
+	float WaitEndTime = 0.f;
 };
 
 UCLASS()
@@ -42,4 +45,7 @@ protected:
 
 	UPROPERTY(Category = "Blackboard", EditAnywhere, meta = (AllowPrivateAccess = "true"))
 	FBlackboardKeySelector TargetActorKey;
+
+	UPROPERTY(Category = "AI|Combat", EditAnywhere, meta = (AllowPrivateAccess = "true"))
+	float WaitDuration = 1.5f;
 };

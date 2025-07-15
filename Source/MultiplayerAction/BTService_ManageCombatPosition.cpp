@@ -40,6 +40,16 @@ void UBTService_ManageCombatPosition::TickNode(UBehaviorTreeComponent& OwnerComp
 		return;
 	}
 
+	const float CurrentTime = GetWorld()->GetTimeSeconds();
+	if (CurrentTime < MyMemory->WaitEndTime)
+	{
+		if (AActor* TargetActor = Cast<AActor>(BlackboardComp->GetValueAsObject(TargetActorKey.SelectedKeyName)))
+		{
+			AIController->SetFocus(TargetActor);
+		}
+		return;
+	}
+
 	APawn* SelfPawn = AIController->GetPawn();
 	AActor* TargetActor = Cast<AActor>(BlackboardComp->GetValueAsObject(TargetActorKey.SelectedKeyName));
 
@@ -94,5 +104,6 @@ void UBTService_ManageCombatPosition::TickNode(UBehaviorTreeComponent& OwnerComp
 	{
 		UAIBlueprintHelperLibrary::SimpleMoveToLocation(AIController, NewTargetLocation);
 		MyMemory->LastMovedToLocation = NewTargetLocation;
+		MyMemory->WaitEndTime = CurrentTime + WaitDuration;
 	}
 }
