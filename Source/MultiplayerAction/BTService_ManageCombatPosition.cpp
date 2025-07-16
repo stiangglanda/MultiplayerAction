@@ -15,6 +15,7 @@ UBTService_ManageCombatPosition::UBTService_ManageCombatPosition()
 
 	bNotifyBecomeRelevant = true;
 	bNotifyTick = true;
+	bNotifyCeaseRelevant = true;
 }
 
 uint16 UBTService_ManageCombatPosition::GetInstanceMemorySize() const
@@ -105,5 +106,16 @@ void UBTService_ManageCombatPosition::TickNode(UBehaviorTreeComponent& OwnerComp
 		UAIBlueprintHelperLibrary::SimpleMoveToLocation(AIController, NewTargetLocation);
 		MyMemory->LastMovedToLocation = NewTargetLocation;
 		MyMemory->WaitEndTime = CurrentTime + WaitDuration;
+	}
+}
+
+void UBTService_ManageCombatPosition::OnCeaseRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+{
+	Super::OnCeaseRelevant(OwnerComp, NodeMemory);
+
+	AAIController* AIController = OwnerComp.GetAIOwner();
+	if (AIController)
+	{
+		AIController->ClearFocus(EAIFocusPriority::Gameplay);
 	}
 }

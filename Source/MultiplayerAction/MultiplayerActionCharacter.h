@@ -133,6 +133,9 @@ public:
     void ServerReliableRPC_Attack();
 
     UFUNCTION(Server, Reliable)
+    void ServerReliableRPC_HeavyAttack();
+
+    UFUNCTION(Server, Reliable)
     void ServerReliableRPC_SwapWeapon(TSubclassOf<UWeapon> NewWeaponClass);
 
     UFUNCTION(NetMulticast, Reliable)
@@ -189,9 +192,6 @@ protected:
 
     UFUNCTION(NetMulticast, Reliable)
     void NetMulticastReliableRPC_Roll();
-
-    UFUNCTION(Server, Reliable)
-    void ServerReliableRPC_HeavyAttack();
 
     UFUNCTION(NetMulticast, Reliable)
     void NetMulticastReliableRPC_HeavyAttack();
