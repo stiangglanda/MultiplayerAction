@@ -335,13 +335,14 @@ void AMultiplayerActionCharacter::NetMulticastReliableRPC_HeavyAttack_Implementa
 		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 		if (AnimInstance)
 		{
-			if (!AttackMontageEndedDelegate.IsBound())
+			if (!HeavyAttackMontageEndedDelegate.IsBound())
 			{
-				AttackMontageEndedDelegate.BindUObject(this, &AMultiplayerActionCharacter::OnAttackMontageEnded);
+				HeavyAttackMontageEndedDelegate.BindUObject(this, &AMultiplayerActionCharacter::OnHeavyAttackMontageEnded);
 			}
+			RotationBeforeAttack = GetActorRotation();
 
 			AnimInstance->Montage_Play(HeavyAttackMontage);
-			AnimInstance->Montage_SetEndDelegate(AttackMontageEndedDelegate, HeavyAttackMontage);
+			AnimInstance->Montage_SetEndDelegate(HeavyAttackMontageEndedDelegate, HeavyAttackMontage);
 
 			StartWeaponTrace();
 		}
@@ -643,6 +644,12 @@ void AMultiplayerActionCharacter::OnAttackMontageEnded(UAnimMontage* Montage, bo
 {
 	bIsAttacking = false;
 	StopWeaponTrace();
+}
+
+void AMultiplayerActionCharacter::OnHeavyAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	OnAttackMontageEnded(Montage, bInterrupted);
+	SetActorRotation(RotationBeforeAttack);
 }
 
 void AMultiplayerActionCharacter::ServerReliableRPC_Block_Implementation()

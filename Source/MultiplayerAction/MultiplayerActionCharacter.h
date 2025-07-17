@@ -136,6 +136,9 @@ public:
     void ServerReliableRPC_HeavyAttack();
 
     UFUNCTION(Server, Reliable)
+    void ServerReliableRPC_Block();
+
+    UFUNCTION(Server, Reliable)
     void ServerReliableRPC_SwapWeapon(TSubclassOf<UWeapon> NewWeaponClass);
 
     UFUNCTION(NetMulticast, Reliable)
@@ -159,11 +162,15 @@ protected:
     bool IsBlocking = false;
     bool IsLockedOn = false;
 
+	FRotator RotationBeforeAttack;// Root moten messes with the rotation, so we store the rotation before attack to restore it after the attack animation ends.
+
 	AMultiplayerActionCharacter* LockedOnTarget;
 
 	class AChest* OverlappingChest;
 
     FOnMontageEnded AttackMontageEndedDelegate;
+
+    FOnMontageEnded HeavyAttackMontageEndedDelegate;
 
     FOnMontageEnded BlockMontageEndedDelegate;
 
@@ -173,6 +180,9 @@ protected:
     void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
     UFUNCTION()
+    void OnHeavyAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+    UFUNCTION()
     void OnBlockMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
     UFUNCTION()
@@ -180,9 +190,6 @@ protected:
 
     UFUNCTION(NetMulticast, Reliable)
     void NetMulticastReliableRPC_Attack();
-
-    UFUNCTION(Server, Reliable)
-    void ServerReliableRPC_Block();
 
     UFUNCTION(NetMulticast, Reliable)
     void NetMulticastReliableRPC_Block();
