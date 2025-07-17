@@ -214,12 +214,12 @@ protected:
     UPROPERTY(EditAnywhere)
     float MaxHealth = 100;
 
-    UPROPERTY(ReplicatedUsing = OnRep_CurrentHealth)
-    float Health;
-
     /** RepNotify for changes made to current health.*/
     UFUNCTION()
     void OnRep_CurrentHealth();
+
+    UPROPERTY(ReplicatedUsing = OnRep_CurrentHealth)
+    float Health;
 
     /** Called for movement input */
     void Move(const FInputActionValue& Value);
@@ -244,12 +244,12 @@ protected:
 
     float TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser);
 
-    void PlayImpactAnimation();
+    //void PlayImpactAnimation();
 
     /** Property replication */
     void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-    void OnHealthUpdate();
+    //void OnHealthUpdate();
 
     UFUNCTION()
     void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,

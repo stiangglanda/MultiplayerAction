@@ -197,7 +197,25 @@ AMultiplayerActionCharacter::~AMultiplayerActionCharacter()
 
 void AMultiplayerActionCharacter::OnRep_CurrentHealth()
 {
-	OnHealthUpdate();
+	//Client-specific functionality
+	if (IsLocallyControlled())
+	{
+		//FString healthMessage = FString::Printf(TEXT("You now have %f health remaining."), Health);
+		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, healthMessage);
+
+		if (Health <= 0)
+		{
+			//FString deathMessage = FString::Printf(TEXT("You have been killed."));
+			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, deathMessage);
+		}
+	}
+
+	//Server-specific functionality
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		//FString healthMessage = FString::Printf(TEXT("%s now has %f health remaining."), *GetFName().ToString(), Health);
+		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, healthMessage);
+	}
 }
 
 void AMultiplayerActionCharacter::Move(const FInputActionValue& Value)
@@ -405,9 +423,12 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 	Health -= DamageApplied;
 
 	UE_LOG(LogTemp, Display, TEXT("Health: %f"), Health);
-	OnHealthUpdate();
+	OnRep_CurrentHealth();
 
-	PlayImpactAnimation();
+	if (ImpactMontage)
+	{
+		PlayAnimMontage(ImpactMontage);
+	}
 
 	if (IsDead())
 	{
@@ -419,13 +440,10 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 	return DamageApplied;
 }
 
-void AMultiplayerActionCharacter::PlayImpactAnimation()
-{
-	if (ImpactMontage)
-	{
-		PlayAnimMontage(ImpactMontage);
-	}
-}
+//void AMultiplayerActionCharacter::PlayImpactAnimation()
+//{
+//
+//}
 
 void AMultiplayerActionCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -436,36 +454,36 @@ void AMultiplayerActionCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePro
 	DOREPLIFETIME(AMultiplayerActionCharacter, WeaponClass);
 }
 
-void AMultiplayerActionCharacter::OnHealthUpdate()
-{
-	//Client-specific functionality
-	if (IsLocallyControlled())
-	{
-		//FString healthMessage = FString::Printf(TEXT("You now have %f health remaining."), Health);
-		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, healthMessage);
-
-		if (Health <= 0)
-		{
-			//FString deathMessage = FString::Printf(TEXT("You have been killed."));
-			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, deathMessage);
-		}
-	}
-
-	//Server-specific functionality
-	if (GetLocalRole() == ROLE_Authority)
-	{
-		//FString healthMessage = FString::Printf(TEXT("%s now has %f health remaining."), *GetFName().ToString(), Health);
-		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, healthMessage);
-	}
-
-
-	PlayImpactAnimation();
-
-	//Functions that occur on all machines.
-	/*
-		Any special functionality that should occur as a result of damage or death should be placed here.
-	*/
-}
+//void AMultiplayerActionCharacter::OnHealthUpdate()
+//{
+//	//Client-specific functionality
+//	if (IsLocallyControlled())
+//	{
+//		//FString healthMessage = FString::Printf(TEXT("You now have %f health remaining."), Health);
+//		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, healthMessage);
+//
+//		if (Health <= 0)
+//		{
+//			//FString deathMessage = FString::Printf(TEXT("You have been killed."));
+//			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, deathMessage);
+//		}
+//	}
+//
+//	//Server-specific functionality
+//	if (GetLocalRole() == ROLE_Authority)
+//	{
+//		//FString healthMessage = FString::Printf(TEXT("%s now has %f health remaining."), *GetFName().ToString(), Health);
+//		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, healthMessage);
+//	}
+//
+//
+//	PlayImpactAnimation();
+//
+//	//Functions that occur on all machines.
+//	/*
+//		Any special functionality that should occur as a result of damage or death should be placed here.
+//	*/
+//}
 
 bool AMultiplayerActionCharacter::IsDead()
 {
