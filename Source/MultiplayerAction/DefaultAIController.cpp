@@ -3,7 +3,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Perception/AISense_Sight.h"
-#include "EnemyCharacter.h"
 
 ADefaultAIController::ADefaultAIController()
 {

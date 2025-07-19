@@ -22,6 +22,8 @@ class AMultiplayerActionCharacter : public ACharacter
 {
     GENERATED_BODY()
 
+protected:
+
     /** Camera boom positioning the camera behind the character */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
     USpringArmComponent* CameraBoom;
@@ -204,7 +206,7 @@ protected:
     void NetMulticastReliableRPC_HeavyAttack();
 
     FTimerHandle WeaponTraceTimer;
-    void PerformWeaponTrace();
+    virtual void PerformWeaponTrace();
     void StartWeaponTrace();
     void StopWeaponTrace();
     const float WeaponTraceInterval = 0.01f;// 100 traces per second
@@ -240,10 +242,6 @@ protected:
     /** Called for Attack input */
     void AttackInputMapping(const FInputActionValue& Value);
 
-    int GetTeam();
-
-    float TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser);
-
     //void PlayImpactAnimation();
 
     /** Property replication */
@@ -270,6 +268,10 @@ protected:
     virtual void Tick(float DeltaTime) override;
 
 public:
+    int GetTeam();
+
+    float TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser);
+
     /** Returns CameraBoom subobject **/
     FORCEINLINE class USpringArmComponent* GetCameraBoom() const
     {
