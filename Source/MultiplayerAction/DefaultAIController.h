@@ -48,5 +48,5 @@ private:
 	TObjectPtr<UAISenseConfig_Sight> SightConfig;
 
 	UPROPERTY()
-	TObjectPtr<UAISenseConfig_Damage> DamageConfig;
+	TObjectPtr<UAISenseConfig_Damage> DamageConfig;// Damage sense configuration doesnt quite work
 };

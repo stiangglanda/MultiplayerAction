@@ -17,6 +17,9 @@
 #include "Chest.h"
 #include <Kismet/KismetMathLibrary.h>
 #include "AIGroupManager.h"
+#include <Perception/AISense_Damage.h>
+#include <AIController.h>
+#include "BehaviorTree/BlackboardComponent.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -424,6 +427,21 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 
 	UE_LOG(LogTemp, Display, TEXT("Health: %f"), Health);
 	OnRep_CurrentHealth();
+
+	if (EventInstigator != nullptr && DamageCauser != nullptr)// this is for the AIPerceptionComponent to persive the damage event
+	{
+
+		AAIController* MyController = Cast<AAIController>(GetController());
+		if (MyController)
+		{
+			UBlackboardComponent* MyBlackboard = MyController->GetBlackboardComponent();
+			if (MyBlackboard)
+			{
+				MyBlackboard->SetValueAsObject(TEXT("Player"), EventInstigator->GetPawn());
+				UE_LOG(LogTemp, Warning, TEXT("Direct Damage React: Setting target to %s"), *EventInstigator->GetPawn()->GetName());
+			}
+		}
+	}
 
 	if (ImpactMontage)
 	{

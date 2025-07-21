@@ -26,6 +26,7 @@ ADefaultAIController::ADefaultAIController()
     DamageConfig = CreateDefaultSubobject<UAISenseConfig_Damage>(TEXT("DamageConfig"));
     if (DamageConfig)
     {
+        DamageConfig->SetMaxAge(5.0f);
         AIPerceptionComponent->ConfigureSense(*DamageConfig);
     }
 

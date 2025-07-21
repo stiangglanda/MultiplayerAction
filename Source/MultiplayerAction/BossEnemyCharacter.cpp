@@ -11,7 +11,7 @@ void ABossEnemyCharacter::PerformWeaponTrace()
 
 	bool bSuccess = UKismetSystemLibrary::SphereTraceMulti(GetWorld(), WeaponStart, WeaponEnd, SphereTraceRadiusWeapon,
 		UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_GameTraceChannel1), false, ignore,
-		EDrawDebugTrace::ForDuration, hits, true, FLinearColor::Red, FLinearColor::Blue, 10.0f);
+		EDrawDebugTrace::None, hits, true, FLinearColor::Red, FLinearColor::Blue, 10.0f);
 
 	if (bSuccess)
 	{
@@ -38,10 +38,6 @@ void ABossEnemyCharacter::ApplyKnockbackToPlayer(ACharacter* PlayerToLaunch, con
 	{
 		return;
 	}
-
-	//FVector BossLocation = GetActorLocation();
-	//FVector PlayerLocation = PlayerToLaunch->GetActorLocation();
-	//FVector KnockbackDirection = PlayerLocation - BossLocation;
 
 	FVector KnockbackDirection = -HitResult.ImpactNormal;
 	KnockbackDirection.Z = 0;

@@ -75,3 +75,5 @@ DerivedDataCache/*
 
 # all the static assets(maps, models, animations)
 Content/static/*
+
+Content/Movies/*
