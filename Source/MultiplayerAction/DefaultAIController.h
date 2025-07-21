@@ -8,6 +8,7 @@
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
 #include "PatrolPath.h"
+#include "Perception/AISenseConfig_Damage.h"
 #include "DefaultAIController.generated.h"
 
 /**
@@ -45,4 +46,7 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UAISenseConfig_Sight> SightConfig;
+
+	UPROPERTY()
+	TObjectPtr<UAISenseConfig_Damage> DamageConfig;
 };

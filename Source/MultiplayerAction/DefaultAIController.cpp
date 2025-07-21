@@ -3,6 +3,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Perception/AISense_Sight.h"
+#include "Perception/AISenseConfig_Damage.h"
 
 ADefaultAIController::ADefaultAIController()
 {
@@ -21,6 +22,13 @@ ADefaultAIController::ADefaultAIController()
     SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
 
     AIPerceptionComponent->ConfigureSense(*SightConfig);
+
+    DamageConfig = CreateDefaultSubobject<UAISenseConfig_Damage>(TEXT("DamageConfig"));
+    if (DamageConfig)
+    {
+        AIPerceptionComponent->ConfigureSense(*DamageConfig);
+    }
+
     AIPerceptionComponent->SetDominantSense(SightConfig->GetSenseImplementation());
     AIPerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ADefaultAIController::OnTargetPerceptionUpdated);
 }
@@ -66,11 +74,18 @@ void ADefaultAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus 
         return;
     }
 
-    // Only react to player-controlled pawns
     APawn* SensedPawn = Cast<APawn>(Actor);
-    if (!SensedPawn || !SensedPawn->IsPlayerControlled())
+    if (!SensedPawn)
     {
-        return;
+        if (AController* InstigatorController = Cast<AController>(Actor))
+        {
+            SensedPawn = InstigatorController->GetPawn();
+        }
+
+        if (!SensedPawn)
+        {
+            return;
+        }
     }
 
     UBlackboardComponent* BlackboardComp = GetBlackboardComponent();
@@ -79,16 +94,33 @@ void ADefaultAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus 
         return;
     }
 
-    static const FName PlayerActorKey = TEXT("Player");
 
-    if (Stimulus.WasSuccessfullySensed())
+    static const FName TargetActorKey = TEXT("Player");
+
+    const FAISenseID SenseID = Stimulus.Type;
+
+    if (SenseID == UAISense::GetSenseID<UAISense_Sight>())
     {
-        // Player seen: set blackboard key
-        BlackboardComp->SetValueAsObject(PlayerActorKey, Actor);
+        if (Stimulus.WasSuccessfullySensed())
+        {
+            UE_LOG(LogTemp, Warning, TEXT("SIGHT stimulus: I see %s"), *SensedPawn->GetName());
+            BlackboardComp->SetValueAsObject(TargetActorKey, SensedPawn);
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("SIGHT stimulus: I lost sight of %s"), *SensedPawn->GetName());
+            if (BlackboardComp->GetValueAsObject(TargetActorKey) == SensedPawn)
+            {
+                BlackboardComp->ClearValue(TargetActorKey);
+            }
+        }
     }
-    else
+    else if (SenseID == UAISense::GetSenseID<UAISense_Damage>())
     {
-        // Player lost: clear blackboard key
-        BlackboardComp->ClearValue(PlayerActorKey);
+        if (Stimulus.WasSuccessfullySensed())
+        {
+            UE_LOG(LogTemp, Warning, TEXT("DAMAGE stimulus: I was hit by %s!"), *SensedPawn->GetName());
+            BlackboardComp->SetValueAsObject(TargetActorKey, SensedPawn);
+        }
     }
 }
