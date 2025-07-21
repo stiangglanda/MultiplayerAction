@@ -65,6 +65,10 @@ protected:
     /** Interact Input Action */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputAction* InteractAction;
+
+    /** Escape Input Action */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* EscapeAction;
     
     /** Heavy Attack Input Action */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -153,6 +157,12 @@ public:
 
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+    TSubclassOf<UUserWidget> EscapeWidgetClass;
+
+    UPROPERTY()
+    UUserWidget* EscapeWidget;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<UUserWidget> InteractionWidgetClass;
 
     UPROPERTY()
@@ -239,6 +249,8 @@ protected:
 
     void Interact(const FInputActionValue& Value);
 
+    void Escape(const FInputActionValue& Value);
+
     /** Called for Attack input */
     void AttackInputMapping(const FInputActionValue& Value);
 
@@ -250,7 +262,7 @@ protected:
     //void OnHealthUpdate();
 
     UFUNCTION()
-    void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+    virtual void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
         const FHitResult& SweepResult);
 

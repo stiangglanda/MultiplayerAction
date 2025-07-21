@@ -23,6 +23,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	bool IsDead() const;
 
+	UPROPERTY(EditAnywhere)
+	UBehaviorTree* AIBehavior;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -36,9 +39,6 @@ protected:
 private:
 	UPROPERTY(EditAnywhere)
 	float AcceptenceRadius = 200;
-
-	UPROPERTY(EditAnywhere)
-	UBehaviorTree* AIBehavior;
 
 	// AI Perception components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta = (AllowPrivateAccess = "true"))

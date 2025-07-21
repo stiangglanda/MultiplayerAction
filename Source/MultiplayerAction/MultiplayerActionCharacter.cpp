@@ -143,6 +143,8 @@ void AMultiplayerActionCharacter::SetupPlayerInputComponent(UInputComponent* Pla
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::Interact);
 
 		EnhancedInputComponent->BindAction(HeavyAttackAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::HeavyAttack);
+
+		EnhancedInputComponent->BindAction(EscapeAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::Escape);
 	}
 	else
 	{
@@ -398,6 +400,47 @@ void AMultiplayerActionCharacter::Interact(const FInputActionValue& Value)
 	{
 		PC->SetInputMode(FInputModeGameOnly());
 		PC->bShowMouseCursor = false;
+	}
+}
+
+void AMultiplayerActionCharacter::Escape(const FInputActionValue& Value)
+{
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (!PC)
+	{
+		return;
+	}
+
+	if (!EscapeWidgetClass)
+	{
+		return;
+	}
+
+	if (!EscapeWidget)
+	{
+		EscapeWidget = CreateWidget<UUserWidget>(PC, EscapeWidgetClass);
+		if (EscapeWidget)
+		{
+			EscapeWidget->AddToViewport();
+		}
+		PC->SetInputMode(FInputModeGameAndUI());
+		PC->bShowMouseCursor = true;
+		return;
+	}
+
+	if (EscapeWidget->IsInViewport())
+	{
+		EscapeWidget->RemoveFromParent();
+		PC->SetInputMode(FInputModeGameOnly());
+		PC->bShowMouseCursor = false;
+		return;
+	}
+	else
+	{
+		EscapeWidget->AddToViewport();
+		PC->SetInputMode(FInputModeGameAndUI());
+		PC->bShowMouseCursor = true;
+		return;
 	}
 }
 
