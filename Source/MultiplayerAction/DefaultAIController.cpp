@@ -3,6 +3,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Perception/AISense_Sight.h"
+#include "AIGroupManager.h"
 #include "Perception/AISenseConfig_Damage.h"
 
 ADefaultAIController::ADefaultAIController()
@@ -23,12 +24,12 @@ ADefaultAIController::ADefaultAIController()
 
     AIPerceptionComponent->ConfigureSense(*SightConfig);
 
-    DamageConfig = CreateDefaultSubobject<UAISenseConfig_Damage>(TEXT("DamageConfig"));
-    if (DamageConfig)
-    {
-        DamageConfig->SetMaxAge(5.0f);
-        AIPerceptionComponent->ConfigureSense(*DamageConfig);
-    }
+    //DamageConfig = CreateDefaultSubobject<UAISenseConfig_Damage>(TEXT("DamageConfig"));
+    //if (DamageConfig)
+    //{
+    //    DamageConfig->SetMaxAge(5.0f);
+    //    AIPerceptionComponent->ConfigureSense(*DamageConfig);
+    //}
 
     AIPerceptionComponent->SetDominantSense(SightConfig->GetSenseImplementation());
     AIPerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ADefaultAIController::OnTargetPerceptionUpdated);
@@ -61,6 +62,20 @@ bool ADefaultAIController::IsDead() const
     }
 
     return true;
+}
+
+void ADefaultAIController::OnGroupAlert_Implementation(AActor* AlertedAboutActor)
+{
+    if (GetBlackboardComponent()->GetValueAsObject(TEXT("Player")))
+    {
+        return;
+    }
+
+    if (AlertedAboutActor)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("%s received group alert about %s!"), *GetName(), *AlertedAboutActor->GetName());
+        GetBlackboardComponent()->SetValueAsObject(TEXT("Player"), AlertedAboutActor);
+    }
 }
 
 void ADefaultAIController::Tick(float DeltaTime)
@@ -105,7 +120,24 @@ void ADefaultAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus 
         if (Stimulus.WasSuccessfullySensed())
         {
             UE_LOG(LogTemp, Warning, TEXT("SIGHT stimulus: I see %s"), *SensedPawn->GetName());
-            BlackboardComp->SetValueAsObject(TargetActorKey, SensedPawn);
+            
+            AMultiplayerActionCharacter* SensedCharacter = Cast<AMultiplayerActionCharacter>(SensedPawn);
+            if (SensedCharacter)
+            {
+                AMultiplayerActionCharacter* ControlledCharacter = Cast<AMultiplayerActionCharacter>(GetPawn());
+                if (ControlledCharacter)
+                {
+                    if (SensedCharacter->GetTeam() != ControlledCharacter->GetTeam())
+                    {
+                        BlackboardComp->SetValueAsObject(TargetActorKey, SensedCharacter);
+
+                        if (ControlledCharacter->AIGroupManager)
+                        {
+                            ControlledCharacter->AIGroupManager->BroadcastAlert(ControlledCharacter, SensedCharacter);
+                        }
+                    }
+                }
+            }
         }
         else
         {
@@ -116,12 +148,12 @@ void ADefaultAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus 
             }
         }
     }
-    else if (SenseID == UAISense::GetSenseID<UAISense_Damage>())
-    {
-        if (Stimulus.WasSuccessfullySensed())
-        {
-            UE_LOG(LogTemp, Warning, TEXT("DAMAGE stimulus: I was hit by %s!"), *SensedPawn->GetName());
-            BlackboardComp->SetValueAsObject(TargetActorKey, SensedPawn);
-        }
-    }
+    //else if (SenseID == UAISense::GetSenseID<UAISense_Damage>())
+    //{
+    //    if (Stimulus.WasSuccessfullySensed())
+    //    {
+    //        UE_LOG(LogTemp, Warning, TEXT("DAMAGE stimulus: I was hit by %s!"), *SensedPawn->GetName());
+    //        BlackboardComp->SetValueAsObject(TargetActorKey, SensedPawn);
+    //    }
+    //}
 }

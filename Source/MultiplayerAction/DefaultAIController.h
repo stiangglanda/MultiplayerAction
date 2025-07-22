@@ -9,13 +9,14 @@
 #include "Perception/AISenseConfig_Sight.h"
 #include "PatrolPath.h"
 #include "Perception/AISenseConfig_Damage.h"
+#include "AIGroupAlertInterface.h"
 #include "DefaultAIController.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class MULTIPLAYERACTION_API ADefaultAIController : public AAIController
+class MULTIPLAYERACTION_API ADefaultAIController : public AAIController, public IAIGroupAlertInterface
 {
 	GENERATED_BODY()
 public:
@@ -23,20 +24,20 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	bool IsDead() const;
 
-	UPROPERTY(EditAnywhere)
-	UBehaviorTree* AIBehavior;
+	virtual void OnGroupAlert_Implementation(AActor* AlertedAboutActor) override;
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	// Perception updated callback
 	UFUNCTION()
 	void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 
 	virtual void OnPossess(APawn* InPawn) override;
 
 private:
+	UPROPERTY(EditAnywhere)
+	UBehaviorTree* AIBehavior;
+
 	UPROPERTY(EditAnywhere)
 	float AcceptenceRadius = 200;
 

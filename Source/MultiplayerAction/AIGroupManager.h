@@ -18,6 +18,8 @@ public:
 	UPROPERTY(EditInstanceOnly, Category = "AI Group")
 	TObjectPtr<class APatrolPath> PatrolPath;
 
+	void BroadcastAlert(AActor* SentryPawn, AActor* TargetActor);
+
 protected:
 	virtual void BeginPlay() override;
 

@@ -4,10 +4,35 @@
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "TimerManager.h"
+#include "DefaultAIController.h"
+#include "AIGroupAlertInterface.h"
 
 AAIGroupManager::AAIGroupManager()
 {
 	PrimaryActorTick.bCanEverTick = false;
+}
+
+void AAIGroupManager::BroadcastAlert(AActor* SentryPawn, AActor* TargetActor)
+{
+    if (!SentryPawn || !TargetActor)
+    {
+        return;
+    }
+
+    // Iterate through all members of the group
+    for (AMultiplayerActionCharacter* CurrentMember : GroupMembers)
+    {
+        // Don't re-alert the original sentry or null members
+        if (CurrentMember && CurrentMember != SentryPawn)
+        {
+            // Check if the member implements the interface
+            if (CurrentMember->GetController()->Implements<UAIGroupAlertInterface>())
+            {
+                // Call the interface function. This is the broadcast!
+                IAIGroupAlertInterface::Execute_OnGroupAlert(CurrentMember->GetController(), TargetActor);
+            }
+        }
+    }
 }
 
 void AAIGroupManager::BeginPlay()
