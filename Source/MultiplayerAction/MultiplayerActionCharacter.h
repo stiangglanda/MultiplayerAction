@@ -155,7 +155,17 @@ public:
 
     void SetLockedOnTarget(AMultiplayerActionCharacter* unit);
 
+    UAudioComponent* GetMovementAudioComponent() const { return MovementAudioComponent; }
+
+    USoundBase* GetMovementLoopSound() const { return MovementLoopSound; }
+
 protected:
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio")
+    TObjectPtr<UAudioComponent> MovementAudioComponent;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+    TObjectPtr<USoundBase> MovementLoopSound;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<UUserWidget> EscapeWidgetClass;
 

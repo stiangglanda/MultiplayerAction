@@ -148,12 +148,4 @@ void ADefaultAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus 
             }
         }
     }
-    //else if (SenseID == UAISense::GetSenseID<UAISense_Damage>())
-    //{
-    //    if (Stimulus.WasSuccessfullySensed())
-    //    {
-    //        UE_LOG(LogTemp, Warning, TEXT("DAMAGE stimulus: I was hit by %s!"), *SensedPawn->GetName());
-    //        BlackboardComp->SetValueAsObject(TargetActorKey, SensedPawn);
-    //    }
-    //}
 }
