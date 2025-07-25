@@ -166,6 +166,15 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
     TObjectPtr<USoundBase> MovementLoopSound;
 
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+    TObjectPtr<USoundBase> JumpSound;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+    TObjectPtr<USoundBase> RollSound;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+    TObjectPtr<USoundBase> BlockSound;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<UUserWidget> EscapeWidgetClass;
 
@@ -260,6 +269,8 @@ protected:
     void Interact(const FInputActionValue& Value);
 
     void Escape(const FInputActionValue& Value);
+
+    void Jump() override;
 
     /** Called for Attack input */
     void AttackInputMapping(const FInputActionValue& Value);

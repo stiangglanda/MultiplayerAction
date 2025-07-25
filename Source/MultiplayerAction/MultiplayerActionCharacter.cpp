@@ -123,7 +123,7 @@ void AMultiplayerActionCharacter::SetupPlayerInputComponent(UInputComponent* Pla
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
 
 		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AMultiplayerActionCharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		// Moving
@@ -254,6 +254,10 @@ void AMultiplayerActionCharacter::Look(const FInputActionValue& Value)
 
 void AMultiplayerActionCharacter::Roll(const FInputActionValue& Value)
 {
+	if (RollSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, RollSound, GetActorLocation());
+	}
 	ServerReliableRPC_Roll();
 }
 
@@ -444,6 +448,15 @@ void AMultiplayerActionCharacter::Escape(const FInputActionValue& Value)
 	}
 }
 
+void AMultiplayerActionCharacter::Jump()
+{
+	Super::Jump();
+	if (JumpSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, JumpSound, GetActorLocation());
+	}
+}
+
 void AMultiplayerActionCharacter::AttackInputMapping(const FInputActionValue& Value)
 {
 	ServerReliableRPC_Attack();
@@ -460,6 +473,10 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 
 	if (IsBlocking)
 	{
+		if (BlockSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, BlockSound, GetActorLocation());
+		}
 		return 0;
 	}
 
