@@ -175,6 +175,21 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
     TObjectPtr<USoundBase> BlockSound;
 
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+    TObjectPtr<USoundBase> AttackSound;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+    TObjectPtr<USoundBase> DeathSound;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+    TObjectPtr<USoundBase> DamageSound;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+    TObjectPtr<USoundBase> HeavyAttackGruntSound;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+    TObjectPtr<USoundBase> AttackGruntSound;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<UUserWidget> EscapeWidgetClass;
 

@@ -345,6 +345,10 @@ void AMultiplayerActionCharacter::Block(const FInputActionValue& Value)
 void AMultiplayerActionCharacter::HeavyAttack(const FInputActionValue& Value)
 {
 	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("HeavyAttack"));
+	if (HeavyAttackGruntSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, HeavyAttackGruntSound, GetActorLocation());
+	}
 	ServerReliableRPC_HeavyAttack();
 }
 
@@ -459,6 +463,10 @@ void AMultiplayerActionCharacter::Jump()
 
 void AMultiplayerActionCharacter::AttackInputMapping(const FInputActionValue& Value)
 {
+	if (AttackGruntSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, AttackGruntSound, GetActorLocation());
+	}
 	ServerReliableRPC_Attack();
 }
 
@@ -503,6 +511,11 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 		}
 	}
 
+	if (DamageSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, DamageSound, GetActorLocation());
+	}
+
 	if (ImpactMontage)
 	{
 		PlayAnimMontage(ImpactMontage);
@@ -510,6 +523,10 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 
 	if (IsDead())
 	{
+		if (DeathSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, DeathSound, GetActorLocation());
+		}
 		GetMesh()->SetSimulatePhysics(true);
 		DetachFromControllerPendingDestroy();
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -678,6 +695,10 @@ void AMultiplayerActionCharacter::PerformWeaponTrace()
 				AMultiplayerActionCharacter* unit = Cast<AMultiplayerActionCharacter>(hits[i].GetActor());
 				if (unit && unit->GetTeam() != GetTeam())
 				{
+					if (AttackSound)
+					{
+						UGameplayStatics::PlaySoundAtLocation(this, AttackSound, GetActorLocation());
+					}
 					FPointDamageEvent DamageEvent(WeaponDamage, hits[i], -GetActorLocation(), nullptr);
 					unit->TakeDamage(WeaponDamage, DamageEvent, GetController(), this);
 					ActorsHit.Add(unit);
