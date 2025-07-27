@@ -44,6 +44,11 @@ void AChest::OpenChest()
 		UAnimInstance* AnimInstance = Mesh->GetAnimInstance();
 		if (AnimInstance)
 		{
+			if (ChestOpenSound)
+			{
+				UGameplayStatics::PlaySoundAtLocation(this, ChestOpenSound, GetActorLocation());
+			}
+
 			AnimInstance->Montage_Play(OpenCloseAnim, 1, EMontagePlayReturnType::MontageLength, AnimInstance->Montage_GetPosition(OpenCloseAnim), true);
 		}
 	}
@@ -89,6 +94,11 @@ void AChest::CloseChest()
 		UAnimInstance* AnimInstance = Mesh->GetAnimInstance();
 		if (AnimInstance)
 		{
+			if (ChestCloseSound)
+			{
+				UGameplayStatics::PlaySoundAtLocation(this, ChestCloseSound, GetActorLocation());
+			}
+
 			float CurrentPosition = AnimInstance->Montage_GetPosition(OpenCloseAnim) == 0 ? OpenCloseAnim->GetPlayLength() : AnimInstance->Montage_GetPosition(OpenCloseAnim);
 			AnimInstance->Montage_Play(OpenCloseAnim,-1,EMontagePlayReturnType::MontageLength, CurrentPosition, true);
 		}

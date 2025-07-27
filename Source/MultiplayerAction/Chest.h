@@ -39,6 +39,12 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Chest")
 	UAnimMontage* OpenCloseAnim;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+	TObjectPtr<USoundBase> ChestOpenSound;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+	TObjectPtr<USoundBase> ChestCloseSound;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<UChestWidget> ChestMenuWidgetClass;
 

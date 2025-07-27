@@ -254,10 +254,6 @@ void AMultiplayerActionCharacter::Look(const FInputActionValue& Value)
 
 void AMultiplayerActionCharacter::Roll(const FInputActionValue& Value)
 {
-	if (RollSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(this, RollSound, GetActorLocation());
-	}
 	ServerReliableRPC_Roll();
 }
 
@@ -281,6 +277,11 @@ void AMultiplayerActionCharacter::NetMulticastReliableRPC_Roll_Implementation()
 			if (!RollMontageEndedDelegate.IsBound())
 			{
 				RollMontageEndedDelegate.BindUObject(this, &AMultiplayerActionCharacter::OnRollMontageEnded);
+			}
+
+			if (RollSound)
+			{
+				UGameplayStatics::PlaySoundAtLocation(this, RollSound, GetActorLocation());
 			}
 
 			AnimInstance->Montage_Play(RollMontage);
@@ -345,10 +346,6 @@ void AMultiplayerActionCharacter::Block(const FInputActionValue& Value)
 void AMultiplayerActionCharacter::HeavyAttack(const FInputActionValue& Value)
 {
 	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("HeavyAttack"));
-	if (HeavyAttackGruntSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(this, HeavyAttackGruntSound, GetActorLocation());
-	}
 	ServerReliableRPC_HeavyAttack();
 }
 
@@ -371,6 +368,11 @@ void AMultiplayerActionCharacter::NetMulticastReliableRPC_HeavyAttack_Implementa
 				HeavyAttackMontageEndedDelegate.BindUObject(this, &AMultiplayerActionCharacter::OnHeavyAttackMontageEnded);
 			}
 			RotationBeforeAttack = GetActorRotation();
+
+			if (HeavyAttackGruntSound)
+			{
+				UGameplayStatics::PlaySoundAtLocation(this, HeavyAttackGruntSound, GetActorLocation());
+			}
 
 			AnimInstance->Montage_Play(HeavyAttackMontage);
 			AnimInstance->Montage_SetEndDelegate(HeavyAttackMontageEndedDelegate, HeavyAttackMontage);
@@ -461,15 +463,6 @@ void AMultiplayerActionCharacter::Jump()
 	}
 }
 
-void AMultiplayerActionCharacter::AttackInputMapping(const FInputActionValue& Value)
-{
-	if (AttackGruntSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(this, AttackGruntSound, GetActorLocation());
-	}
-	ServerReliableRPC_Attack();
-}
-
 int AMultiplayerActionCharacter::GetTeam()
 {
 	return Team;
@@ -535,11 +528,6 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 	return DamageApplied;
 }
 
-//void AMultiplayerActionCharacter::PlayImpactAnimation()
-//{
-//
-//}
-
 void AMultiplayerActionCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -548,37 +536,6 @@ void AMultiplayerActionCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePro
 	DOREPLIFETIME(AMultiplayerActionCharacter, Health);
 	DOREPLIFETIME(AMultiplayerActionCharacter, WeaponClass);
 }
-
-//void AMultiplayerActionCharacter::OnHealthUpdate()
-//{
-//	//Client-specific functionality
-//	if (IsLocallyControlled())
-//	{
-//		//FString healthMessage = FString::Printf(TEXT("You now have %f health remaining."), Health);
-//		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, healthMessage);
-//
-//		if (Health <= 0)
-//		{
-//			//FString deathMessage = FString::Printf(TEXT("You have been killed."));
-//			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, deathMessage);
-//		}
-//	}
-//
-//	//Server-specific functionality
-//	if (GetLocalRole() == ROLE_Authority)
-//	{
-//		//FString healthMessage = FString::Printf(TEXT("%s now has %f health remaining."), *GetFName().ToString(), Health);
-//		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, healthMessage);
-//	}
-//
-//
-//	PlayImpactAnimation();
-//
-//	//Functions that occur on all machines.
-//	/*
-//		Any special functionality that should occur as a result of damage or death should be placed here.
-//	*/
-//}
 
 bool AMultiplayerActionCharacter::IsDead()
 {
@@ -589,37 +546,6 @@ float AMultiplayerActionCharacter::GetHeathPercent() const
 {
 	return Health / MaxHealth;
 }
-
-//TSubclassOf<UWeapon> AMultiplayerActionCharacter::SwapWeapon(TSubclassOf<UWeapon> NewWeaponClass)
-//{
-//	ServerReliableRPC_Block();
-//
-//	TSubclassOf<UWeapon> OldWeaponClass = WeaponClass;
-//	if (WeaponClass == NewWeaponClass || !NewWeaponClass)
-//	{
-//		return OldWeaponClass;
-//	}
-//	if (Weapon)
-//	{
-//		Weapon->DestroyComponent();
-//		Weapon = nullptr;
-//	}
-//	WeaponClass = NewWeaponClass;
-//	if (WeaponClass)
-//	{
-//		Weapon = NewObject<UWeapon>(this, NewWeaponClass);
-//		if (Weapon)
-//		{
-//			Weapon->RegisterComponent();
-//			Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, TEXT("WeaponSocket"));
-//		}
-//	}
-//	else
-//	{
-//		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Failed to swap weapon: Invalid weapon class."));
-//	}
-//	return OldWeaponClass;
-//}
 
 void AMultiplayerActionCharacter::OnRep_WeaponClass()
 {
@@ -665,6 +591,10 @@ void AMultiplayerActionCharacter::ServerReliableRPC_SwapWeapon_Implementation(TS
 
 void AMultiplayerActionCharacter::NetMulticastReliableRPC_SwapWeapon_Implementation(TSubclassOf<UWeapon> NewWeaponClass)
 {
+	if (WeaponSwapSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, WeaponSwapSound, GetActorLocation());
+	}
 	WeaponClass = NewWeaponClass;
 	OnRep_WeaponClass();
 }
@@ -720,6 +650,11 @@ void AMultiplayerActionCharacter::StopWeaponTrace()
 	ActorsHit.Empty();
 }
 
+void AMultiplayerActionCharacter::AttackInputMapping(const FInputActionValue& Value)
+{
+	ServerReliableRPC_Attack();
+}
+
 void AMultiplayerActionCharacter::ServerReliableRPC_Attack_Implementation()
 {
 	NetMulticastReliableRPC_Attack();
@@ -739,6 +674,10 @@ void AMultiplayerActionCharacter::NetMulticastReliableRPC_Attack_Implementation(
 				AttackMontageEndedDelegate.BindUObject(this, &AMultiplayerActionCharacter::OnAttackMontageEnded);
 			}
 
+			if (AttackGruntSound)
+			{
+				UGameplayStatics::PlaySoundAtLocation(this, AttackGruntSound, GetActorLocation());
+			}
 
 			if (AttackAnim)
 			{
