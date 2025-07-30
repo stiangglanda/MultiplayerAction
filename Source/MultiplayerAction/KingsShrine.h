@@ -19,6 +19,9 @@ public:
 	// Sets default values for this actor's properties
 	AKingsShrine();
 
+	UPROPERTY(EditInstanceOnly, Category = "AI Group")
+	TObjectPtr<class AAIGroupManager> GroupManager;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

@@ -20,6 +20,9 @@ public:
 
 	void BroadcastAlert(AActor* SentryPawn, AActor* TargetActor);
 
+	UFUNCTION(BlueprintCallable, Category = "AI Group")
+	void SetGroupLeader(class AMultiplayerActionCharacter* NewLeaderPawn);
+
 protected:
 	virtual void BeginPlay() override;
 

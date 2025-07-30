@@ -111,6 +111,50 @@ void AAIGroupManager::AttemptGroupSetup()
     }
 }
 
+void AAIGroupManager::SetGroupLeader(class AMultiplayerActionCharacter* NewLeaderPawn)
+{
+    // This function should ONLY ever run on the server.
+    if (!HasAuthority())
+    {
+        return;
+    }
+
+    if (!NewLeaderPawn)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("SetGroupLeader called with null Pawn!"));
+        return;
+	}
+
+    NewLeaderPawn->InitializeGroupMembership(this);
+
+
+    // Now, command every group member to update their target.
+    for (AMultiplayerActionCharacter* CurrentMember : GroupMembers)
+    {
+        if(!CurrentMember)
+        {
+            continue; // Skip null members
+		}
+
+		ADefaultAIController* MemberController = Cast<ADefaultAIController>(CurrentMember->GetController());
+
+        if (MemberController && MemberController->GetBlackboardComponent())
+        {
+            int32 OriginalIndex = GroupMembers.Find(CurrentMember);
+            // Set the "Leader" key on each AI's blackboard.
+            // This will cause their Behavior Tree to switch to the "Follow" state.
+            // If the NewLeaderPawn is null, it will clear the value, making them stop following.
+            MemberController->GetBlackboardComponent()->SetValueAsBool(IsLeaderKeyName, false);
+            MemberController->GetBlackboardComponent()->SetValueAsObject(PatrolLeaderKeyName, NewLeaderPawn);
+
+            if (FormationOffsets.IsValidIndex(OriginalIndex))
+            {
+                MemberController->GetBlackboardComponent()->SetValueAsVector(FormationOffsetKeyName, FormationOffsets[OriginalIndex]);
+            }
+        }
+    }
+}
+
 void AAIGroupManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);

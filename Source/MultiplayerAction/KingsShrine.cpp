@@ -5,6 +5,7 @@
 #include "Components/WidgetComponent.h"
 #include "InteractionProgressBarWidget.h"
 #include <Net/UnrealNetwork.h>
+#include "AIGroupManager.h"
 #include "MultiplayerActionCharacter.h"
 
 // Sets default values
@@ -51,7 +52,7 @@ void AKingsShrine::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 void AKingsShrine::OnInteract_Implementation(APawn* InstigatorPawn)
 {
-	if (!InstigatorPawn || !InstigatorPawn->IsLocallyControlled())
+	if (!InstigatorPawn)
 	{
 		return;
 	}
@@ -96,7 +97,7 @@ void AKingsShrine::OnStopInteract_Implementation(APawn* InstigatorPawn)
 	Server_StopInteraction();
 
 	// Handle hiding the UI on the client that released the key.
-	if (InstigatorPawn && InstigatorPawn->IsLocallyControlled())
+	if (InstigatorPawn)
 	{
 		if (InteractionPromptWidget)
 		{
@@ -155,7 +156,7 @@ void AKingsShrine::Server_StartInteraction_Implementation(APawn* InstigatorPawn)
 	AMultiplayerActionCharacter* InteractingCharacter = Cast<AMultiplayerActionCharacter>(InteractingPlayer);
 	if (InteractingCharacter)
 	{
-		InteractingCharacter->PlayInteractionMontage();
+		InteractingCharacter->ServerReliableRPC_PlayInteractionMontage();
 	}
 
 	GetWorld()->GetTimerManager().SetTimer(
@@ -178,7 +179,7 @@ void AKingsShrine::Server_StopInteraction_Implementation()
 		if (InteractingCharacter)
 		{
 			// Tell the character to stop its replicated animation
-			InteractingCharacter->StopInteractionMontage();
+			InteractingCharacter->ServerReliableRPC_StopInteractionMontage();
 		}
 
 		GetWorld()->GetTimerManager().ClearTimer(InteractionTimerHandle);
@@ -195,7 +196,13 @@ void AKingsShrine::OnInteractionComplete()
 	AMultiplayerActionCharacter* InteractingCharacter = Cast<AMultiplayerActionCharacter>(InteractingPlayer);
 	if (InteractingCharacter)
 	{
-		InteractingCharacter->StopInteractionMontage();
+		InteractingCharacter->ServerReliableRPC_StopInteractionMontage();
+	}
+
+	if (GroupManager)
+	{
+		// Tell the group manager to assign the interacting player as the new leader.
+		GroupManager->SetGroupLeader(InteractingCharacter);
 	}
 
 	// Set the replicated variable. This will trigger OnRep_KeyTaken on all clients.
