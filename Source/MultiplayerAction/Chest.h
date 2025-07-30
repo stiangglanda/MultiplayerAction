@@ -64,6 +64,8 @@ public:
 	//bool ToggleOpenClose(APawn* InstigatorPawn);//return true if opened, false if closed
 	virtual void OnInteract_Implementation(APawn* InstigatorPawn) override;
 
+	virtual void OnEndFocus_Implementation(APawn* InstigatorPawn) override;
+
 	UFUNCTION()
 	void CloseChest(APawn* InstigatorPawn);
 

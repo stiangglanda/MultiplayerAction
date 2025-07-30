@@ -21,4 +21,7 @@ public:
     // You can also add a function to stop/reset it.
     UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Interaction")
     void StopProgress();
+
+    UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Interaction")
+    void ShowCompletedMessage();
 };

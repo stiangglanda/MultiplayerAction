@@ -3,6 +3,7 @@
 #include "AIController.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISense_Sight.h"
+#include "MultiplayerActionCharacter.h"
 
 UBTService_PlayerLocationifSeen::UBTService_PlayerLocationifSeen()
 {
@@ -15,6 +16,12 @@ void UBTService_PlayerLocationifSeen::TickNode(UBehaviorTreeComponent& OwnerComp
 
     AAIController* AIController = OwnerComp.GetAIOwner();
     if (!AIController)
+    {
+        return;
+    }
+
+    AMultiplayerActionCharacter* AIPawn = Cast<AMultiplayerActionCharacter>(AIController->GetPawn());
+    if (!AIPawn)
     {
         return;
     }
@@ -47,11 +54,11 @@ void UBTService_PlayerLocationifSeen::TickNode(UBehaviorTreeComponent& OwnerComp
 
     for (AActor* Actor : PerceivedActors)
     {
-        if (APawn* PawnActor = Cast<APawn>(Actor))
+        if (AMultiplayerActionCharacter* PawnActor = Cast<AMultiplayerActionCharacter>(Actor))
         {
-            if (PawnActor->IsPlayerControlled())
+            if (PawnActor->GetTeam() != AIPawn->GetTeam())
             {
-                float Distance = FVector::Distance(AIController->GetPawn()->GetActorLocation(), 
+                float Distance = FVector::Distance(AIPawn->GetActorLocation(),
                                                  PawnActor->GetActorLocation());
                 if (Distance < ClosestDistance)
                 {

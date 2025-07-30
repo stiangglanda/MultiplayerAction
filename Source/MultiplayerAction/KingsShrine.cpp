@@ -48,68 +48,109 @@ void AKingsShrine::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(AKingsShrine, bIsKeyTaken);
 }
 
-void AKingsShrine::StartInteraction(APawn* InstigatorPawn)
+void AKingsShrine::OnInteract_Implementation(APawn* InstigatorPawn)
 {
-	// Ask the server to start the interaction process.
-	Server_StartInteraction(InstigatorPawn);
+	if (!InstigatorPawn || !InstigatorPawn->IsLocallyControlled())
+	{
+		return;
+	}
 
-	// --- CLIENT-SIDE UI ---
+	// Get the widget instance first, as we'll need it in either case.
+	UInteractionProgressBarWidget* ProgressBarWidget = nullptr;
 	if (InteractionPromptWidget)
 	{
-		// 1. Get the actual UUserWidget instance from the component.
-		UUserWidget* GenericWidget = InteractionPromptWidget->GetUserWidgetObject();
-		if (GenericWidget)
-		{
-			// 2. Cast the generic UUserWidget to your specific C++ class.
-			// This is the "safe" way to access your custom functions.
-			UInteractionProgressBarWidget* ProgressBarWidget = Cast<UInteractionProgressBarWidget>(GenericWidget);
-			if (InteractionPromptWidget)
-			{
-				// 3. Now you can call the function!
-				ProgressBarWidget->StartProgress(InteractionDuration);
-			}
-		}
+		// We cast here once to avoid repeating code.
+		ProgressBarWidget = Cast<UInteractionProgressBarWidget>(InteractionPromptWidget->GetUserWidgetObject());
+	}
 
-		// Show the component itself, which makes the widget visible in the world.
+	if (!ProgressBarWidget)
+	{
+		// If we can't get the widget, we can't do anything.
+		return;
+	}
+
+	// --- THE CORE LOGIC CHANGE ---
+	// First, check the state of the shrine.
+	if (bIsKeyTaken)
+	{
+		// The key is already gone. Show the "completed" message.
+		InteractionPromptWidget->SetVisibility(true); // Make sure the component is visible
+		ProgressBarWidget->ShowCompletedMessage();
+	}
+	else
+	{
+		// The key is available. Proceed with the normal interaction.
 		InteractionPromptWidget->SetVisibility(true);
+		ProgressBarWidget->StartProgress(InteractionDuration);
+
+		// Tell the server to start the timer.
+		Server_StartInteraction(InstigatorPawn);
 	}
 }
 
-void AKingsShrine::StopInteraction()
+void AKingsShrine::OnStopInteract_Implementation(APawn* InstigatorPawn)
 {
-	// Ask the server to stop the interaction.
+	// When the player releases "E", they are stopping the interaction.
+	// Call our server function to cancel the timer.
 	Server_StopInteraction();
 
-	// --- CLIENT-SIDE UI ---
-	if (InteractionPromptWidget)
+	// Handle hiding the UI on the client that released the key.
+	if (InstigatorPawn && InstigatorPawn->IsLocallyControlled())
 	{
-		UUserWidget* GenericWidget = InteractionPromptWidget->GetUserWidgetObject();
-		if (GenericWidget)
+		if (InteractionPromptWidget)
 		{
-			UInteractionProgressBarWidget* ProgressBarWidget = Cast<UInteractionProgressBarWidget>(GenericWidget);
+			UInteractionProgressBarWidget* ProgressBarWidget = Cast<UInteractionProgressBarWidget>(InteractionPromptWidget->GetUserWidgetObject());
 			if (ProgressBarWidget)
 			{
-				// Call the corresponding "Stop" or "Reset" function
-				ProgressBarWidget->StopProgress();
+				ProgressBarWidget->StopProgress(); // Assuming you have a Stop function
 			}
+			InteractionPromptWidget->SetVisibility(false);
 		}
-
-		InteractionPromptWidget->SetVisibility(false);
 	}
 }
+
+void AKingsShrine::OnBeginFocus_Implementation(APawn* InstigatorPawn)
+{
+	// This is where you would show a simple "Hold [E] to Activate" prompt.
+	// For this shrine, we can leave this blank because our main progress bar
+	// serves the same purpose and is shown via OnInteract.
+	// If you had a separate, simpler prompt, you would show it here.
+}
+
+void AKingsShrine::OnEndFocus_Implementation(APawn* InstigatorPawn)
+{
+	// If the player looks away while interacting, we should cancel it.
+	// This is an important piece of game feel.
+	if (InteractionPromptWidget)
+	{
+		InteractionPromptWidget->SetVisibility(false);
+	}
+
+	OnStopInteract_Implementation(InstigatorPawn);
+}
+
+FText AKingsShrine::GetInteractionText_Implementation() const
+{
+	// Provide the text for a generic UI prompt if you were using one.
+	return FText::FromString(TEXT("Hold to Activate Shrine"));
+}
+
+bool AKingsShrine::IsCompleted()
+{
+	return bIsKeyTaken;
+}
+
 
 // This function ONLY executes on the SERVER.
 void AKingsShrine::Server_StartInteraction_Implementation(APawn* InstigatorPawn)
 {
-	// Can't interact if key is gone or someone else is already interacting.
-	if (bIsKeyTaken || InteractionTimerHandle.IsValid())
+	if (bIsKeyTaken || InteractionTimerHandle.IsValid() || !InstigatorPawn)
 	{
 		return;
 	}
 
 	InteractingPlayer = InstigatorPawn;
 
-	// Start a timer that will call OnInteractionComplete after InteractionDuration seconds.
 	GetWorld()->GetTimerManager().SetTimer(
 		InteractionTimerHandle,
 		this,
@@ -118,18 +159,17 @@ void AKingsShrine::Server_StartInteraction_Implementation(APawn* InstigatorPawn)
 		false
 	);
 
-	UE_LOG(LogTemp, Warning, TEXT("Server: Interaction started by %s."), *InstigatorPawn->GetName());
+	UE_LOG(LogTemp, Warning, TEXT("Server: Shrine interaction started by %s."), *InstigatorPawn->GetName());
 }
 
 // This function ONLY executes on the SERVER.
 void AKingsShrine::Server_StopInteraction_Implementation()
 {
-	// If the timer is active, clear it.
 	if (InteractionTimerHandle.IsValid())
 	{
 		GetWorld()->GetTimerManager().ClearTimer(InteractionTimerHandle);
 		InteractingPlayer = nullptr;
-		UE_LOG(LogTemp, Warning, TEXT("Server: Interaction cancelled."));
+		UE_LOG(LogTemp, Warning, TEXT("Server: Shrine interaction cancelled."));
 	}
 }
 

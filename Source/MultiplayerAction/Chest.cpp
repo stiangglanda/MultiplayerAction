@@ -50,9 +50,16 @@ void AChest::OpenChest(APawn* InstigatorPawn)
 
 	if (OpenCloseAnim)
 	{
-		// ... your animation and sound logic remains the same ...
-		UGameplayStatics::PlaySoundAtLocation(this, ChestOpenSound, GetActorLocation());
-		Mesh->GetAnimInstance()->Montage_Play(OpenCloseAnim, 1.0f);
+		UAnimInstance* AnimInstance = Mesh->GetAnimInstance();
+		if (AnimInstance)
+		{
+			if (ChestOpenSound)
+			{
+				UGameplayStatics::PlaySoundAtLocation(this, ChestOpenSound, GetActorLocation());
+			}
+	
+			AnimInstance->Montage_Play(OpenCloseAnim, 1, EMontagePlayReturnType::MontageLength, AnimInstance->Montage_GetPosition(OpenCloseAnim), true);
+		}
 	}
 
 	// Create and show the chest's inventory widget.
@@ -120,6 +127,11 @@ void AChest::OnInteract_Implementation(APawn* InstigatorPawn)
 	}
 }
 
+void AChest::OnEndFocus_Implementation(APawn* InstigatorPawn)
+{
+	CloseChest(InstigatorPawn);
+}
+
 //bool AChest::ToggleOpenClose()
 //{
 //	if(bOpen)
@@ -142,9 +154,17 @@ void AChest::CloseChest(APawn* InstigatorPawn)
 
 	if (OpenCloseAnim)
 	{
-		// ... your animation and sound logic remains the same ...
-		UGameplayStatics::PlaySoundAtLocation(this, ChestCloseSound, GetActorLocation());
-		Mesh->GetAnimInstance()->Montage_Play(OpenCloseAnim, -1.0f, EMontagePlayReturnType::MontageLength, OpenCloseAnim->GetPlayLength());
+		UAnimInstance* AnimInstance = Mesh->GetAnimInstance();
+		if (AnimInstance)
+		{
+			if (ChestCloseSound)
+			{
+				UGameplayStatics::PlaySoundAtLocation(this, ChestCloseSound, GetActorLocation());
+			}
+	
+			float CurrentPosition = AnimInstance->Montage_GetPosition(OpenCloseAnim) == 0 ? OpenCloseAnim->GetPlayLength() : AnimInstance->Montage_GetPosition(OpenCloseAnim);
+			AnimInstance->Montage_Play(OpenCloseAnim,-1,EMontagePlayReturnType::MontageLength, CurrentPosition, true);
+		}
 	}
 
 	// Remove the widget from the screen.

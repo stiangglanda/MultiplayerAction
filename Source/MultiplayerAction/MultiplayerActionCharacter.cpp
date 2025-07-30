@@ -140,7 +140,9 @@ void AMultiplayerActionCharacter::SetupPlayerInputComponent(UInputComponent* Pla
 
 		EnhancedInputComponent->BindAction(RollAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::Roll);
 
-		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::Interact);
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &AMultiplayerActionCharacter::Interact);
+
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &AMultiplayerActionCharacter::StopInteract);
 
 		EnhancedInputComponent->BindAction(HeavyAttackAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::HeavyAttack);
 
@@ -386,6 +388,11 @@ void AMultiplayerActionCharacter::Interact(const FInputActionValue& Value)
 {
 	if (CurrentInteractable)
 	{
+		if (InteractionWidget)
+		{
+			InteractionWidget->RemoveFromParent();
+			InteractionWidget = nullptr;
+		}
 		// 2. Call the generic OnInteract function on the object.
 		// We pass 'this' as the InstigatorPawn.
 		IOutpostInteractable::Execute_OnInteract(CurrentInteractable.GetObject(), this);
@@ -768,6 +775,18 @@ void AMultiplayerActionCharacter::OnOverlapBegin(UPrimitiveComponent* Overlapped
 	// This replaces "IsA(AChest::StaticClass())".
 	if (OtherActor->Implements<UOutpostInteractable>())
 	{
+		if (InteractionWidgetClass && !InteractionWidget)
+		{
+			APlayerController* PC = Cast<APlayerController>(GetController());
+			if (PC)
+			{
+				InteractionWidget = CreateWidget<UUserWidget>(PC, InteractionWidgetClass);
+				if (InteractionWidget)
+				{
+					InteractionWidget->AddToViewport();
+				}
+			}
+		}
 		// 2. Tell the object that we are now "focused" on it.
 		// This lets the object decide whether to show a prompt.
 		// We use Execute_ to safely call interface functions.
@@ -809,6 +828,12 @@ void AMultiplayerActionCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedCo
 	// 1. Check if the actor we are no longer overlapping is the one we were interacting with.
 	if (OtherActor == CurrentInteractable.GetObject())
 	{
+		if (InteractionWidget)
+		{
+			InteractionWidget->RemoveFromParent();
+			InteractionWidget = nullptr;
+		}
+
 		// 2. Tell the object that we are no longer focused on it.
 		// This lets the object hide its own UI prompt.
 		IOutpostInteractable::Execute_OnEndFocus(OtherActor, this);

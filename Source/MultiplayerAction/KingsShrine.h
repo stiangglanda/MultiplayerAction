@@ -4,13 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "OutpostInteractable.h"
 #include "KingsShrine.generated.h"
 
 class UWidgetComponent;
 class UInteractionProgressBarWidget;
 
 UCLASS()
-class MULTIPLAYERACTION_API AKingsShrine : public AActor
+class MULTIPLAYERACTION_API AKingsShrine : public AActor, public IOutpostInteractable
 {
 	GENERATED_BODY()
 	
@@ -65,7 +66,7 @@ protected:
 	void OnRep_KeyTaken();
 
 	// --- NETWORKING FUNCTIONS ---
-
+protected:
 	/** [CLIENT] Called by the player to request starting the interaction. */
 	UFUNCTION(Server, Reliable)
 	void Server_StartInteraction(APawn* InstigatorPawn);
@@ -79,8 +80,16 @@ protected:
 	void OnInteractionComplete();
 
 public:
-	// Public functions that the player character will call.
-	void StartInteraction(APawn* InstigatorPawn);
-	void StopInteraction();
+	// --- INTERFACE IMPLEMENTATION ---
+	// We add 'virtual' and 'override' for good C++ practice.
+	virtual void OnInteract_Implementation(APawn* InstigatorPawn) override;
+	virtual void OnStopInteract_Implementation(APawn* InstigatorPawn) override;
+	virtual void OnBeginFocus_Implementation(APawn* InstigatorPawn) override;
+	virtual void OnEndFocus_Implementation(APawn* InstigatorPawn) override;
+	virtual FText GetInteractionText_Implementation() const override;
+
+
+	// Inherited via IOutpostInteractable
+	bool IsCompleted() override;
 
 };
