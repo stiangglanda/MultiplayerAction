@@ -85,9 +85,9 @@ AMultiplayerActionCharacter::AMultiplayerActionCharacter()
 	MovementAudioComponent->SetupAttachment(GetRootComponent());
 	MovementAudioComponent->bAutoActivate = false;
 
-	shield = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("shield"));
-	shield->SetupAttachment(GetMesh(), TEXT("hand_l"));
-	shield->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	ShieldMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ShieldMesh"));
+	ShieldMesh->SetupAttachment(GetMesh(), TEXT("ShieldSocket"));
+	ShieldMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void AMultiplayerActionCharacter::BeginPlay()
@@ -894,9 +894,9 @@ void AMultiplayerActionCharacter::Multicast_PlayInteractionMontage_Implementatio
 		Weapon->SetVisibility(false);
 	}
 
-	if (shield) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
+	if (ShieldMesh) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
 	{
-		shield->SetVisibility(false);
+		ShieldMesh->SetVisibility(false);
 	}
 
 	if (InteractionMontage)
@@ -914,9 +914,9 @@ void AMultiplayerActionCharacter::Multicast_StopInteractionMontage_Implementatio
 		Weapon->SetVisibility(true);
 	}
 
-	if (shield) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
+	if (ShieldMesh) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
 	{
-		shield->SetVisibility(true);
+		ShieldMesh->SetVisibility(true);
 	}
 
 	if (InteractionMontage)
@@ -953,9 +953,9 @@ void AMultiplayerActionCharacter::Multicast_PlayPrayMontage_Implementation()
 		Weapon->SetVisibility(false);
 	}
 
-	if (shield) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
+	if (ShieldMesh) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
 	{
-		shield->SetVisibility(false);
+		ShieldMesh->SetVisibility(false);
 	}
 
 	if (PrayMontage)
@@ -973,9 +973,9 @@ void AMultiplayerActionCharacter::Multicast_StopPrayMontage_Implementation()
 		Weapon->SetVisibility(true);
 	}
 
-	if (shield) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
+	if (ShieldMesh) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
 	{
-		shield->SetVisibility(true);
+		ShieldMesh->SetVisibility(true);
 	}
 
 	if (PrayMontage)
