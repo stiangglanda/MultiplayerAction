@@ -5,6 +5,7 @@
 #include "Components/WidgetComponent.h"
 #include "InteractionProgressBarWidget.h"
 #include <Net/UnrealNetwork.h>
+#include "MultiplayerActionCharacter.h"
 
 // Sets default values
 AKingsShrine::AKingsShrine()
@@ -151,6 +152,12 @@ void AKingsShrine::Server_StartInteraction_Implementation(APawn* InstigatorPawn)
 
 	InteractingPlayer = InstigatorPawn;
 
+	AMultiplayerActionCharacter* InteractingCharacter = Cast<AMultiplayerActionCharacter>(InteractingPlayer);
+	if (InteractingCharacter)
+	{
+		InteractingCharacter->PlayInteractionMontage();
+	}
+
 	GetWorld()->GetTimerManager().SetTimer(
 		InteractionTimerHandle,
 		this,
@@ -167,6 +174,13 @@ void AKingsShrine::Server_StopInteraction_Implementation()
 {
 	if (InteractionTimerHandle.IsValid())
 	{
+		AMultiplayerActionCharacter* InteractingCharacter = Cast<AMultiplayerActionCharacter>(InteractingPlayer);
+		if (InteractingCharacter)
+		{
+			// Tell the character to stop its replicated animation
+			InteractingCharacter->StopInteractionMontage();
+		}
+
 		GetWorld()->GetTimerManager().ClearTimer(InteractionTimerHandle);
 		InteractingPlayer = nullptr;
 		UE_LOG(LogTemp, Warning, TEXT("Server: Shrine interaction cancelled."));
@@ -177,6 +191,12 @@ void AKingsShrine::Server_StopInteraction_Implementation()
 void AKingsShrine::OnInteractionComplete()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Server: Interaction COMPLETE. Key is taken."));
+
+	AMultiplayerActionCharacter* InteractingCharacter = Cast<AMultiplayerActionCharacter>(InteractingPlayer);
+	if (InteractingCharacter)
+	{
+		InteractingCharacter->StopInteractionMontage();
+	}
 
 	// Set the replicated variable. This will trigger OnRep_KeyTaken on all clients.
 	bIsKeyTaken = true;

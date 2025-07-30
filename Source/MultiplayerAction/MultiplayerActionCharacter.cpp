@@ -84,6 +84,10 @@ AMultiplayerActionCharacter::AMultiplayerActionCharacter()
 	MovementAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("MovementAudioComponent"));
 	MovementAudioComponent->SetupAttachment(GetRootComponent());
 	MovementAudioComponent->bAutoActivate = false;
+
+	shield = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("shield"));
+	shield->SetupAttachment(GetMesh(), TEXT("hand_l"));
+	shield->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void AMultiplayerActionCharacter::BeginPlay()
@@ -861,6 +865,124 @@ void AMultiplayerActionCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedCo
 	//	OverlappingChest->CloseChest(); // Close the chest if it was open
 	//	OverlappingChest = nullptr;
 	//}
+}
+
+void AMultiplayerActionCharacter::PlayInteractionMontage()
+{
+	// Only the server should be able to initiate this replicated animation
+	if (HasAuthority())
+	{
+		Multicast_PlayInteractionMontage();
+	}
+}
+
+// This function is called BY THE SERVER (e.g., from the Shrine)
+void AMultiplayerActionCharacter::StopInteractionMontage()
+{
+	if (HasAuthority())
+	{
+		Multicast_StopInteractionMontage();
+	}
+}
+
+
+// This function executes on the SERVER and then REPLICATES to ALL CLIENTS
+void AMultiplayerActionCharacter::Multicast_PlayInteractionMontage_Implementation()
+{
+	if (Weapon) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
+	{
+		Weapon->SetVisibility(false);
+	}
+
+	if (shield) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
+	{
+		shield->SetVisibility(false);
+	}
+
+	if (InteractionMontage)
+	{
+		// Play the looping section of the montage
+		PlayAnimMontage(InteractionMontage, 1.0f);
+	}
+}
+
+// This function executes on the SERVER and then REPLICATES to ALL CLIENTS
+void AMultiplayerActionCharacter::Multicast_StopInteractionMontage_Implementation()
+{
+	if (Weapon) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
+	{
+		Weapon->SetVisibility(true);
+	}
+
+	if (shield) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
+	{
+		shield->SetVisibility(true);
+	}
+
+	if (InteractionMontage)
+	{
+		// Stop any instance of this montage that is currently playing.
+		StopAnimMontage(InteractionMontage);
+	}
+}
+
+void AMultiplayerActionCharacter::PlayPrayMontage()
+{
+	// Only the server should be able to initiate this replicated animation
+	if (HasAuthority())
+	{
+		Multicast_PlayPrayMontage();
+	}
+}
+
+// This function is called BY THE SERVER (e.g., from the Shrine)
+void AMultiplayerActionCharacter::StopPrayMontage()
+{
+	if (HasAuthority())
+	{
+		Multicast_StopPrayMontage();
+	}
+}
+
+
+// This function executes on the SERVER and then REPLICATES to ALL CLIENTS
+void AMultiplayerActionCharacter::Multicast_PlayPrayMontage_Implementation()
+{
+	if (Weapon) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
+	{
+		Weapon->SetVisibility(false);
+	}
+
+	if (shield) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
+	{
+		shield->SetVisibility(false);
+	}
+
+	if (PrayMontage)
+	{
+		// Play the looping section of the montage
+		PlayAnimMontage(PrayMontage, 1.0f, FName("Loop"));
+	}
+}
+
+// This function executes on the SERVER and then REPLICATES to ALL CLIENTS
+void AMultiplayerActionCharacter::Multicast_StopPrayMontage_Implementation()
+{
+	if (Weapon) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
+	{
+		Weapon->SetVisibility(true);
+	}
+
+	if (shield) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
+	{
+		shield->SetVisibility(true);
+	}
+
+	if (PrayMontage)
+	{
+		// Stop any instance of this montage that is currently playing.
+		StopAnimMontage(PrayMontage);
+	}
 }
 
 void AMultiplayerActionCharacter::InitializeGroupMembership(TObjectPtr<class AAIGroupManager> GroupManager)

@@ -33,6 +33,9 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
     UCameraComponent* FollowCamera;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	USkeletalMeshComponent* shield;
+
     /** MappingContext */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputMappingContext* DefaultMappingContext;
@@ -92,6 +95,12 @@ protected:
 
     UPROPERTY(EditAnywhere, Category = "Combat")
     UAnimMontage* RollMontage;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Animation")
+    TObjectPtr<UAnimMontage> InteractionMontage;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Animation")
+    TObjectPtr<UAnimMontage> PrayMontage;
 
     UPROPERTY(EditAnywhere)
     float WeaponDamage = 20;
@@ -159,6 +168,14 @@ public:
     UAudioComponent* GetMovementAudioComponent() const { return MovementAudioComponent; }
 
     USoundBase* GetMovementLoopSound() const { return MovementLoopSound; }
+
+    void PlayInteractionMontage();
+
+    void StopInteractionMontage();
+
+    void PlayPrayMontage();
+
+    void StopPrayMontage();
 
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio")
@@ -253,6 +270,18 @@ protected:
 
     UFUNCTION(NetMulticast, Reliable)
     void NetMulticastReliableRPC_HeavyAttack();
+
+    UFUNCTION(NetMulticast, Reliable)
+    void Multicast_PlayInteractionMontage();
+
+    UFUNCTION(NetMulticast, Reliable)
+    void Multicast_StopInteractionMontage();
+
+    UFUNCTION(NetMulticast, Reliable)
+    void Multicast_PlayPrayMontage();
+
+    UFUNCTION(NetMulticast, Reliable)
+    void Multicast_StopPrayMontage();
 
     FTimerHandle WeaponTraceTimer;
     virtual void PerformWeaponTrace();
