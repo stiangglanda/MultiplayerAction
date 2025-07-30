@@ -37,81 +37,162 @@ AChest::AChest()
 
 }
 
-void AChest::OpenChest()
+void AChest::OpenChest(APawn* InstigatorPawn)
 {
+	if (!InstigatorPawn) return;
+
+	APlayerController* PC = Cast<APlayerController>(InstigatorPawn->GetController());
+	if (!PC || !PC->IsLocalController())
+	{
+		// We only want to open the UI for the specific player who interacted.
+		return;
+	}
+
 	if (OpenCloseAnim)
 	{
-		UAnimInstance* AnimInstance = Mesh->GetAnimInstance();
-		if (AnimInstance)
-		{
-			if (ChestOpenSound)
-			{
-				UGameplayStatics::PlaySoundAtLocation(this, ChestOpenSound, GetActorLocation());
-			}
-
-			AnimInstance->Montage_Play(OpenCloseAnim, 1, EMontagePlayReturnType::MontageLength, AnimInstance->Montage_GetPosition(OpenCloseAnim), true);
-		}
+		// ... your animation and sound logic remains the same ...
+		UGameplayStatics::PlaySoundAtLocation(this, ChestOpenSound, GetActorLocation());
+		Mesh->GetAnimInstance()->Montage_Play(OpenCloseAnim, 1.0f);
 	}
 
+	// Create and show the chest's inventory widget.
 	if (ChestMenuWidgetClass && !ChestMenuWidget)
 	{
-		APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-
-		if (PC && PC->IsLocalController())
+		ChestMenuWidget = CreateWidget<UChestWidget>(PC, ChestMenuWidgetClass);
+		if (ChestMenuWidget)
 		{
-			ChestMenuWidget = CreateWidget<UChestWidget>(PC, ChestMenuWidgetClass);
-			if (ChestMenuWidget)
-			{
-				ChestMenuWidget->SetChestReference(this);
-				ChestMenuWidget->AddToViewport();
-			}
+			ChestMenuWidget->SetChestReference(this);
+			ChestMenuWidget->AddToViewport();
+
+			// --- RESPONSIBILITY SHIFT ---
+			// The CHEST is now responsible for changing the player's input mode.
+			PC->SetInputMode(FInputModeGameAndUI());
+			PC->bShowMouseCursor = true;
 		}
 	}
 
-	bOpen = !bOpen;
+	bOpen = true;
 }
+//void AChest::OpenChest()
+//{
+//	if (OpenCloseAnim)
+//	{
+//		UAnimInstance* AnimInstance = Mesh->GetAnimInstance();
+//		if (AnimInstance)
+//		{
+//			if (ChestOpenSound)
+//			{
+//				UGameplayStatics::PlaySoundAtLocation(this, ChestOpenSound, GetActorLocation());
+//			}
+//
+//			AnimInstance->Montage_Play(OpenCloseAnim, 1, EMontagePlayReturnType::MontageLength, AnimInstance->Montage_GetPosition(OpenCloseAnim), true);
+//		}
+//	}
+//
+//	if (ChestMenuWidgetClass && !ChestMenuWidget)
+//	{
+//		APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+//
+//		if (PC && PC->IsLocalController())
+//		{
+//			ChestMenuWidget = CreateWidget<UChestWidget>(PC, ChestMenuWidgetClass);
+//			if (ChestMenuWidget)
+//			{
+//				ChestMenuWidget->SetChestReference(this);
+//				ChestMenuWidget->AddToViewport();
+//			}
+//		}
+//	}
+//
+//	bOpen = !bOpen;
+//}
 
-bool AChest::ToggleOpenClose()
+void AChest::OnInteract_Implementation(APawn* InstigatorPawn)
 {
-	if(bOpen)
+	// The logic from your old ToggleOpenClose function moves here.
+	if (bOpen)
 	{
-		CloseChest();
+		CloseChest(InstigatorPawn); // Pass the pawn along
 	}
 	else
 	{
-		OpenChest();
+		OpenChest(InstigatorPawn); // Pass the pawn along
 	}
-	return bOpen;
 }
 
-void AChest::CloseChest()
+//bool AChest::ToggleOpenClose()
+//{
+//	if(bOpen)
+//	{
+//		CloseChest();
+//	}
+//	else
+//	{
+//		OpenChest();
+//	}
+//	return bOpen;
+//}
+
+void AChest::CloseChest(APawn* InstigatorPawn)
 {
-	if (!bOpen)
-		return;
-	
+	if (!bOpen) return;
+	if (!InstigatorPawn) return;
+
+	APlayerController* PC = Cast<APlayerController>(InstigatorPawn->GetController());
+
 	if (OpenCloseAnim)
 	{
-		UAnimInstance* AnimInstance = Mesh->GetAnimInstance();
-		if (AnimInstance)
-		{
-			if (ChestCloseSound)
-			{
-				UGameplayStatics::PlaySoundAtLocation(this, ChestCloseSound, GetActorLocation());
-			}
-
-			float CurrentPosition = AnimInstance->Montage_GetPosition(OpenCloseAnim) == 0 ? OpenCloseAnim->GetPlayLength() : AnimInstance->Montage_GetPosition(OpenCloseAnim);
-			AnimInstance->Montage_Play(OpenCloseAnim,-1,EMontagePlayReturnType::MontageLength, CurrentPosition, true);
-		}
+		// ... your animation and sound logic remains the same ...
+		UGameplayStatics::PlaySoundAtLocation(this, ChestCloseSound, GetActorLocation());
+		Mesh->GetAnimInstance()->Montage_Play(OpenCloseAnim, -1.0f, EMontagePlayReturnType::MontageLength, OpenCloseAnim->GetPlayLength());
 	}
 
+	// Remove the widget from the screen.
 	if (ChestMenuWidget)
 	{
 		ChestMenuWidget->RemoveFromParent();
 		ChestMenuWidget = nullptr;
 	}
 
-	bOpen = !bOpen;
+	// --- RESPONSIBILITY SHIFT ---
+	// The CHEST tells the player's controller to return to game-only input.
+	if (PC && PC->IsLocalController())
+	{
+		PC->SetInputMode(FInputModeGameOnly());
+		PC->bShowMouseCursor = false;
+	}
+
+	bOpen = false;
 }
+
+//void AChest::CloseChest()
+//{
+//	if (!bOpen)
+//		return;
+//	
+//	if (OpenCloseAnim)
+//	{
+//		UAnimInstance* AnimInstance = Mesh->GetAnimInstance();
+//		if (AnimInstance)
+//		{
+//			if (ChestCloseSound)
+//			{
+//				UGameplayStatics::PlaySoundAtLocation(this, ChestCloseSound, GetActorLocation());
+//			}
+//
+//			float CurrentPosition = AnimInstance->Montage_GetPosition(OpenCloseAnim) == 0 ? OpenCloseAnim->GetPlayLength() : AnimInstance->Montage_GetPosition(OpenCloseAnim);
+//			AnimInstance->Montage_Play(OpenCloseAnim,-1,EMontagePlayReturnType::MontageLength, CurrentPosition, true);
+//		}
+//	}
+//
+//	if (ChestMenuWidget)
+//	{
+//		ChestMenuWidget->RemoveFromParent();
+//		ChestMenuWidget = nullptr;
+//	}
+//
+//	bOpen = !bOpen;
+//}
 
 FWeaponData* AChest::GetChestContents()
 {
@@ -157,5 +238,10 @@ void AChest::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+bool AChest::IsCompleted()
+{
+	return false;
 }
 

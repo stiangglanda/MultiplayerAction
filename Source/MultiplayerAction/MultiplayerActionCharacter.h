@@ -7,6 +7,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Runtime/UMG/Public/UMG.h"
 #include <Components/SphereComponent.h>
+#include "OutpostInteractable.h"
 #include "MultiplayerActionCharacter.generated.h"
 
 class USpringArmComponent;
@@ -215,7 +216,8 @@ protected:
 
 	AMultiplayerActionCharacter* LockedOnTarget;
 
-	class AChest* OverlappingChest;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
+    TScriptInterface<IOutpostInteractable> CurrentInteractable;
 
     FOnMontageEnded AttackMontageEndedDelegate;
 
@@ -285,6 +287,8 @@ protected:
     void HeavyAttack(const FInputActionValue& Value);
 
     void Interact(const FInputActionValue& Value);
+
+    void StopInteract(const FInputActionValue& Value);
 
     void Escape(const FInputActionValue& Value);
 

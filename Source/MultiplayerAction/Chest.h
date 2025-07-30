@@ -8,11 +8,12 @@
 #include "Runtime/UMG/Public/UMG.h"
 #include "Weapon.h"
 #include "ChestInterface.h"
+#include "OutpostInteractable.h"
 #include "ChestWidget.h"
 #include "Chest.generated.h"
 
 UCLASS()
-class MULTIPLAYERACTION_API AChest : public AActor, public IChestInterface
+class MULTIPLAYERACTION_API AChest : public AActor, public IChestInterface, public IOutpostInteractable
 {
 	GENERATED_BODY()
 	
@@ -57,14 +58,16 @@ protected:
 
 public:	
 	UFUNCTION()
-	void OpenChest();
+	void OpenChest(APawn* InstigatorPawn);
+
+	//UFUNCTION()
+	//bool ToggleOpenClose(APawn* InstigatorPawn);//return true if opened, false if closed
+	virtual void OnInteract_Implementation(APawn* InstigatorPawn) override;
 
 	UFUNCTION()
-	bool ToggleOpenClose();//return true if opened, false if closed
-
-	UFUNCTION()
-	void CloseChest();
+	void CloseChest(APawn* InstigatorPawn);
 
 	virtual void Tick(float DeltaTime) override;
 
+	bool IsCompleted() override;
 };

@@ -78,7 +78,7 @@ AMultiplayerActionCharacter::AMultiplayerActionCharacter()
 	SphereCollider->SetCanEverAffectNavigation(false);
 	SphereCollider->SetupAttachment(RootComponent);
 
-	OverlappingChest = nullptr;
+	CurrentInteractable = nullptr;
 	LockedOnTarget = nullptr;
 
 	MovementAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("MovementAudioComponent"));
@@ -384,32 +384,48 @@ void AMultiplayerActionCharacter::NetMulticastReliableRPC_HeavyAttack_Implementa
 
 void AMultiplayerActionCharacter::Interact(const FInputActionValue& Value)
 {
-	if (InteractionWidget)
+	if (CurrentInteractable)
 	{
-		InteractionWidget->RemoveFromParent();
-		InteractionWidget = nullptr;
+		// 2. Call the generic OnInteract function on the object.
+		// We pass 'this' as the InstigatorPawn.
+		IOutpostInteractable::Execute_OnInteract(CurrentInteractable.GetObject(), this);
 	}
 
-	if (!OverlappingChest)
-	{
-		return;
-	}
+	//if (InteractionWidget)
+	//{
+	//	InteractionWidget->RemoveFromParent();
+	//	InteractionWidget = nullptr;
+	//}
 
-	APlayerController* PC = Cast<APlayerController>(GetController());
-	if (!PC)
-	{
-		return;
-	}
+	//if (!OverlappingChest)
+	//{
+	//	return;
+	//}
 
-	if (OverlappingChest->ToggleOpenClose())
+	//APlayerController* PC = Cast<APlayerController>(GetController());
+	//if (!PC)
+	//{
+	//	return;
+	//}
+
+	//if (OverlappingChest->ToggleOpenClose())
+	//{
+	//	PC->SetInputMode(FInputModeGameAndUI());
+	//	PC->bShowMouseCursor = true;
+	//}
+	//else
+	//{
+	//	PC->SetInputMode(FInputModeGameOnly());
+	//	PC->bShowMouseCursor = false;
+	//}
+}
+
+void AMultiplayerActionCharacter::StopInteract(const FInputActionValue& Value)
+{
+	if (CurrentInteractable)
 	{
-		PC->SetInputMode(FInputModeGameAndUI());
-		PC->bShowMouseCursor = true;
-	}
-	else
-	{
-		PC->SetInputMode(FInputModeGameOnly());
-		PC->bShowMouseCursor = false;
+		// This will be used by the Shrine when the player releases the key.
+		IOutpostInteractable::Execute_OnStopInteract(CurrentInteractable.GetObject(), this);
 	}
 }
 
@@ -742,49 +758,84 @@ void AMultiplayerActionCharacter::OnOverlapBegin(UPrimitiveComponent* Overlapped
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
 	const FHitResult& SweepResult)
 {
-	if (OtherActor && OtherActor->IsA(AChest::StaticClass()))
-	{
-		// Create and show widget
-		if (InteractionWidgetClass && !InteractionWidget)
-		{
-			APlayerController* PC = Cast<APlayerController>(GetController());
-			if (PC)
-			{
-				InteractionWidget = CreateWidget<UUserWidget>(PC, InteractionWidgetClass);
-				if (InteractionWidget)
-				{
-					InteractionWidget->AddToViewport();
-				}
-			}
-		}
 
-		AChest* chest = Cast<AChest>(OtherActor);
-		OverlappingChest = chest;
+	if (!OtherActor)
+	{
+		return;
 	}
+
+	// 1. Check if the overlapped actor implements our interface.
+	// This replaces "IsA(AChest::StaticClass())".
+	if (OtherActor->Implements<UOutpostInteractable>())
+	{
+		// 2. Tell the object that we are now "focused" on it.
+		// This lets the object decide whether to show a prompt.
+		// We use Execute_ to safely call interface functions.
+		IOutpostInteractable::Execute_OnBeginFocus(OtherActor, this);
+
+		// 3. Store a reference to this interactable object.
+		CurrentInteractable = OtherActor;
+	}
+
+	//if (OtherActor && OtherActor->IsA(AChest::StaticClass()))
+	//{
+	//	// Create and show widget
+	//	if (InteractionWidgetClass && !InteractionWidget)
+	//	{
+	//		APlayerController* PC = Cast<APlayerController>(GetController());
+	//		if (PC)
+	//		{
+	//			InteractionWidget = CreateWidget<UUserWidget>(PC, InteractionWidgetClass);
+	//			if (InteractionWidget)
+	//			{
+	//				InteractionWidget->AddToViewport();
+	//			}
+	//		}
+	//	}
+
+	//	AChest* chest = Cast<AChest>(OtherActor);
+	//	OverlappingChest = chest;
+	//}
 }
 
 void AMultiplayerActionCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (OtherActor && OtherActor->IsA(AChest::StaticClass()))
+	if (!OtherActor)
 	{
-		// Remove widget from viewport
-		if (InteractionWidget)
-		{
-			InteractionWidget->RemoveFromParent();
-			InteractionWidget = nullptr;
-		}
-
-		APlayerController* PC = Cast<APlayerController>(GetController());
-		if (PC)
-		{
-			PC->SetInputMode(FInputModeGameOnly());
-			PC->bShowMouseCursor = false;
-		}
-
-		OverlappingChest->CloseChest(); // Close the chest if it was open
-		OverlappingChest = nullptr;
+		return;
 	}
+
+	// 1. Check if the actor we are no longer overlapping is the one we were interacting with.
+	if (OtherActor == CurrentInteractable.GetObject())
+	{
+		// 2. Tell the object that we are no longer focused on it.
+		// This lets the object hide its own UI prompt.
+		IOutpostInteractable::Execute_OnEndFocus(OtherActor, this);
+
+		// 3. Clear our reference.
+		CurrentInteractable = nullptr;
+	}
+
+	//if (OtherActor && OtherActor->IsA(AChest::StaticClass()))
+	//{
+	//	// Remove widget from viewport
+	//	if (InteractionWidget)
+	//	{
+	//		InteractionWidget->RemoveFromParent();
+	//		InteractionWidget = nullptr;
+	//	}
+
+	//	APlayerController* PC = Cast<APlayerController>(GetController());
+	//	if (PC)
+	//	{
+	//		PC->SetInputMode(FInputModeGameOnly());
+	//		PC->bShowMouseCursor = false;
+	//	}
+
+	//	OverlappingChest->CloseChest(); // Close the chest if it was open
+	//	OverlappingChest = nullptr;
+	//}
 }
 
 void AMultiplayerActionCharacter::InitializeGroupMembership(TObjectPtr<class AAIGroupManager> GroupManager)
