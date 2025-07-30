@@ -169,17 +169,13 @@ public:
 
     USoundBase* GetMovementLoopSound() const { return MovementLoopSound; }
 
-    UFUNCTION(Server, Reliable)
-    void ServerReliableRPC_PlayInteractionMontage();
+    void PlayInteractionMontage();
 
-    UFUNCTION(Server, Reliable)
-    void ServerReliableRPC_StopInteractionMontage();
+    void StopInteractionMontage();
 
-    UFUNCTION(Server, Reliable)
-    void ServerReliableRPC_PlayPrayMontage();
+    void PlayPrayMontage();
 
-    UFUNCTION(Server, Reliable)
-    void ServerReliableRPC_StopPrayMontage();
+    void StopPrayMontage();
 
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio")

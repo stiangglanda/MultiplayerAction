@@ -867,22 +867,22 @@ void AMultiplayerActionCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedCo
 	//}
 }
 
-void AMultiplayerActionCharacter::ServerReliableRPC_PlayInteractionMontage_Implementation()
+void AMultiplayerActionCharacter::PlayInteractionMontage()
 {
 	// Only the server should be able to initiate this replicated animation
-	//if (HasAuthority())
-	//{
+	if (HasAuthority())
+	{
 		Multicast_PlayInteractionMontage();
-	//}
+	}
 }
 
 // This function is called BY THE SERVER (e.g., from the Shrine)
-void AMultiplayerActionCharacter::ServerReliableRPC_StopInteractionMontage_Implementation()
+void AMultiplayerActionCharacter::StopInteractionMontage()
 {
-	//if (HasAuthority())
-	//{
+	if (HasAuthority())
+	{
 		Multicast_StopInteractionMontage();
-	//}
+	}
 }
 
 
@@ -926,22 +926,22 @@ void AMultiplayerActionCharacter::Multicast_StopInteractionMontage_Implementatio
 	}
 }
 
-void AMultiplayerActionCharacter::ServerReliableRPC_PlayPrayMontage_Implementation()
+void AMultiplayerActionCharacter::PlayPrayMontage()
 {
 	// Only the server should be able to initiate this replicated animation
-	//if (HasAuthority())
-	//{
+	if (HasAuthority())
+	{
 		Multicast_PlayPrayMontage();
-	//}
+	}
 }
 
 // This function is called BY THE SERVER (e.g., from the Shrine)
-void AMultiplayerActionCharacter::ServerReliableRPC_StopPrayMontage_Implementation()
+void AMultiplayerActionCharacter::StopPrayMontage()
 {
-	//if (HasAuthority())
-	//{
+	if (HasAuthority())
+	{
 		Multicast_StopPrayMontage();
-	//}
+	}
 }
 
 

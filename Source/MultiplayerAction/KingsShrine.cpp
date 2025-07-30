@@ -146,6 +146,7 @@ bool AKingsShrine::IsCompleted()
 // This function ONLY executes on the SERVER.
 void AKingsShrine::Server_StartInteraction_Implementation(APawn* InstigatorPawn)
 {
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("AKingsShrine"));
 	if (bIsKeyTaken || InteractionTimerHandle.IsValid() || !InstigatorPawn)
 	{
 		return;
@@ -156,7 +157,7 @@ void AKingsShrine::Server_StartInteraction_Implementation(APawn* InstigatorPawn)
 	AMultiplayerActionCharacter* InteractingCharacter = Cast<AMultiplayerActionCharacter>(InteractingPlayer);
 	if (InteractingCharacter)
 	{
-		InteractingCharacter->ServerReliableRPC_PlayInteractionMontage();
+		InteractingCharacter->PlayInteractionMontage();
 	}
 
 	GetWorld()->GetTimerManager().SetTimer(
@@ -179,7 +180,7 @@ void AKingsShrine::Server_StopInteraction_Implementation()
 		if (InteractingCharacter)
 		{
 			// Tell the character to stop its replicated animation
-			InteractingCharacter->ServerReliableRPC_StopInteractionMontage();
+			InteractingCharacter->StopInteractionMontage();
 		}
 
 		GetWorld()->GetTimerManager().ClearTimer(InteractionTimerHandle);
@@ -196,7 +197,7 @@ void AKingsShrine::OnInteractionComplete()
 	AMultiplayerActionCharacter* InteractingCharacter = Cast<AMultiplayerActionCharacter>(InteractingPlayer);
 	if (InteractingCharacter)
 	{
-		InteractingCharacter->ServerReliableRPC_StopInteractionMontage();
+		InteractingCharacter->StopInteractionMontage();
 	}
 
 	if (GroupManager)
