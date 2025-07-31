@@ -8,6 +8,7 @@
 #include "AIGroupManager.h"
 #include "MultiplayerActionCharacter.h"
 #include <Blueprint/WidgetBlueprintLibrary.h>
+#include "DefaultGameState.h"
 
 // Sets default values
 AKingsShrine::AKingsShrine()
@@ -299,6 +300,13 @@ void AKingsShrine::OnInteractionComplete()
 	{
 		// Tell the group manager to assign the interacting player as the new leader.
 		GroupManager->SetGroupLeader(InteractingCharacter);
+	}
+
+	ADefaultGameState* GameState = GetWorld()->GetGameState<ADefaultGameState>();
+	if (GameState)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Shrine reporting to GameState: King's Key has been acquired."));
+		GameState->SetHasKingsKey(true);
 	}
 
 	// Set the replicated variable. This will trigger OnRep_KeyTaken on all clients.

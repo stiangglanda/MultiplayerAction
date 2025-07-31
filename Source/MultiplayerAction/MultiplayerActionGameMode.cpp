@@ -3,6 +3,7 @@
 #include "MultiplayerActionGameMode.h"
 #include "MultiplayerActionCharacter.h"
 #include "UObject/ConstructorHelpers.h"
+#include "DefaultGameState.h"
 
 AMultiplayerActionGameMode::AMultiplayerActionGameMode()
 {
@@ -12,4 +13,6 @@ AMultiplayerActionGameMode::AMultiplayerActionGameMode()
 	{
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}
+
+	GameStateClass = ADefaultGameState::StaticClass();
 }
