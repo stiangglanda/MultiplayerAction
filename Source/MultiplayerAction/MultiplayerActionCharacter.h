@@ -8,6 +8,7 @@
 #include "Runtime/UMG/Public/UMG.h"
 #include <Components/SphereComponent.h>
 #include "OutpostInteractable.h"
+#include "InteractionProgressBarWidget.h"
 #include "MultiplayerActionCharacter.generated.h"
 
 class USpringArmComponent;
@@ -222,6 +223,9 @@ protected:
 
     UPROPERTY()
     UUserWidget* InteractionWidget;
+
+    UPROPERTY()
+    TObjectPtr<UInteractionProgressBarWidget> ShrineProgressWidget;
 
     bool bIsAttacking = false;
     bool IsRolling = false;

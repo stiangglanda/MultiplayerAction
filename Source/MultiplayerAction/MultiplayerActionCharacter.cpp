@@ -20,6 +20,7 @@
 #include <Perception/AISense_Damage.h>
 #include <AIController.h>
 #include "BehaviorTree/BlackboardComponent.h"
+#include "KingsShrine.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -398,6 +399,32 @@ void AMultiplayerActionCharacter::Interact(const FInputActionValue& Value)
 			InteractionWidget = nullptr;
 		}
 
+		AKingsShrine* Shrine = Cast<AKingsShrine>(CurrentInteractable.GetObject());
+		if (Shrine)
+		{
+			// Check if we already have a progress widget. If so, don't create another.
+			if (!ShrineProgressWidget)
+			{
+				APlayerController* PC = GetController<APlayerController>();
+				if (PC && PC->IsLocalController())
+				{
+					// Get the widget class from the shrine actor itself.
+					TSubclassOf<UInteractionProgressBarWidget> WidgetClass = Shrine->GetProgressBarWidgetClass(); // We need to create this getter
+					if (WidgetClass)
+					{
+						// Create the widget
+						ShrineProgressWidget = CreateWidget<UInteractionProgressBarWidget>(PC, WidgetClass);
+						if (ShrineProgressWidget)
+						{
+							// Add it to the screen and start its progress animation
+							ShrineProgressWidget->AddToViewport();
+							ShrineProgressWidget->StartProgress(Shrine->GetInteractionDuration());
+						}
+					}
+				}
+			}
+		}
+
 		AActor* InteractableActor = Cast<AActor>(CurrentInteractable.GetObject());
 		if (InteractableActor)
 		{
@@ -436,6 +463,12 @@ void AMultiplayerActionCharacter::Interact(const FInputActionValue& Value)
 
 void AMultiplayerActionCharacter::StopInteract(const FInputActionValue& Value)
 {
+	if (ShrineProgressWidget)
+	{
+		ShrineProgressWidget->RemoveFromParent();
+		ShrineProgressWidget = nullptr; // Set pointer to null so it can be created again.
+	}
+
 	if (CurrentInteractable)
 	{
 		AActor* InteractableActor = Cast<AActor>(CurrentInteractable.GetObject());
@@ -862,6 +895,12 @@ void AMultiplayerActionCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedCo
 			InteractionWidget = nullptr;
 		}
 
+		if (ShrineProgressWidget)
+		{
+			ShrineProgressWidget->RemoveFromParent();
+			ShrineProgressWidget = nullptr; // Set pointer to null so it can be created again.
+		}
+
 		// 2. Tell the object that we are no longer focused on it.
 		// This lets the object hide its own UI prompt.
 		IOutpostInteractable::Execute_OnEndFocus(OtherActor, this);
@@ -985,7 +1024,7 @@ void AMultiplayerActionCharacter::Multicast_PlayPrayMontage_Implementation()
 	if (PrayMontage)
 	{
 		// Play the looping section of the montage
-		PlayAnimMontage(PrayMontage, 1.0f, FName("Loop"));
+		PlayAnimMontage(PrayMontage, 1.0f);
 	}
 }
 

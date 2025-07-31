@@ -22,6 +22,12 @@ public:
 	UPROPERTY(EditInstanceOnly, Category = "AI Group")
 	TObjectPtr<class AAIGroupManager> GroupManager;
 
+	UFUNCTION(BlueprintPure, Category = "Shrine")
+	TSubclassOf<UInteractionProgressBarWidget> GetProgressBarWidgetClass() const { return InteractionProgressBarWidgetClass; }
+
+	UFUNCTION(BlueprintPure, Category = "Shrine")
+	float GetInteractionDuration() const { return InteractionDuration; }
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -82,12 +88,12 @@ protected:
 	UFUNCTION()
 	void OnInteractionComplete();
 
-	UFUNCTION(Client, Reliable)
-	void Client_ShowInteractionUI(APlayerController* PlayerToTell);
+	//UFUNCTION(Client, Reliable)
+	//void Client_ShowInteractionUI(APlayerController* PlayerToTell);
 
-	/** [CLIENT] Tells a specific client to hide the progress bar UI. */
-	UFUNCTION(Client, Reliable)
-	void Client_HideInteractionUI(APlayerController* PlayerToTell);
+	///** [CLIENT] Tells a specific client to hide the progress bar UI. */
+	//UFUNCTION(Client, Reliable)
+	//void Client_HideInteractionUI(APlayerController* PlayerToTell);
 
 public:
 	// --- INTERFACE IMPLEMENTATION ---

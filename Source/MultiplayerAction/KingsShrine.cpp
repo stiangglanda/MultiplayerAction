@@ -55,22 +55,22 @@ void AKingsShrine::OnInteract_Implementation(APawn* InstigatorPawn)
 {
 	if (!InstigatorPawn) return;
 
-	// Get the controller associated with the pawn that started the interaction.
 	APlayerController* PC = InstigatorPawn->GetController<APlayerController>();
-	if (!PC) return;
+	if (!PC)
+	{
+		UE_LOG(LogTemp, Error, TEXT("OnInteract (SERVER): FAILED to get PlayerController from InstigatorPawn!"));
+		return;
+	}
 
 	if (bIsKeyTaken)
 	{
-		// Tell this specific client to show the "completed" message.
-		// We can reuse the "show" RPC and handle the logic inside the widget.
-		Client_ShowInteractionUI(PC);
+		UE_LOG(LogTemp, Warning, TEXT("OnInteract (SERVER): Key is taken. Telling client to show 'Completed' message."));
+		//Client_ShowInteractionUI(PC);
 	}
 	else
 	{
-		// Tell this specific client to show the progress bar.
-		Client_ShowInteractionUI(PC);
-
-		// Start the server-side logic (timer, animation).
+		UE_LOG(LogTemp, Warning, TEXT("OnInteract (SERVER): Key is available. Telling client to show progress UI."));
+		//Client_ShowInteractionUI(PC);
 		StartInteraction(InstigatorPawn);
 	}
 
@@ -119,7 +119,7 @@ void AKingsShrine::OnStopInteract_Implementation(APawn* InstigatorPawn)
     if (!PC) return;
     
     // Tell this specific client to hide the UI.
-    Client_HideInteractionUI(PC);
+    //Client_HideInteractionUI(PC);
     
     // Stop the server-side logic.
     StopInteraction();
@@ -142,59 +142,58 @@ void AKingsShrine::OnStopInteract_Implementation(APawn* InstigatorPawn)
 	//}
 }
 
-void AKingsShrine::Client_ShowInteractionUI_Implementation(APlayerController* PlayerToTell)
-{
-	// First, check if we are the correct client to be showing this UI.
-	if (!PlayerToTell || !PlayerToTell->IsLocalController())
-	{
-		return;
-	}
-
-	// Now, create and show the widget. This is the logic that was previously on the Player Character.
-	if (InteractionProgressBarWidgetClass)
-	{
-		// Note: We create and manage the widget directly here. We don't need a member variable
-		// if we just want to show it. If you need to reference it to stop an animation,
-		// you'd store it on the PlayerController or a UI manager subsystem.
-		UInteractionProgressBarWidget* ProgressWidget = CreateWidget<UInteractionProgressBarWidget>(PlayerToTell, InteractionProgressBarWidgetClass);
-		if (ProgressWidget)
-		{
-			if (bIsKeyTaken)
-			{
-				ProgressWidget->ShowCompletedMessage();
-			}
-			else
-			{
-				ProgressWidget->StartProgress(InteractionDuration);
-			}
-			ProgressWidget->AddToViewport();
-		}
-	}
-}
+//void AKingsShrine::Client_ShowInteractionUI_Implementation(APlayerController* PlayerToTell)
+//{
+//	// First, check if we are the correct client to be showing this UI.
+//	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+//	if (!PC || !PC->IsLocalController())
+//	{
+//		// This check is a safety net.
+//		return;
+//	}
+//
+//	// Now that we are on the client, this CreateWidget call is VALID.
+//	if (InteractionProgressBarWidgetClass)
+//	{
+//		UInteractionProgressBarWidget* ProgressWidget = CreateWidget<UInteractionProgressBarWidget>(PC, InteractionProgressBarWidgetClass);
+//		if (ProgressWidget)
+//		{
+//			if (bIsKeyTaken)
+//			{
+//				ProgressWidget->ShowCompletedMessage();
+//			}
+//			else
+//			{
+//				ProgressWidget->StartProgress(InteractionDuration);
+//			}
+//			ProgressWidget->AddToViewport();
+//		}
+//	}
+//}
 
 // This function is CALLED on the server, but EXECUTES on the client's machine.
-void AKingsShrine::Client_HideInteractionUI_Implementation(APlayerController* PlayerToTell)
-{
-	if (!PlayerToTell || !PlayerToTell->IsLocalController())
-	{
-		return;
-	}
-
-	// This is harder because we don't have a direct reference to the widget we created.
-	// This is a classic problem with this pattern.
-	// SOLUTION: We need to give the widget a name or find it by class.
-
-	TArray<UUserWidget*> FoundWidgets;
-	UWidgetBlueprintLibrary::GetAllWidgetsOfClass(
-		GetWorld(), FoundWidgets, UInteractionProgressBarWidget::StaticClass()
-	);
-
-	for (UUserWidget* Widget : FoundWidgets)
-	{
-		// This will remove ALL instances of this widget class. For a single player game this is fine.
-		Widget->RemoveFromParent();
-	}
-}
+//void AKingsShrine::Client_HideInteractionUI_Implementation(APlayerController* PlayerToTell)
+//{
+//	if (!PlayerToTell || !PlayerToTell->IsLocalController())
+//	{
+//		return;
+//	}
+//
+//	// This is harder because we don't have a direct reference to the widget we created.
+//	// This is a classic problem with this pattern.
+//	// SOLUTION: We need to give the widget a name or find it by class.
+//
+//	TArray<UUserWidget*> FoundWidgets;
+//	UWidgetBlueprintLibrary::GetAllWidgetsOfClass(
+//		GetWorld(), FoundWidgets, UInteractionProgressBarWidget::StaticClass()
+//	);
+//
+//	for (UUserWidget* Widget : FoundWidgets)
+//	{
+//		// This will remove ALL instances of this widget class. For a single player game this is fine.
+//		Widget->RemoveFromParent();
+//	}
+//}
 
 void AKingsShrine::OnBeginFocus_Implementation(APawn* InstigatorPawn)
 {
@@ -242,7 +241,7 @@ bool AKingsShrine::IsCompleted()
 
 void AKingsShrine::StartInteraction(APawn* InstigatorPawn)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("AKingsShrine"));
+	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("AKingsShrine"));
 	if (bIsKeyTaken || InteractionTimerHandle.IsValid() || !InstigatorPawn)
 	{
 		return;
