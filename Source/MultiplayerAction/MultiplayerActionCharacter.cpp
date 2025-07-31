@@ -400,92 +400,7 @@ void AMultiplayerActionCharacter::Interact(const FInputActionValue& Value)
 		}
 
 		IOutpostInteractable::Execute_OnClientStartInteract(CurrentInteractable.GetObject(), this);
-
-		//AKingsShrine* Shrine = Cast<AKingsShrine>(CurrentInteractable.GetObject());
-		//if (Shrine)
-		//{
-		//	// --- THE CRITICAL FIX ---
-		//	// Ask the shrine for its current state BEFORE doing anything else.
-		//	// Since bIsKeyTaken is replicated, the client's version is accurate.
-		//	if (Shrine->IsKeyAlreadyTaken()) // We'll create this simple getter
-		//	{
-		//		// --- COMPLETED LOGIC ---
-		//		// The key is gone. We need to show the "Completed" message.
-		//		if (!ShrineProgressWidget)
-		//		{
-		//			APlayerController* PC = GetController<APlayerController>();
-		//			TSubclassOf<UInteractionProgressBarWidget> WidgetClass = Shrine->GetProgressBarWidgetClass();
-		//			if (PC && PC->IsLocalController() && WidgetClass)
-		//			{
-		//				ShrineProgressWidget = CreateWidget<UInteractionProgressBarWidget>(PC, WidgetClass);
-		//				if (ShrineProgressWidget)
-		//				{
-		//					ShrineProgressWidget->AddToViewport();
-		//					ShrineProgressWidget->ShowCompletedMessage();
-		//					// We use a timer to automatically hide this message after a couple of seconds.
-		//					FTimerHandle TempMessageTimer;
-		//					GetWorld()->GetTimerManager().SetTimer(TempMessageTimer, this, &AMultiplayerActionCharacter::HideTemporaryInteractionWidget, 2.0f, false);
-		//				}
-		//			}
-		//		}
-		//		// We do NOT call the server RPC because there's nothing for the server to do.
-		//		return; // Stop execution here.
-		//	}
-		//	else
-		//	{
-		//		// --- INTERACTION CAN PROCEED LOGIC ---
-		//		// The key is available. Create the widget and start the progress bar.
-		//		if (!ShrineProgressWidget)
-		//		{
-		//			APlayerController* PC = GetController<APlayerController>();
-		//			TSubclassOf<UInteractionProgressBarWidget> WidgetClass = Shrine->GetProgressBarWidgetClass();
-		//			if (PC && PC->IsLocalController() && WidgetClass)
-		//			{
-		//				ShrineProgressWidget = CreateWidget<UInteractionProgressBarWidget>(PC, WidgetClass);
-		//				if (ShrineProgressWidget)
-		//				{
-		//					ShrineProgressWidget->AddToViewport();
-		//					ShrineProgressWidget->StartProgress(Shrine->GetInteractionDuration());
-		//				}
-		//			}
-		//		}
-		//	}
-		//}
-
-		//AActor* InteractableActor = Cast<AActor>(CurrentInteractable.GetObject());
-		//if (InteractableActor)
-		//{
-		//	Server_RequestStartInteract(InteractableActor);
-		//}
 	}
-
-	//if (InteractionWidget)
-	//{
-	//	InteractionWidget->RemoveFromParent();
-	//	InteractionWidget = nullptr;
-	//}
-
-	//if (!OverlappingChest)
-	//{
-	//	return;
-	//}
-
-	//APlayerController* PC = Cast<APlayerController>(GetController());
-	//if (!PC)
-	//{
-	//	return;
-	//}
-
-	//if (OverlappingChest->ToggleOpenClose())
-	//{
-	//	PC->SetInputMode(FInputModeGameAndUI());
-	//	PC->bShowMouseCursor = true;
-	//}
-	//else
-	//{
-	//	PC->SetInputMode(FInputModeGameOnly());
-	//	PC->bShowMouseCursor = false;
-	//}
 }
 
 void AMultiplayerActionCharacter::StopInteract(const FInputActionValue& Value)
@@ -947,6 +862,13 @@ void AMultiplayerActionCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedCo
 
 		// 3. Clear our reference.
 		CurrentInteractable = nullptr;
+
+		APlayerController* PC = Cast<APlayerController>(GetController());
+		if (PC)
+		{
+			PC->SetInputMode(FInputModeGameOnly());
+			PC->bShowMouseCursor = false;
+		}
 	}
 
 	//if (OtherActor && OtherActor->IsA(AChest::StaticClass()))

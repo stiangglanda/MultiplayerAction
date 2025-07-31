@@ -91,39 +91,6 @@ void AChest::OpenChest(APawn* InstigatorPawn)
 
 	bOpen = true;
 }
-//void AChest::OpenChest()
-//{
-//	if (OpenCloseAnim)
-//	{
-//		UAnimInstance* AnimInstance = Mesh->GetAnimInstance();
-//		if (AnimInstance)
-//		{
-//			if (ChestOpenSound)
-//			{
-//				UGameplayStatics::PlaySoundAtLocation(this, ChestOpenSound, GetActorLocation());
-//			}
-//
-//			AnimInstance->Montage_Play(OpenCloseAnim, 1, EMontagePlayReturnType::MontageLength, AnimInstance->Montage_GetPosition(OpenCloseAnim), true);
-//		}
-//	}
-//
-//	if (ChestMenuWidgetClass && !ChestMenuWidget)
-//	{
-//		APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-//
-//		if (PC && PC->IsLocalController())
-//		{
-//			ChestMenuWidget = CreateWidget<UChestWidget>(PC, ChestMenuWidgetClass);
-//			if (ChestMenuWidget)
-//			{
-//				ChestMenuWidget->SetChestReference(this);
-//				ChestMenuWidget->AddToViewport();
-//			}
-//		}
-//	}
-//
-//	bOpen = !bOpen;
-//}
 
 void AChest::OnInteract_Implementation(APawn* InstigatorPawn)
 {
@@ -153,7 +120,6 @@ void AChest::OnInteract_Implementation(APawn* InstigatorPawn)
 		else
 		{
 			// Player does NOT have the key. Show feedback.
-			//Client_ShowFeedback(true, false);
 		}
 	}
 }
@@ -181,7 +147,8 @@ void AChest::OnClientStartInteract_Implementation(AMultiplayerActionCharacter* I
 	if (bIsUnlocked)
 	{
 		// Chest is unlocked, just tell the server to open it.
-		InteractingCharacter->Server_RequestStartInteract(this);
+		OnInteract_Implementation(InteractingCharacter);
+		//InteractingCharacter->Server_RequestStartInteract(this);
 	}
 	else if (GameState && GameState->bHasKingsKey)
 	{
@@ -226,19 +193,6 @@ void AChest::OnClientStartInteract_Implementation(AMultiplayerActionCharacter* I
 	}
 }
 
-//bool AChest::ToggleOpenClose()
-//{
-//	if(bOpen)
-//	{
-//		CloseChest();
-//	}
-//	else
-//	{
-//		OpenChest();
-//	}
-//	return bOpen;
-//}
-
 void AChest::CloseChest(APawn* InstigatorPawn)
 {
 	if (!bOpen) return;
@@ -278,35 +232,6 @@ void AChest::CloseChest(APawn* InstigatorPawn)
 
 	bOpen = false;
 }
-
-//void AChest::CloseChest()
-//{
-//	if (!bOpen)
-//		return;
-//	
-//	if (OpenCloseAnim)
-//	{
-//		UAnimInstance* AnimInstance = Mesh->GetAnimInstance();
-//		if (AnimInstance)
-//		{
-//			if (ChestCloseSound)
-//			{
-//				UGameplayStatics::PlaySoundAtLocation(this, ChestCloseSound, GetActorLocation());
-//			}
-//
-//			float CurrentPosition = AnimInstance->Montage_GetPosition(OpenCloseAnim) == 0 ? OpenCloseAnim->GetPlayLength() : AnimInstance->Montage_GetPosition(OpenCloseAnim);
-//			AnimInstance->Montage_Play(OpenCloseAnim,-1,EMontagePlayReturnType::MontageLength, CurrentPosition, true);
-//		}
-//	}
-//
-//	if (ChestMenuWidget)
-//	{
-//		ChestMenuWidget->RemoveFromParent();
-//		ChestMenuWidget = nullptr;
-//	}
-//
-//	bOpen = !bOpen;
-//}
 
 FWeaponData* AChest::GetChestContents()
 {
@@ -370,55 +295,12 @@ void AChest::OnUnlockComplete()
 		Char->StopInteractionMontage();
 	}
 
-	// Tell the client to hide the UI
-	//Client_HideUnlockUI();
-
 	// Set the replicated state
 	bIsUnlocked = true;
 	OnRep_Unlocked(); // Call for server
 
 	InteractingPlayer = nullptr;
 }
-
-//void AChest::Client_ShowUnlockUI_Implementation()
-//{
-//	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-//	if (PC && PC->IsLocalController() && UnlockingWidgetClass)
-//	{
-//		UInteractionProgressBarWidget* UnlockWidget = CreateWidget<UInteractionProgressBarWidget>(PC, UnlockingWidgetClass);
-//		if (UnlockWidget)
-//		{
-//			UnlockWidget->AddToViewport();
-//			UnlockWidget->StartProgress(UnlockDuration);
-//		}
-//	}
-//}
-
-//void AChest::Client_ShowFeedback_Implementation(bool bIsLocked, bool bHasKey)
-//{
-//	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-//	if (PC && PC->IsLocalController())
-//	{
-//		if (bIsLocked && !bHasKey)
-//		{
-//			// Play locked sound, show "Requires King's Key" widget.
-//			if (ChestLockedSound) UGameplayStatics::PlaySoundAtLocation(this, ChestLockedSound, GetActorLocation());
-//			// Create and show a temporary "Locked" widget...
-//		}
-//	}
-//}
-
-//void AChest::Client_HideUnlockUI_Implementation()
-//{
-//	TArray<UUserWidget*> FoundWidgets;
-//	UWidgetBlueprintLibrary::GetAllWidgetsOfClass(
-//		GetWorld(), FoundWidgets, UnlockingWidgetClass
-//	);
-//	for (UUserWidget* Widget : FoundWidgets)
-//	{
-//		Widget->RemoveFromParent();
-//	}
-//}
 
 void AChest::OnRep_Unlocked()
 {
@@ -441,9 +323,6 @@ void AChest::Server_CancelUnlock_Implementation()
 				Char->StopInteractionMontage();
 			}
 		}
-
-		// Tell the client to hide the progress bar
-		//Client_HideUnlockUI();
 		InteractingPlayer = nullptr;
 	}
 }
@@ -467,7 +346,5 @@ void AChest::Server_BeginUnlock_Implementation(APawn* InstigatorPawn)
 		Char->PlayInteractionMontage(UnlockMontage);
 	}
 
-	// Tell the client to show the progress bar
-	//Client_ShowUnlockUI();
 }
 
