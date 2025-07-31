@@ -397,9 +397,12 @@ void AMultiplayerActionCharacter::Interact(const FInputActionValue& Value)
 			InteractionWidget->RemoveFromParent();
 			InteractionWidget = nullptr;
 		}
-		// 2. Call the generic OnInteract function on the object.
-		// We pass 'this' as the InstigatorPawn.
-		IOutpostInteractable::Execute_OnInteract(CurrentInteractable.GetObject(), this);
+
+		AActor* InteractableActor = Cast<AActor>(CurrentInteractable.GetObject());
+		if (InteractableActor)
+		{
+			Server_RequestStartInteract(InteractableActor);
+		}
 	}
 
 	//if (InteractionWidget)
@@ -435,8 +438,11 @@ void AMultiplayerActionCharacter::StopInteract(const FInputActionValue& Value)
 {
 	if (CurrentInteractable)
 	{
-		// This will be used by the Shrine when the player releases the key.
-		IOutpostInteractable::Execute_OnStopInteract(CurrentInteractable.GetObject(), this);
+		AActor* InteractableActor = Cast<AActor>(CurrentInteractable.GetObject());
+		if (InteractableActor)
+		{
+			Server_RequestStopInteract(InteractableActor);
+		}
 	}
 }
 
@@ -624,6 +630,24 @@ void AMultiplayerActionCharacter::NetMulticastReliableRPC_SwapWeapon_Implementat
 	}
 	WeaponClass = NewWeaponClass;
 	OnRep_WeaponClass();
+}
+
+void AMultiplayerActionCharacter::Server_RequestStartInteract_Implementation(AActor* InteractableActor)
+{
+	if (InteractableActor && InteractableActor->Implements<UOutpostInteractable>())
+	{
+		// Call the interface function on the shrine (or chest, etc.).
+		// The 'this' pointer here refers to the server-side pawn.
+		IOutpostInteractable::Execute_OnInteract(InteractableActor, this);
+	}
+}
+
+void AMultiplayerActionCharacter::Server_RequestStopInteract_Implementation(AActor* InteractableActor)
+{
+	if (InteractableActor && InteractableActor->Implements<UOutpostInteractable>())
+	{
+		IOutpostInteractable::Execute_OnStopInteract(InteractableActor, this);
+	}
 }
 
 void AMultiplayerActionCharacter::PerformWeaponTrace()

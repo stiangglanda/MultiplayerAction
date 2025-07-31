@@ -283,6 +283,12 @@ protected:
     UFUNCTION(NetMulticast, Reliable)
     void Multicast_StopPrayMontage();
 
+    UFUNCTION(Server, Reliable)
+    void Server_RequestStartInteract(AActor* InteractableActor);
+
+    UFUNCTION(Server, Reliable)
+    void Server_RequestStopInteract(AActor* InteractableActor);
+
     FTimerHandle WeaponTraceTimer;
     virtual void PerformWeaponTrace();
     void StartWeaponTrace();

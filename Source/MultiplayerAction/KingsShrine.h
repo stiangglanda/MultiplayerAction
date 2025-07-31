@@ -71,16 +71,23 @@ protected:
 	// --- NETWORKING FUNCTIONS ---
 protected:
 	/** [CLIENT] Called by the player to request starting the interaction. */
-	UFUNCTION(Server, Reliable)
-	void Server_StartInteraction(APawn* InstigatorPawn);
+	UFUNCTION()
+	void StartInteraction(APawn* InstigatorPawn);
 
 	/** [CLIENT] Called by the player when they stop interacting (e.g., release key or move away). */
-	UFUNCTION(Server, Reliable)
-	void Server_StopInteraction();
+	UFUNCTION()
+	void StopInteraction();
 
 	/** [SERVER] Called by the timer when the interaction is successfully completed. */
 	UFUNCTION()
 	void OnInteractionComplete();
+
+	UFUNCTION(Client, Reliable)
+	void Client_ShowInteractionUI(APlayerController* PlayerToTell);
+
+	/** [CLIENT] Tells a specific client to hide the progress bar UI. */
+	UFUNCTION(Client, Reliable)
+	void Client_HideInteractionUI(APlayerController* PlayerToTell);
 
 public:
 	// --- INTERFACE IMPLEMENTATION ---

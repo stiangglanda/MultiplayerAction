@@ -7,6 +7,7 @@
 #include <Net/UnrealNetwork.h>
 #include "AIGroupManager.h"
 #include "MultiplayerActionCharacter.h"
+#include <Blueprint/WidgetBlueprintLibrary.h>
 
 // Sets default values
 AKingsShrine::AKingsShrine()
@@ -52,62 +53,146 @@ void AKingsShrine::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 void AKingsShrine::OnInteract_Implementation(APawn* InstigatorPawn)
 {
-	if (!InstigatorPawn)
-	{
-		return;
-	}
+	if (!InstigatorPawn) return;
 
-	// Get the widget instance first, as we'll need it in either case.
-	UInteractionProgressBarWidget* ProgressBarWidget = nullptr;
-	if (InteractionPromptWidget)
-	{
-		// We cast here once to avoid repeating code.
-		ProgressBarWidget = Cast<UInteractionProgressBarWidget>(InteractionPromptWidget->GetUserWidgetObject());
-	}
+	// Get the controller associated with the pawn that started the interaction.
+	APlayerController* PC = InstigatorPawn->GetController<APlayerController>();
+	if (!PC) return;
 
-	if (!ProgressBarWidget)
-	{
-		// If we can't get the widget, we can't do anything.
-		return;
-	}
-
-	// --- THE CORE LOGIC CHANGE ---
-	// First, check the state of the shrine.
 	if (bIsKeyTaken)
 	{
-		// The key is already gone. Show the "completed" message.
-		InteractionPromptWidget->SetVisibility(true); // Make sure the component is visible
-		ProgressBarWidget->ShowCompletedMessage();
+		// Tell this specific client to show the "completed" message.
+		// We can reuse the "show" RPC and handle the logic inside the widget.
+		Client_ShowInteractionUI(PC);
 	}
 	else
 	{
-		// The key is available. Proceed with the normal interaction.
-		InteractionPromptWidget->SetVisibility(true);
-		ProgressBarWidget->StartProgress(InteractionDuration);
+		// Tell this specific client to show the progress bar.
+		Client_ShowInteractionUI(PC);
 
-		// Tell the server to start the timer.
-		Server_StartInteraction(InstigatorPawn);
+		// Start the server-side logic (timer, animation).
+		StartInteraction(InstigatorPawn);
 	}
+
+	//if (!InstigatorPawn)
+	//{
+	//	return;
+	//}
+
+	// Get the widget instance first, as we'll need it in either case.
+	//UInteractionProgressBarWidget* ProgressBarWidget = nullptr;
+	//if (InteractionPromptWidget)
+	//{
+	//	// We cast here once to avoid repeating code.
+	//	ProgressBarWidget = Cast<UInteractionProgressBarWidget>(InteractionPromptWidget->GetUserWidgetObject());
+	//}
+
+	//if (!ProgressBarWidget)
+	//{
+	//	// If we can't get the widget, we can't do anything.
+	//	return;
+	//}
+
+	//// --- THE CORE LOGIC CHANGE ---
+	//// First, check the state of the shrine.
+	//if (bIsKeyTaken)
+	//{
+	//	// The key is already gone. Show the "completed" message.
+	//	InteractionPromptWidget->SetVisibility(true); // Make sure the component is visible
+	//	ProgressBarWidget->ShowCompletedMessage();
+	//}
+	//else
+	//{
+	//	// The key is available. Proceed with the normal interaction.
+	//	InteractionPromptWidget->SetVisibility(true);
+	//	ProgressBarWidget->StartProgress(InteractionDuration);
+
+	//	// Tell the server to start the timer.
+	//	Server_StartInteraction(InstigatorPawn);
+	//}
 }
 
 void AKingsShrine::OnStopInteract_Implementation(APawn* InstigatorPawn)
 {
+	if (!InstigatorPawn) return;
+    APlayerController* PC = InstigatorPawn->GetController<APlayerController>();
+    if (!PC) return;
+    
+    // Tell this specific client to hide the UI.
+    Client_HideInteractionUI(PC);
+    
+    // Stop the server-side logic.
+    StopInteraction();
 	// When the player releases "E", they are stopping the interaction.
 	// Call our server function to cancel the timer.
-	Server_StopInteraction();
+	//Server_StopInteraction();
 
-	// Handle hiding the UI on the client that released the key.
-	if (InstigatorPawn)
+	//// Handle hiding the UI on the client that released the key.
+	//if (InstigatorPawn)
+	//{
+	//	if (InteractionPromptWidget)
+	//	{
+	//		UInteractionProgressBarWidget* ProgressBarWidget = Cast<UInteractionProgressBarWidget>(InteractionPromptWidget->GetUserWidgetObject());
+	//		if (ProgressBarWidget)
+	//		{
+	//			ProgressBarWidget->StopProgress(); // Assuming you have a Stop function
+	//		}
+	//		InteractionPromptWidget->SetVisibility(false);
+	//	}
+	//}
+}
+
+void AKingsShrine::Client_ShowInteractionUI_Implementation(APlayerController* PlayerToTell)
+{
+	// First, check if we are the correct client to be showing this UI.
+	if (!PlayerToTell || !PlayerToTell->IsLocalController())
 	{
-		if (InteractionPromptWidget)
+		return;
+	}
+
+	// Now, create and show the widget. This is the logic that was previously on the Player Character.
+	if (InteractionProgressBarWidgetClass)
+	{
+		// Note: We create and manage the widget directly here. We don't need a member variable
+		// if we just want to show it. If you need to reference it to stop an animation,
+		// you'd store it on the PlayerController or a UI manager subsystem.
+		UInteractionProgressBarWidget* ProgressWidget = CreateWidget<UInteractionProgressBarWidget>(PlayerToTell, InteractionProgressBarWidgetClass);
+		if (ProgressWidget)
 		{
-			UInteractionProgressBarWidget* ProgressBarWidget = Cast<UInteractionProgressBarWidget>(InteractionPromptWidget->GetUserWidgetObject());
-			if (ProgressBarWidget)
+			if (bIsKeyTaken)
 			{
-				ProgressBarWidget->StopProgress(); // Assuming you have a Stop function
+				ProgressWidget->ShowCompletedMessage();
 			}
-			InteractionPromptWidget->SetVisibility(false);
+			else
+			{
+				ProgressWidget->StartProgress(InteractionDuration);
+			}
+			ProgressWidget->AddToViewport();
 		}
+	}
+}
+
+// This function is CALLED on the server, but EXECUTES on the client's machine.
+void AKingsShrine::Client_HideInteractionUI_Implementation(APlayerController* PlayerToTell)
+{
+	if (!PlayerToTell || !PlayerToTell->IsLocalController())
+	{
+		return;
+	}
+
+	// This is harder because we don't have a direct reference to the widget we created.
+	// This is a classic problem with this pattern.
+	// SOLUTION: We need to give the widget a name or find it by class.
+
+	TArray<UUserWidget*> FoundWidgets;
+	UWidgetBlueprintLibrary::GetAllWidgetsOfClass(
+		GetWorld(), FoundWidgets, UInteractionProgressBarWidget::StaticClass()
+	);
+
+	for (UUserWidget* Widget : FoundWidgets)
+	{
+		// This will remove ALL instances of this widget class. For a single player game this is fine.
+		Widget->RemoveFromParent();
 	}
 }
 
@@ -143,8 +228,19 @@ bool AKingsShrine::IsCompleted()
 }
 
 
+//// This function ONLY executes on the SERVER.
+//void AKingsShrine::Server_StartInteraction_Implementation(APawn* InstigatorPawn)
+//{
+//
+//}
+
 // This function ONLY executes on the SERVER.
-void AKingsShrine::Server_StartInteraction_Implementation(APawn* InstigatorPawn)
+//void AKingsShrine::Server_StopInteraction_Implementation()
+//{
+//
+//}
+
+void AKingsShrine::StartInteraction(APawn* InstigatorPawn)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("AKingsShrine"));
 	if (bIsKeyTaken || InteractionTimerHandle.IsValid() || !InstigatorPawn)
@@ -171,8 +267,7 @@ void AKingsShrine::Server_StartInteraction_Implementation(APawn* InstigatorPawn)
 	UE_LOG(LogTemp, Warning, TEXT("Server: Shrine interaction started by %s."), *InstigatorPawn->GetName());
 }
 
-// This function ONLY executes on the SERVER.
-void AKingsShrine::Server_StopInteraction_Implementation()
+void AKingsShrine::StopInteraction()
 {
 	if (InteractionTimerHandle.IsValid())
 	{
