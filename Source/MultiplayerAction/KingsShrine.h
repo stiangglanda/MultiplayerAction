@@ -54,6 +54,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UInteractionProgressBarWidget> InteractionProgressBarWidgetClass;
 
+	UPROPERTY(EditAnywhere, Category = "Animations")
+	TObjectPtr<UAnimMontage> ShrineChannelingMontage; // The player plays this
+
 	// --- INTERACTION LOGIC ---
 
 	/** The player currently interacting with the shrine. Only one at a time. */

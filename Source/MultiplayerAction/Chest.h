@@ -12,6 +12,8 @@
 #include "ChestWidget.h"
 #include "Chest.generated.h"
 
+class UInteractionProgressBarWidget;
+
 UCLASS()
 class MULTIPLAYERACTION_API AChest : public AActor, public IChestInterface, public IOutpostInteractable
 {
@@ -40,36 +42,87 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Chest")
 	UAnimMontage* OpenCloseAnim;
 
+	UPROPERTY(EditAnywhere, Category = "Animations")
+	TObjectPtr<UAnimMontage> UnlockMontage; // The player plays this
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
 	TObjectPtr<USoundBase> ChestOpenSound;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
 	TObjectPtr<USoundBase> ChestCloseSound;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Audio")
+	TObjectPtr<USoundBase> ChestLockedSound;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Audio")
+	TObjectPtr<USoundBase> ChestUnlockSound;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<UChestWidget> ChestMenuWidgetClass;
+
+	UPROPERTY(EditAnywhere, Category = "UI")
+	TSubclassOf<UInteractionProgressBarWidget> UnlockingWidgetClass;
 
 	UPROPERTY()
 	UChestWidget* ChestMenuWidget;
 
-	bool bOpen;
+	UPROPERTY(EditAnywhere, Category = "Interaction")
+	float UnlockDuration = 5.0f;
+
+	FTimerHandle UnlockTimerHandle;
+
+	UPROPERTY()
+	TObjectPtr<APawn> InteractingPlayer;
+
+	bool bOpen = false;
 
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UPROPERTY(ReplicatedUsing = OnRep_Unlocked)
+	bool bIsUnlocked = false;
 
 public:	
-	UFUNCTION()
-	void OpenChest(APawn* InstigatorPawn);
-
 	//UFUNCTION()
 	//bool ToggleOpenClose(APawn* InstigatorPawn);//return true if opened, false if closed
 	virtual void OnInteract_Implementation(APawn* InstigatorPawn) override;
 
+	virtual void OnStopInteract_Implementation(APawn* InstigatorPawn) override;
+
 	virtual void OnEndFocus_Implementation(APawn* InstigatorPawn) override;
+
+	UFUNCTION()
+	void OpenChest(APawn* InstigatorPawn);
 
 	UFUNCTION()
 	void CloseChest(APawn* InstigatorPawn);
 
 	virtual void Tick(float DeltaTime) override;
 
-	bool IsCompleted() override;
+	virtual bool IsCompleted() override;
+
+protected:
+	// --- SERVER-SIDE LOGIC ---
+	UFUNCTION(Server, Reliable)
+	void Server_BeginUnlock(APawn* InstigatorPawn);
+
+	UFUNCTION(Server, Reliable)
+	void Server_CancelUnlock();
+
+	UFUNCTION()
+	void OnUnlockComplete();
+
+	// --- CLIENT-SIDE UI COMMANDS ---
+	UFUNCTION(Client, Reliable)
+	void Client_ShowFeedback(bool bIsLocked, bool bHasKey);
+
+	UFUNCTION(Client, Reliable)
+	void Client_ShowUnlockUI();
+
+	UFUNCTION(Client, Reliable)
+	void Client_HideUnlockUI();
+
+	// --- REPLICATION ---
+	UFUNCTION()
+	void OnRep_Unlocked();
 };

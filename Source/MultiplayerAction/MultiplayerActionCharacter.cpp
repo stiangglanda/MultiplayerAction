@@ -626,6 +626,7 @@ void AMultiplayerActionCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePro
 	//Replicate current health.
 	DOREPLIFETIME(AMultiplayerActionCharacter, Health);
 	DOREPLIFETIME(AMultiplayerActionCharacter, WeaponClass);
+	DOREPLIFETIME(AMultiplayerActionCharacter, CurrentInteractionMontage);
 }
 
 bool AMultiplayerActionCharacter::IsDead()
@@ -955,12 +956,16 @@ void AMultiplayerActionCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedCo
 	//}
 }
 
-void AMultiplayerActionCharacter::PlayInteractionMontage()
+void AMultiplayerActionCharacter::PlayInteractionMontage(UAnimMontage* MontageToPlay)
 {
 	// Only the server should be able to initiate this replicated animation
-	if (HasAuthority())
+	if (HasAuthority() && MontageToPlay)
 	{
-		Multicast_PlayInteractionMontage();
+		// Set the current montage on the server
+		CurrentInteractionMontage = MontageToPlay;
+
+		// Call the multicast function, passing the montage along
+		Multicast_PlayInteractionMontage(MontageToPlay);
 	}
 }
 
@@ -969,109 +974,100 @@ void AMultiplayerActionCharacter::StopInteractionMontage()
 {
 	if (HasAuthority())
 	{
+		// The multicast stop doesn't need a parameter, it will use CurrentInteractionMontage
 		Multicast_StopInteractionMontage();
+
+		// Clear the current montage on the server
+		CurrentInteractionMontage = nullptr;
 	}
 }
 
 
 // This function executes on the SERVER and then REPLICATES to ALL CLIENTS
-void AMultiplayerActionCharacter::Multicast_PlayInteractionMontage_Implementation()
+void AMultiplayerActionCharacter::Multicast_PlayInteractionMontage_Implementation(UAnimMontage* MontageToPlay)
 {
-	if (Weapon) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
-	{
-		Weapon->SetVisibility(false);
-	}
+	if (Weapon) { Weapon->SetVisibility(false); }
+	if (ShieldMesh) { ShieldMesh->SetVisibility(false); }
 
-	if (ShieldMesh) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
+	// Play the specific montage that was passed from the server
+	if (MontageToPlay)
 	{
-		ShieldMesh->SetVisibility(false);
-	}
-
-	if (InteractionMontage)
-	{
-		// Play the looping section of the montage
-		PlayAnimMontage(InteractionMontage, 1.0f);
+		CurrentInteractionMontage = MontageToPlay; // Ensure clients also have the correct reference
+		PlayAnimMontage(MontageToPlay); // You can specify a section name if needed, e.g., FName("Loop")
 	}
 }
 
 // This function executes on the SERVER and then REPLICATES to ALL CLIENTS
 void AMultiplayerActionCharacter::Multicast_StopInteractionMontage_Implementation()
 {
-	if (Weapon) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
-	{
-		Weapon->SetVisibility(true);
-	}
+	if (Weapon) { Weapon->SetVisibility(true); }
+	if (ShieldMesh) { ShieldMesh->SetVisibility(true); }
 
-	if (ShieldMesh) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
+	// Stop the currently playing interaction montage
+	if (CurrentInteractionMontage)
 	{
-		ShieldMesh->SetVisibility(true);
-	}
-
-	if (InteractionMontage)
-	{
-		// Stop any instance of this montage that is currently playing.
-		StopAnimMontage(InteractionMontage);
+		StopAnimMontage(CurrentInteractionMontage);
 	}
 }
 
-void AMultiplayerActionCharacter::PlayPrayMontage()
-{
-	// Only the server should be able to initiate this replicated animation
-	if (HasAuthority())
-	{
-		Multicast_PlayPrayMontage();
-	}
-}
-
-// This function is called BY THE SERVER (e.g., from the Shrine)
-void AMultiplayerActionCharacter::StopPrayMontage()
-{
-	if (HasAuthority())
-	{
-		Multicast_StopPrayMontage();
-	}
-}
+//void AMultiplayerActionCharacter::PlayPrayMontage()
+//{
+//	// Only the server should be able to initiate this replicated animation
+//	if (HasAuthority())
+//	{
+//		Multicast_PlayPrayMontage();
+//	}
+//}
+//
+//// This function is called BY THE SERVER (e.g., from the Shrine)
+//void AMultiplayerActionCharacter::StopPrayMontage()
+//{
+//	if (HasAuthority())
+//	{
+//		Multicast_StopPrayMontage();
+//	}
+//}
 
 
 // This function executes on the SERVER and then REPLICATES to ALL CLIENTS
-void AMultiplayerActionCharacter::Multicast_PlayPrayMontage_Implementation()
-{
-	if (Weapon) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
-	{
-		Weapon->SetVisibility(false);
-	}
-
-	if (ShieldMesh) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
-	{
-		ShieldMesh->SetVisibility(false);
-	}
-
-	if (PrayMontage)
-	{
-		// Play the looping section of the montage
-		PlayAnimMontage(PrayMontage, 1.0f);
-	}
-}
-
-// This function executes on the SERVER and then REPLICATES to ALL CLIENTS
-void AMultiplayerActionCharacter::Multicast_StopPrayMontage_Implementation()
-{
-	if (Weapon) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
-	{
-		Weapon->SetVisibility(true);
-	}
-
-	if (ShieldMesh) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
-	{
-		ShieldMesh->SetVisibility(true);
-	}
-
-	if (PrayMontage)
-	{
-		// Stop any instance of this montage that is currently playing.
-		StopAnimMontage(PrayMontage);
-	}
-}
+//void AMultiplayerActionCharacter::Multicast_PlayPrayMontage_Implementation()
+//{
+//	if (Weapon) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
+//	{
+//		Weapon->SetVisibility(false);
+//	}
+//
+//	if (ShieldMesh) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
+//	{
+//		ShieldMesh->SetVisibility(false);
+//	}
+//
+//	if (PrayMontage)
+//	{
+//		// Play the looping section of the montage
+//		PlayAnimMontage(PrayMontage, 1.0f);
+//	}
+//}
+//
+//// This function executes on the SERVER and then REPLICATES to ALL CLIENTS
+//void AMultiplayerActionCharacter::Multicast_StopPrayMontage_Implementation()
+//{
+//	if (Weapon) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
+//	{
+//		Weapon->SetVisibility(true);
+//	}
+//
+//	if (ShieldMesh) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
+//	{
+//		ShieldMesh->SetVisibility(true);
+//	}
+//
+//	if (PrayMontage)
+//	{
+//		// Stop any instance of this montage that is currently playing.
+//		StopAnimMontage(PrayMontage);
+//	}
+//}
 
 void AMultiplayerActionCharacter::Client_OnInteractionSuccess_Implementation()
 {

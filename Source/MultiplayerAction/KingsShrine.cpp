@@ -253,7 +253,8 @@ void AKingsShrine::StartInteraction(APawn* InstigatorPawn)
 	AMultiplayerActionCharacter* InteractingCharacter = Cast<AMultiplayerActionCharacter>(InteractingPlayer);
 	if (InteractingCharacter)
 	{
-		InteractingCharacter->PlayInteractionMontage();
+		// The shrine passes its own unique interaction montage
+		InteractingCharacter->PlayInteractionMontage(ShrineChannelingMontage); // Assuming you add this UPROPERTY
 	}
 
 	GetWorld()->GetTimerManager().SetTimer(

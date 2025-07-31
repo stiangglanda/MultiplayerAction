@@ -97,11 +97,11 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Combat")
     UAnimMontage* RollMontage;
 
-    UPROPERTY(EditDefaultsOnly, Category = "Animation")
-    TObjectPtr<UAnimMontage> InteractionMontage;
+    UPROPERTY(Replicated)
+    TObjectPtr<UAnimMontage> CurrentInteractionMontage;
 
-    UPROPERTY(EditDefaultsOnly, Category = "Animation")
-    TObjectPtr<UAnimMontage> PrayMontage;
+    //UPROPERTY(EditDefaultsOnly, Category = "Animation")
+    //TObjectPtr<UAnimMontage> PrayMontage;
 
     UPROPERTY(EditAnywhere)
     float WeaponDamage = 20;
@@ -175,13 +175,13 @@ public:
 
     USoundBase* GetMovementLoopSound() const { return MovementLoopSound; }
 
-    void PlayInteractionMontage();
+    void PlayInteractionMontage(UAnimMontage* MontageToPlay);
 
     void StopInteractionMontage();
 
-    void PlayPrayMontage();
+    //void PlayPrayMontage();
 
-    void StopPrayMontage();
+    //void StopPrayMontage();
 
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio")
@@ -281,16 +281,16 @@ protected:
     void NetMulticastReliableRPC_HeavyAttack();
 
     UFUNCTION(NetMulticast, Reliable)
-    void Multicast_PlayInteractionMontage();
+    void Multicast_PlayInteractionMontage(UAnimMontage* MontageToPlay);
 
     UFUNCTION(NetMulticast, Reliable)
     void Multicast_StopInteractionMontage();
 
-    UFUNCTION(NetMulticast, Reliable)
-    void Multicast_PlayPrayMontage();
+    //UFUNCTION(NetMulticast, Reliable)
+    //void Multicast_PlayPrayMontage();
 
-    UFUNCTION(NetMulticast, Reliable)
-    void Multicast_StopPrayMontage();
+    //UFUNCTION(NetMulticast, Reliable)
+    //void Multicast_StopPrayMontage();
 
     UFUNCTION(Server, Reliable)
     void Server_RequestStartInteract(AActor* InteractableActor);
