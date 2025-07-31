@@ -21,6 +21,31 @@ AMultiplayerActionGameMode::AMultiplayerActionGameMode()
 	GameStateClass = ADefaultGameState::StaticClass();
 }
 
+void AMultiplayerActionGameMode::StartPlay()
+{
+	Super::StartPlay();
+
+	// --- INITIALIZE ACTOR TRACKING ---
+	// Clear any existing data first to be safe.
+	ActiveBosses.Empty();
+
+	// Find all instances of the Boss character class in the level.
+	TArray<AActor*> FoundBosses;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABossEnemyCharacter::StaticClass(), FoundBosses);
+
+	for (AActor* BossActor : FoundBosses)
+	{
+		if (ABossEnemyCharacter* Boss = Cast<ABossEnemyCharacter>(BossActor))
+		{
+			ActiveBosses.Add(Boss);
+		}
+	}
+
+	InitialBossCount = ActiveBosses.Num(); // Store the starting number of bosses.
+	bMatchHasEnded = false;
+	UE_LOG(LogTemp, Log, TEXT("GameMode Initialized: Found %d players and %d bosses."), ActivePlayerControllers.Num(), ActiveBosses.Num());
+}
+
 void AMultiplayerActionGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
@@ -102,35 +127,22 @@ void AMultiplayerActionGameMode::OnBossDied(ABossEnemyCharacter* DeadBoss)
 
 void AMultiplayerActionGameMode::CheckWinLossConditions()
 {
-	// LOSS Condition: No players left.
+	if (bMatchHasEnded) return;
+
+	// LOSS Condition
 	if (ActivePlayerControllers.Num() <= 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("GAME OVER: All players are dead. Players lose."));
-		EndGame(false); // bPlayersWon = false
-		return; // Stop checking
+		bMatchHasEnded = true;
+		EndGame(false);
+		return;
 	}
 
-	// WIN Condition: All bosses are defeated.
-	// We need to find all bosses at the start of the game to know the total.
-	if (TotalBossesToDefeat == 0) // Find bosses on the first check
+	// WIN Condition
+	// Only check for a win if there were bosses to defeat in the first place.
+	if (InitialBossCount > 0 && ActiveBosses.Num() <= 0)
 	{
-		TArray<AActor*> FoundBosses;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABossEnemyCharacter::StaticClass(), FoundBosses);
-		for (AActor* BossActor : FoundBosses)
-		{
-			if (ABossEnemyCharacter* Boss = Cast<ABossEnemyCharacter>(BossActor))
-			{
-				ActiveBosses.Add(Boss);
-			}
-		}
-		TotalBossesToDefeat = ActiveBosses.Num();
-		UE_LOG(LogTemp, Log, TEXT("Found %d bosses to defeat."), TotalBossesToDefeat);
-	}
-
-	if (ActiveBosses.Num() <= 0 && TotalBossesToDefeat > 0)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("GAME OVER: All bosses have been defeated. Players win!"));
-		EndGame(true); // bPlayersWon = true
+		bMatchHasEnded = true;
+		EndGame(true);
 	}
 }
 
@@ -140,13 +152,13 @@ void AMultiplayerActionGameMode::EndGame(bool bPlayersWon)
 	ADefaultGameState* MyGameState = GetGameState<ADefaultGameState>();
 	if (MyGameState)
 	{
-		// You'll need to create a function on your GameState to handle this.
-		// e.g., MyGameState->SetMatchState(bPlayersWon ? EMatchState::Won : EMatchState::Lost);
-
-		// This will replicate the new state to all clients, who can then show
-		// a "Victory" or "Defeat" screen.
 		EMatchState NewState = bPlayersWon ? EMatchState::Victory : EMatchState::Defeat;
+		UE_LOG(LogTemp, Error, TEXT("GAMEMODE (SERVER): Ending game. Setting MatchState to: %s"), *UEnum::GetValueAsString(NewState));
 		MyGameState->SetMatchState(NewState);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("GAMEMODE (SERVER): FAILED to get GameState in EndGame!"));
 	}
 
 	// You might also want to disable player input here.
@@ -161,5 +173,5 @@ void AMultiplayerActionGameMode::EndGame(bool bPlayersWon)
 
 void AMultiplayerActionGameMode::ReturnToMainMenu()
 {
-	UGameplayStatics::OpenLevel(GetWorld(), FName("YourMainMenuMapName"), true);
+	//UGameplayStatics::OpenLevel(GetWorld(), FName("Minimal_Default"), true);
 }

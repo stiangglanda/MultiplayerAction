@@ -23,6 +23,7 @@ public:
 	void OnBossDied(ABossEnemyCharacter* DeadBoss);
 
 protected:
+	virtual void StartPlay() override;
 	// This function is called when a new player joins the game.
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
@@ -36,7 +37,9 @@ protected:
 	TArray<TObjectPtr<ABossEnemyCharacter>> ActiveBosses;
 
 	/** Total number of bosses that must be defeated to win. */
-	int32 TotalBossesToDefeat = 0;
+	int32 InitialBossCount = 0;
+
+	bool bMatchHasEnded = false;
 
 private:
 	/** Checks the current game state to see if a win/loss condition has been met. */

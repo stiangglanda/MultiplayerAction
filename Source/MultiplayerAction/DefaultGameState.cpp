@@ -3,7 +3,8 @@
 
 #include "DefaultGameState.h"
 #include "Net/UnrealNetwork.h"
-#include "MultiplayerActionCharacter.h"
+#include "DefaultPlayerController.h"
+#include <Kismet/GameplayStatics.h>
 
 ADefaultGameState::ADefaultGameState()
 {
@@ -88,19 +89,18 @@ void ADefaultGameState::SetMatchState(EMatchState NewState)
 // This function is automatically called on CLIENTS when MatchState changes
 void ADefaultGameState::OnRep_MatchState()
 {
-    // This is where the magic happens on the client.
-    // We will create the UI here.
+    UE_LOG(LogTemp, Warning, TEXT("GAMESTATE (CLIENT): OnRep_MatchState FIRED!"));
 
-    // Get the local player controller
+    // Get the local player controller. This is a much more reliable object than the pawn.
     APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
     if (PC && PC->IsLocalController())
     {
-        // You'll need a way to get the widget class, e.g., from a GameInstance or PlayerController property.
-        // For now, let's assume the PlayerController has the class reference.
-        AMultiplayerActionCharacter* PlayerChar = PC->GetPawn<AMultiplayerActionCharacter>();
-        if (PlayerChar)
+        // Cast to our specific Player Controller class
+        ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC);
+        if (MyPC)
         {
-            PlayerChar->ShowEndOfMatchUI(MatchState);
+            // Tell the Player Controller to handle its own UI.
+            MyPC->ShowEndOfMatchUI(MatchState);
         }
     }
 }

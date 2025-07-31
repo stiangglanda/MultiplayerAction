@@ -958,38 +958,38 @@ void AMultiplayerActionCharacter::SetActiveProgressBar(UInteractionProgressBarWi
 	ActiveProgressBarWidget = Widget;
 }
 
-void AMultiplayerActionCharacter::ShowEndOfMatchUI(EMatchState MatchResult)
-{
-	APlayerController* PC = GetController<APlayerController>();
-	if (!PC || !PC->IsLocalController())
-	{
-		return;
-	}
-
-	TSubclassOf<UUserWidget> WidgetToShowClass = nullptr;
-
-	if (MatchResult == EMatchState::Victory)
-	{
-		WidgetToShowClass = VictoryWidgetClass;
-	}
-	else if (MatchResult == EMatchState::Defeat)
-	{
-		WidgetToShowClass = DefeatWidgetClass;
-	}
-
-	if (WidgetToShowClass)
-	{
-		UUserWidget* EndOfMatchWidget = CreateWidget<UUserWidget>(PC, WidgetToShowClass);
-		if (EndOfMatchWidget)
-		{
-			EndOfMatchWidget->AddToViewport();
-
-			// Set input mode to UI only and show the mouse cursor
-			PC->SetInputMode(FInputModeUIOnly());
-			PC->bShowMouseCursor = true;
-		}
-	}
-}
+//void AMultiplayerActionCharacter::ShowEndOfMatchUI(EMatchState MatchResult)
+//{
+//	APlayerController* PC = GetController<APlayerController>();
+//	if (!PC || !PC->IsLocalController())
+//	{
+//		return;
+//	}
+//
+//	TSubclassOf<UUserWidget> WidgetToShowClass = nullptr;
+//
+//	if (MatchResult == EMatchState::Victory)
+//	{
+//		WidgetToShowClass = VictoryWidgetClass;
+//	}
+//	else if (MatchResult == EMatchState::Defeat)
+//	{
+//		WidgetToShowClass = DefeatWidgetClass;
+//	}
+//
+//	if (WidgetToShowClass)
+//	{
+//		UUserWidget* EndOfMatchWidget = CreateWidget<UUserWidget>(PC, WidgetToShowClass);
+//		if (EndOfMatchWidget)
+//		{
+//			EndOfMatchWidget->AddToViewport();
+//
+//			// Set input mode to UI only and show the mouse cursor
+//			PC->SetInputMode(FInputModeUIOnly());
+//			PC->bShowMouseCursor = true;
+//		}
+//	}
+//}
 
 
 // This function executes on the SERVER and then REPLICATES to ALL CLIENTS

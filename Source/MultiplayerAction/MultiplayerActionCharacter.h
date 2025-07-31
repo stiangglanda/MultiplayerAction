@@ -9,7 +9,6 @@
 #include <Components/SphereComponent.h>
 #include "OutpostInteractable.h"
 #include "InteractionProgressBarWidget.h"
-#include "DefaultGameState.h"
 #include "MultiplayerActionCharacter.generated.h"
 
 class USpringArmComponent;
@@ -192,7 +191,7 @@ public:
     UFUNCTION(Server, Reliable)
     void Server_RequestStopInteract(AActor* InteractableActor);
 
-    void ShowEndOfMatchUI(EMatchState MatchResult);
+    //void ShowEndOfMatchUI(EMatchState MatchResult);
 
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio")
@@ -243,12 +242,12 @@ protected:
     UPROPERTY()
     TObjectPtr<UInteractionProgressBarWidget> ShrineProgressWidget;
 
-    UPROPERTY(EditDefaultsOnly, Category = "UI")
-    TSubclassOf<UUserWidget> VictoryWidgetClass;
+    //UPROPERTY(EditDefaultsOnly, Category = "UI")
+    //TSubclassOf<UUserWidget> VictoryWidgetClass;
 
-    /** The widget class to show on Defeat. */
-    UPROPERTY(EditDefaultsOnly, Category = "UI")
-    TSubclassOf<UUserWidget> DefeatWidgetClass;
+    ///** The widget class to show on Defeat. */
+    //UPROPERTY(EditDefaultsOnly, Category = "UI")
+    //TSubclassOf<UUserWidget> DefeatWidgetClass;
 
     bool bIsAttacking = false;
     bool IsRolling = false;

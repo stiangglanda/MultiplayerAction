@@ -3,6 +3,30 @@
 
 #include "DefaultPlayerController.h"
 
+void ADefaultPlayerController::ShowEndOfMatchUI(EMatchState MatchResult)
+{
+	TSubclassOf<UUserWidget> WidgetToShowClass = nullptr;
+	if (MatchResult == EMatchState::Victory)
+	{
+		WidgetToShowClass = VictoryWidgetClass;
+	}
+	else if (MatchResult == EMatchState::Defeat)
+	{
+		WidgetToShowClass = DefeatWidgetClass;
+	}
+
+	if (WidgetToShowClass)
+	{
+		UUserWidget* EndOfMatchWidget = CreateWidget<UUserWidget>(this, WidgetToShowClass);
+		if (EndOfMatchWidget)
+		{
+			EndOfMatchWidget->AddToViewport();
+			SetInputMode(FInputModeUIOnly());
+			bShowMouseCursor = true;
+		}
+	}
+}
+
 void ADefaultPlayerController::BeginPlay()
 {
     Super::BeginPlay();
