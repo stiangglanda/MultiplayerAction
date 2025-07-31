@@ -109,6 +109,7 @@ public:
 	virtual void OnBeginFocus_Implementation(APawn* InstigatorPawn) override;
 	virtual void OnEndFocus_Implementation(APawn* InstigatorPawn) override;
 	virtual FText GetInteractionText_Implementation() const override;
+	virtual void OnClientStartInteract_Implementation(class AMultiplayerActionCharacter* InteractingCharacter) override;
 
 
 	// Inherited via IOutpostInteractable

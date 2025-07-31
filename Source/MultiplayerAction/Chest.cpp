@@ -153,7 +153,7 @@ void AChest::OnInteract_Implementation(APawn* InstigatorPawn)
 		else
 		{
 			// Player does NOT have the key. Show feedback.
-			Client_ShowFeedback(true, false);
+			//Client_ShowFeedback(true, false);
 		}
 	}
 }
@@ -165,7 +165,65 @@ void AChest::OnStopInteract_Implementation(APawn* InstigatorPawn)
 
 void AChest::OnEndFocus_Implementation(APawn* InstigatorPawn)
 {
+	Server_CancelUnlock();
 	CloseChest(InstigatorPawn);
+}
+
+void AChest::OnClientStartInteract_Implementation(AMultiplayerActionCharacter* InteractingCharacter)
+{
+	if (!InteractingCharacter) return;
+	APlayerController* PC = InteractingCharacter->GetController<APlayerController>();
+	if (!PC || !PC->IsLocalController()) return;
+
+	// --- LOGIC MOVED FROM PLAYER ---
+	ADefaultGameState* GameState = GetWorld()->GetGameState<ADefaultGameState>();
+
+	if (bIsUnlocked)
+	{
+		// Chest is unlocked, just tell the server to open it.
+		InteractingCharacter->Server_RequestStartInteract(this);
+	}
+	else if (GameState && GameState->bHasKingsKey)
+	{
+		// Chest is locked, but we have the key. Show progress bar.
+		if (UnlockingWidgetClass)
+		{
+			UInteractionProgressBarWidget* Widget = CreateWidget<UInteractionProgressBarWidget>(PC, UnlockingWidgetClass);
+			if (Widget)
+			{
+				Widget->AddToViewport();
+				Widget->StartProgress(UnlockDuration);
+
+				// --- HAND OFF THE WIDGET REFERENCE ---
+				InteractingCharacter->SetActiveProgressBar(Widget);
+			}
+		}
+
+		// Tell the server to start the unlock process.
+		InteractingCharacter->Server_RequestStartInteract(this);
+	}
+	else
+	{
+		if (UnlockingWidgetClass)
+		{
+			UInteractionProgressBarWidget* Widget = CreateWidget<UInteractionProgressBarWidget>(PC, UnlockingWidgetClass);
+			if (Widget)
+			{
+				Widget->AddToViewport();
+				Widget->ShowCompletedMessage();
+
+				// --- HAND OFF THE WIDGET REFERENCE ---
+				InteractingCharacter->SetActiveProgressBar(Widget);
+			}
+		}
+
+		if (ChestLockedSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, ChestLockedSound, GetActorLocation());
+		}
+		// Chest is locked, no key. Show locked message.
+		// ... create and show temporary "locked" widget ...
+	}
 }
 
 //bool AChest::ToggleOpenClose()
@@ -308,11 +366,12 @@ void AChest::OnUnlockComplete()
 	// Stop the player's animation
 	if (AMultiplayerActionCharacter* Char = Cast<AMultiplayerActionCharacter>(InteractingPlayer))
 	{
+		Char->Client_OnInteractionSuccess();
 		Char->StopInteractionMontage();
 	}
 
 	// Tell the client to hide the UI
-	Client_HideUnlockUI();
+	//Client_HideUnlockUI();
 
 	// Set the replicated state
 	bIsUnlocked = true;
@@ -321,45 +380,45 @@ void AChest::OnUnlockComplete()
 	InteractingPlayer = nullptr;
 }
 
-void AChest::Client_ShowUnlockUI_Implementation()
-{
-	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-	if (PC && PC->IsLocalController() && UnlockingWidgetClass)
-	{
-		UInteractionProgressBarWidget* UnlockWidget = CreateWidget<UInteractionProgressBarWidget>(PC, UnlockingWidgetClass);
-		if (UnlockWidget)
-		{
-			UnlockWidget->AddToViewport();
-			UnlockWidget->StartProgress(UnlockDuration);
-		}
-	}
-}
+//void AChest::Client_ShowUnlockUI_Implementation()
+//{
+//	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+//	if (PC && PC->IsLocalController() && UnlockingWidgetClass)
+//	{
+//		UInteractionProgressBarWidget* UnlockWidget = CreateWidget<UInteractionProgressBarWidget>(PC, UnlockingWidgetClass);
+//		if (UnlockWidget)
+//		{
+//			UnlockWidget->AddToViewport();
+//			UnlockWidget->StartProgress(UnlockDuration);
+//		}
+//	}
+//}
 
-void AChest::Client_ShowFeedback_Implementation(bool bIsLocked, bool bHasKey)
-{
-	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-	if (PC && PC->IsLocalController())
-	{
-		if (bIsLocked && !bHasKey)
-		{
-			// Play locked sound, show "Requires King's Key" widget.
-			if (ChestLockedSound) UGameplayStatics::PlaySoundAtLocation(this, ChestLockedSound, GetActorLocation());
-			// Create and show a temporary "Locked" widget...
-		}
-	}
-}
+//void AChest::Client_ShowFeedback_Implementation(bool bIsLocked, bool bHasKey)
+//{
+//	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+//	if (PC && PC->IsLocalController())
+//	{
+//		if (bIsLocked && !bHasKey)
+//		{
+//			// Play locked sound, show "Requires King's Key" widget.
+//			if (ChestLockedSound) UGameplayStatics::PlaySoundAtLocation(this, ChestLockedSound, GetActorLocation());
+//			// Create and show a temporary "Locked" widget...
+//		}
+//	}
+//}
 
-void AChest::Client_HideUnlockUI_Implementation()
-{
-	TArray<UUserWidget*> FoundWidgets;
-	UWidgetBlueprintLibrary::GetAllWidgetsOfClass(
-		GetWorld(), FoundWidgets, UnlockingWidgetClass
-	);
-	for (UUserWidget* Widget : FoundWidgets)
-	{
-		Widget->RemoveFromParent();
-	}
-}
+//void AChest::Client_HideUnlockUI_Implementation()
+//{
+//	TArray<UUserWidget*> FoundWidgets;
+//	UWidgetBlueprintLibrary::GetAllWidgetsOfClass(
+//		GetWorld(), FoundWidgets, UnlockingWidgetClass
+//	);
+//	for (UUserWidget* Widget : FoundWidgets)
+//	{
+//		Widget->RemoveFromParent();
+//	}
+//}
 
 void AChest::OnRep_Unlocked()
 {
@@ -384,7 +443,7 @@ void AChest::Server_CancelUnlock_Implementation()
 		}
 
 		// Tell the client to hide the progress bar
-		Client_HideUnlockUI();
+		//Client_HideUnlockUI();
 		InteractingPlayer = nullptr;
 	}
 }
@@ -409,6 +468,6 @@ void AChest::Server_BeginUnlock_Implementation(APawn* InstigatorPawn)
 	}
 
 	// Tell the client to show the progress bar
-	Client_ShowUnlockUI();
+	//Client_ShowUnlockUI();
 }
 

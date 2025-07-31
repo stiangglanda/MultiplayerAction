@@ -183,6 +183,14 @@ public:
 
     //void StopPrayMontage();
 
+    void SetActiveProgressBar(UInteractionProgressBarWidget* Widget);
+
+    UFUNCTION(Server, Reliable)
+    void Server_RequestStartInteract(AActor* InteractableActor);
+
+    UFUNCTION(Server, Reliable)
+    void Server_RequestStopInteract(AActor* InteractableActor);
+
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio")
     TObjectPtr<UAudioComponent> MovementAudioComponent;
@@ -245,6 +253,9 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
     TScriptInterface<IOutpostInteractable> CurrentInteractable;
 
+    UPROPERTY()
+    TObjectPtr<UInteractionProgressBarWidget> ActiveProgressBarWidget;
+
     FOnMontageEnded AttackMontageEndedDelegate;
 
     FOnMontageEnded HeavyAttackMontageEndedDelegate;
@@ -291,12 +302,6 @@ protected:
 
     //UFUNCTION(NetMulticast, Reliable)
     //void Multicast_StopPrayMontage();
-
-    UFUNCTION(Server, Reliable)
-    void Server_RequestStartInteract(AActor* InteractableActor);
-
-    UFUNCTION(Server, Reliable)
-    void Server_RequestStopInteract(AActor* InteractableActor);
 
     FTimerHandle WeaponTraceTimer;
     virtual void PerformWeaponTrace();

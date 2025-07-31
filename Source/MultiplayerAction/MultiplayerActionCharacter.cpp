@@ -399,62 +399,64 @@ void AMultiplayerActionCharacter::Interact(const FInputActionValue& Value)
 			InteractionWidget = nullptr;
 		}
 
-		AKingsShrine* Shrine = Cast<AKingsShrine>(CurrentInteractable.GetObject());
-		if (Shrine)
-		{
-			// --- THE CRITICAL FIX ---
-			// Ask the shrine for its current state BEFORE doing anything else.
-			// Since bIsKeyTaken is replicated, the client's version is accurate.
-			if (Shrine->IsKeyAlreadyTaken()) // We'll create this simple getter
-			{
-				// --- COMPLETED LOGIC ---
-				// The key is gone. We need to show the "Completed" message.
-				if (!ShrineProgressWidget)
-				{
-					APlayerController* PC = GetController<APlayerController>();
-					TSubclassOf<UInteractionProgressBarWidget> WidgetClass = Shrine->GetProgressBarWidgetClass();
-					if (PC && PC->IsLocalController() && WidgetClass)
-					{
-						ShrineProgressWidget = CreateWidget<UInteractionProgressBarWidget>(PC, WidgetClass);
-						if (ShrineProgressWidget)
-						{
-							ShrineProgressWidget->AddToViewport();
-							ShrineProgressWidget->ShowCompletedMessage();
-							// We use a timer to automatically hide this message after a couple of seconds.
-							FTimerHandle TempMessageTimer;
-							GetWorld()->GetTimerManager().SetTimer(TempMessageTimer, this, &AMultiplayerActionCharacter::HideTemporaryInteractionWidget, 2.0f, false);
-						}
-					}
-				}
-				// We do NOT call the server RPC because there's nothing for the server to do.
-				return; // Stop execution here.
-			}
-			else
-			{
-				// --- INTERACTION CAN PROCEED LOGIC ---
-				// The key is available. Create the widget and start the progress bar.
-				if (!ShrineProgressWidget)
-				{
-					APlayerController* PC = GetController<APlayerController>();
-					TSubclassOf<UInteractionProgressBarWidget> WidgetClass = Shrine->GetProgressBarWidgetClass();
-					if (PC && PC->IsLocalController() && WidgetClass)
-					{
-						ShrineProgressWidget = CreateWidget<UInteractionProgressBarWidget>(PC, WidgetClass);
-						if (ShrineProgressWidget)
-						{
-							ShrineProgressWidget->AddToViewport();
-							ShrineProgressWidget->StartProgress(Shrine->GetInteractionDuration());
-						}
-					}
-				}
-			}
-		}
+		IOutpostInteractable::Execute_OnClientStartInteract(CurrentInteractable.GetObject(), this);
 
-		AActor* InteractableActor = Cast<AActor>(CurrentInteractable.GetObject());
-		if (InteractableActor)
-		{
-			Server_RequestStartInteract(InteractableActor);
-		}
+		//AKingsShrine* Shrine = Cast<AKingsShrine>(CurrentInteractable.GetObject());
+		//if (Shrine)
+		//{
+		//	// --- THE CRITICAL FIX ---
+		//	// Ask the shrine for its current state BEFORE doing anything else.
+		//	// Since bIsKeyTaken is replicated, the client's version is accurate.
+		//	if (Shrine->IsKeyAlreadyTaken()) // We'll create this simple getter
+		//	{
+		//		// --- COMPLETED LOGIC ---
+		//		// The key is gone. We need to show the "Completed" message.
+		//		if (!ShrineProgressWidget)
+		//		{
+		//			APlayerController* PC = GetController<APlayerController>();
+		//			TSubclassOf<UInteractionProgressBarWidget> WidgetClass = Shrine->GetProgressBarWidgetClass();
+		//			if (PC && PC->IsLocalController() && WidgetClass)
+		//			{
+		//				ShrineProgressWidget = CreateWidget<UInteractionProgressBarWidget>(PC, WidgetClass);
+		//				if (ShrineProgressWidget)
+		//				{
+		//					ShrineProgressWidget->AddToViewport();
+		//					ShrineProgressWidget->ShowCompletedMessage();
+		//					// We use a timer to automatically hide this message after a couple of seconds.
+		//					FTimerHandle TempMessageTimer;
+		//					GetWorld()->GetTimerManager().SetTimer(TempMessageTimer, this, &AMultiplayerActionCharacter::HideTemporaryInteractionWidget, 2.0f, false);
+		//				}
+		//			}
+		//		}
+		//		// We do NOT call the server RPC because there's nothing for the server to do.
+		//		return; // Stop execution here.
+		//	}
+		//	else
+		//	{
+		//		// --- INTERACTION CAN PROCEED LOGIC ---
+		//		// The key is available. Create the widget and start the progress bar.
+		//		if (!ShrineProgressWidget)
+		//		{
+		//			APlayerController* PC = GetController<APlayerController>();
+		//			TSubclassOf<UInteractionProgressBarWidget> WidgetClass = Shrine->GetProgressBarWidgetClass();
+		//			if (PC && PC->IsLocalController() && WidgetClass)
+		//			{
+		//				ShrineProgressWidget = CreateWidget<UInteractionProgressBarWidget>(PC, WidgetClass);
+		//				if (ShrineProgressWidget)
+		//				{
+		//					ShrineProgressWidget->AddToViewport();
+		//					ShrineProgressWidget->StartProgress(Shrine->GetInteractionDuration());
+		//				}
+		//			}
+		//		}
+		//	}
+		//}
+
+		//AActor* InteractableActor = Cast<AActor>(CurrentInteractable.GetObject());
+		//if (InteractableActor)
+		//{
+		//	Server_RequestStartInteract(InteractableActor);
+		//}
 	}
 
 	//if (InteractionWidget)
@@ -488,10 +490,15 @@ void AMultiplayerActionCharacter::Interact(const FInputActionValue& Value)
 
 void AMultiplayerActionCharacter::StopInteract(const FInputActionValue& Value)
 {
-	if (ShrineProgressWidget)
+	//if (ShrineProgressWidget)
+	//{
+	//	ShrineProgressWidget->RemoveFromParent();
+	//	ShrineProgressWidget = nullptr; // Set pointer to null so it can be created again.
+	//}
+	if (ActiveProgressBarWidget)
 	{
-		ShrineProgressWidget->RemoveFromParent();
-		ShrineProgressWidget = nullptr; // Set pointer to null so it can be created again.
+		ActiveProgressBarWidget->RemoveFromParent();
+		ActiveProgressBarWidget = nullptr; // Clear the pointer.
 	}
 
 	if (CurrentInteractable)
@@ -499,6 +506,7 @@ void AMultiplayerActionCharacter::StopInteract(const FInputActionValue& Value)
 		AActor* InteractableActor = Cast<AActor>(CurrentInteractable.GetObject());
 		if (InteractableActor)
 		{
+			// Tell the server we stopped.
 			Server_RequestStopInteract(InteractableActor);
 		}
 	}
@@ -921,11 +929,17 @@ void AMultiplayerActionCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedCo
 			InteractionWidget = nullptr;
 		}
 
-		if (ShrineProgressWidget)
+		if (ActiveProgressBarWidget)
 		{
-			ShrineProgressWidget->RemoveFromParent();
-			ShrineProgressWidget = nullptr; // Set pointer to null so it can be created again.
+			ActiveProgressBarWidget->RemoveFromParent();
+			ActiveProgressBarWidget = nullptr;
 		}
+
+		//if (ShrineProgressWidget)
+		//{
+		//	ShrineProgressWidget->RemoveFromParent();
+		//	ShrineProgressWidget = nullptr; // Set pointer to null so it can be created again.
+		//}
 
 		// 2. Tell the object that we are no longer focused on it.
 		// This lets the object hide its own UI prompt.
@@ -980,6 +994,18 @@ void AMultiplayerActionCharacter::StopInteractionMontage()
 		// Clear the current montage on the server
 		CurrentInteractionMontage = nullptr;
 	}
+}
+
+void AMultiplayerActionCharacter::SetActiveProgressBar(UInteractionProgressBarWidget* Widget)
+{
+	if (ActiveProgressBarWidget)
+	{
+		ActiveProgressBarWidget->RemoveFromParent();
+		ActiveProgressBarWidget = nullptr;
+	}
+
+	// Store the pointer to the new widget.
+	ActiveProgressBarWidget = Widget;
 }
 
 
@@ -1071,11 +1097,16 @@ void AMultiplayerActionCharacter::Multicast_StopInteractionMontage_Implementatio
 
 void AMultiplayerActionCharacter::Client_OnInteractionSuccess_Implementation()
 {
-	if (ShrineProgressWidget)
+	//if (ShrineProgressWidget)
+	//{
+	//	UE_LOG(LogTemp, Log, TEXT("Client: Interaction succeeded. Hiding progress UI."));
+	//	ShrineProgressWidget->RemoveFromParent();
+	//	ShrineProgressWidget = nullptr;
+	//}
+	if (ActiveProgressBarWidget)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Client: Interaction succeeded. Hiding progress UI."));
-		ShrineProgressWidget->RemoveFromParent();
-		ShrineProgressWidget = nullptr;
+		ActiveProgressBarWidget->RemoveFromParent();
+		ActiveProgressBarWidget = nullptr;
 	}
 }
 

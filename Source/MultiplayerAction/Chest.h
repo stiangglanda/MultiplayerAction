@@ -91,6 +91,8 @@ public:
 
 	virtual void OnEndFocus_Implementation(APawn* InstigatorPawn) override;
 
+	virtual void OnClientStartInteract_Implementation(class AMultiplayerActionCharacter* InteractingCharacter) override;
+
 	UFUNCTION()
 	void OpenChest(APawn* InstigatorPawn);
 
@@ -113,14 +115,14 @@ protected:
 	void OnUnlockComplete();
 
 	// --- CLIENT-SIDE UI COMMANDS ---
-	UFUNCTION(Client, Reliable)
-	void Client_ShowFeedback(bool bIsLocked, bool bHasKey);
+	//UFUNCTION(Client, Reliable)
+	//void Client_ShowFeedback(bool bIsLocked, bool bHasKey);
 
-	UFUNCTION(Client, Reliable)
-	void Client_ShowUnlockUI();
+	//UFUNCTION(Client, Reliable)
+	//void Client_ShowUnlockUI();
 
-	UFUNCTION(Client, Reliable)
-	void Client_HideUnlockUI();
+	//UFUNCTION(Client, Reliable)
+	//void Client_HideUnlockUI();
 
 	// --- REPLICATION ---
 	UFUNCTION()

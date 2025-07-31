@@ -22,6 +22,9 @@ class MULTIPLAYERACTION_API IOutpostInteractable
 
 public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interactable")
+	void OnClientStartInteract(class AMultiplayerActionCharacter* InteractingCharacter);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interactable")
 	void OnInteract(APawn* InstigatorPawn);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interactable")

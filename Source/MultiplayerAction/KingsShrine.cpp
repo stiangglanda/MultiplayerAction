@@ -222,6 +222,50 @@ FText AKingsShrine::GetInteractionText_Implementation() const
 	return FText::FromString(TEXT("Hold to Activate Shrine"));
 }
 
+void AKingsShrine::OnClientStartInteract_Implementation(AMultiplayerActionCharacter* InteractingCharacter)
+{
+	if (!InteractingCharacter) return;
+	APlayerController* PC = InteractingCharacter->GetController<APlayerController>();
+	if (!PC || !PC->IsLocalController()) return;
+
+	// --- LOGIC MOVED FROM PLAYER ---
+	if (bIsKeyTaken)
+	{
+		// Show the completed message
+		if (InteractionProgressBarWidgetClass)
+		{
+			UInteractionProgressBarWidget* Widget = CreateWidget<UInteractionProgressBarWidget>(PC, InteractionProgressBarWidgetClass);
+			if (Widget)
+			{
+				Widget->AddToViewport();
+				Widget->ShowCompletedMessage();
+
+				InteractingCharacter->SetActiveProgressBar(Widget);
+				// We'd need a way to manage this temporary widget, maybe on the controller.
+			}
+		}
+	}
+	else
+	{
+		// Show the progress bar
+		if (InteractionProgressBarWidgetClass)
+		{
+			UInteractionProgressBarWidget* Widget = CreateWidget<UInteractionProgressBarWidget>(PC, InteractionProgressBarWidgetClass);
+			if (Widget)
+			{
+				Widget->AddToViewport();
+				Widget->StartProgress(InteractionDuration);
+				// The player controller should store this widget so it can be removed later.
+				InteractingCharacter->SetActiveProgressBar(Widget);
+			}
+		}
+
+		// --- TRIGGER THE SERVER RPC HOP ---
+		// After showing the UI, the shrine tells the player character to notify the server.
+		InteractingCharacter->Server_RequestStartInteract(this);
+	}
+}
+
 bool AKingsShrine::IsCompleted()
 {
 	return bIsKeyTaken;
