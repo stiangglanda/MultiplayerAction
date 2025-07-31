@@ -336,6 +336,13 @@ void AChest::Server_BeginUnlock_Implementation(APawn* InstigatorPawn)
 
 	InteractingPlayer = InstigatorPawn;
 
+	ADefaultGameState* GameState = GetWorld()->GetGameState<ADefaultGameState>();
+	if (GameState)
+	{
+		GameState->SetStartedUnlockingChest(true);
+		UE_LOG(LogTemp, Log, TEXT("Chest (Server): Reporting to GameState that unlocking has started."));
+	}
+
 	// Start the server-side timer
 	GetWorld()->GetTimerManager().SetTimer(UnlockTimerHandle, this, &AChest::OnUnlockComplete, UnlockDuration, false);
 

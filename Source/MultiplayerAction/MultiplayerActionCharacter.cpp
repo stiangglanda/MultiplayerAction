@@ -21,6 +21,8 @@
 #include <AIController.h>
 #include "BehaviorTree/BlackboardComponent.h"
 #include "KingsShrine.h"
+#include "MultiplayerActionGameMode.h"
+#include "BossEnemyCharacter.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -484,6 +486,11 @@ int AMultiplayerActionCharacter::GetTeam()
 
 float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
+	if (IsDead())
+	{
+		return 0.f;
+	}
+
 	float DamageApplied = Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
 
 	if (IsBlocking)
@@ -530,13 +537,34 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 
 	if (IsDead())
 	{
+		if (HasAuthority()) // CRITICAL: Only the server can change the GameMode state.
+		{
+			AMultiplayerActionGameMode* GameMode = GetWorld()->GetAuthGameMode<AMultiplayerActionGameMode>();
+			if (GameMode)
+			{
+				// This cast will now work because the compiler has the full definition of ABossEnemyCharacter.
+				if (ABossEnemyCharacter* Boss = Cast<ABossEnemyCharacter>(this))
+				{
+					GameMode->OnBossDied(Boss);
+				}
+				else if (IsPlayerControlled())
+				{
+					GameMode->OnPlayerDied(this);
+				}
+			}
+		}
+
 		if (DeathSound)
 		{
 			UGameplayStatics::PlaySoundAtLocation(this, DeathSound, GetActorLocation());
 		}
+
+		GetCharacterMovement()->DisableMovement();
+
+		// Ragdoll
 		GetMesh()->SetSimulatePhysics(true);
-		DetachFromControllerPendingDestroy();
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		SetLifeSpan(10.0f);
 	}
 
 	return DamageApplied;
@@ -928,6 +956,39 @@ void AMultiplayerActionCharacter::SetActiveProgressBar(UInteractionProgressBarWi
 
 	// Store the pointer to the new widget.
 	ActiveProgressBarWidget = Widget;
+}
+
+void AMultiplayerActionCharacter::ShowEndOfMatchUI(EMatchState MatchResult)
+{
+	APlayerController* PC = GetController<APlayerController>();
+	if (!PC || !PC->IsLocalController())
+	{
+		return;
+	}
+
+	TSubclassOf<UUserWidget> WidgetToShowClass = nullptr;
+
+	if (MatchResult == EMatchState::Victory)
+	{
+		WidgetToShowClass = VictoryWidgetClass;
+	}
+	else if (MatchResult == EMatchState::Defeat)
+	{
+		WidgetToShowClass = DefeatWidgetClass;
+	}
+
+	if (WidgetToShowClass)
+	{
+		UUserWidget* EndOfMatchWidget = CreateWidget<UUserWidget>(PC, WidgetToShowClass);
+		if (EndOfMatchWidget)
+		{
+			EndOfMatchWidget->AddToViewport();
+
+			// Set input mode to UI only and show the mouse cursor
+			PC->SetInputMode(FInputModeUIOnly());
+			PC->bShowMouseCursor = true;
+		}
+	}
 }
 
 

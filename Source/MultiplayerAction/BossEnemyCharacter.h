@@ -10,9 +10,16 @@ class MULTIPLAYERACTION_API ABossEnemyCharacter : public AMultiplayerActionChara
 	GENERATED_BODY()
 
 protected:
+	virtual void BeginPlay() override;
+
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 	virtual void PerformWeaponTrace() override;
 
 	void ApplyKnockbackToPlayer(ACharacter* PlayerToLaunch, const FHitResult& HitResult);
+
+	UFUNCTION()
+	void OnChestUnlockingStarted();
 
 	UPROPERTY(Category = "Combat|Knockback", EditAnywhere, BlueprintReadWrite)
 	float KnockbackStrength = 1000.0f;
