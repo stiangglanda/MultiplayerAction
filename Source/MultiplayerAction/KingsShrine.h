@@ -28,6 +28,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Shrine")
 	float GetInteractionDuration() const { return InteractionDuration; }
 
+	UFUNCTION(BlueprintPure, Category = "Shrine")
+	bool IsKeyAlreadyTaken() const { return bIsKeyTaken; }
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

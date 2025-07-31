@@ -291,6 +291,7 @@ void AKingsShrine::OnInteractionComplete()
 	AMultiplayerActionCharacter* InteractingCharacter = Cast<AMultiplayerActionCharacter>(InteractingPlayer);
 	if (InteractingCharacter)
 	{
+		InteractingCharacter->Client_OnInteractionSuccess();
 		InteractingCharacter->StopInteractionMontage();
 	}
 

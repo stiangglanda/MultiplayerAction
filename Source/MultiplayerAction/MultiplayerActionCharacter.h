@@ -122,6 +122,11 @@ protected:
     float SphereColliderRadius = 200.0f;
 
 public:
+    UFUNCTION(Client, Reliable)
+    void Client_OnInteractionSuccess();
+
+    void HideTemporaryInteractionWidget();
+
     UPROPERTY(EditAnywhere)
     TObjectPtr<class AAIGroupManager> AIGroupManager;
 
