@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -21,12 +19,16 @@ struct FWeaponData
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
     FText WeaponDescription = FText::GetEmpty();
 
+    UPROPERTY(EditAnywhere)
+    float WeaponDamage = 20;
+
     FWeaponData() = default;
 
-    FWeaponData(UTexture2D* InThumbnail, const FText& InName, const FText& InDescription)
+    FWeaponData(UTexture2D* InThumbnail, const FText& InName, const FText& InDescription, float WeaponDamage)
         : ThumbnailImage(InThumbnail)
         , WeaponName(InName)
         , WeaponDescription(InDescription)
+		, WeaponDamage(WeaponDamage)
     {
     }
 };

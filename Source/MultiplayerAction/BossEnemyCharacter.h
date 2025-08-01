@@ -26,4 +26,7 @@ protected:
 
 	UPROPERTY(Category = "Combat|Knockback", EditAnywhere, BlueprintReadWrite)
 	float KnockbackUpwardForce = 500.0f;
+
+	UPROPERTY(EditAnywhere)
+	float BossDamage = 20;
 };

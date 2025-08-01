@@ -19,16 +19,12 @@ void AAIGroupManager::BroadcastAlert(AActor* SentryPawn, AActor* TargetActor)
         return;
     }
 
-    // Iterate through all members of the group
     for (AMultiplayerActionCharacter* CurrentMember : GroupMembers)
     {
-        // Don't re-alert the original sentry or null members
         if (CurrentMember && CurrentMember != SentryPawn)
         {
-            // Check if the member implements the interface
             if (CurrentMember->GetController()->Implements<UAIGroupAlertInterface>())
             {
-                // Call the interface function. This is the broadcast!
                 IAIGroupAlertInterface::Execute_OnGroupAlert(CurrentMember->GetController(), TargetActor);
             }
         }
@@ -113,7 +109,6 @@ void AAIGroupManager::AttemptGroupSetup()
 
 void AAIGroupManager::SetGroupLeader(class AMultiplayerActionCharacter* NewLeaderPawn)
 {
-    // This function should ONLY ever run on the server.
     if (!HasAuthority())
     {
         return;
@@ -127,13 +122,11 @@ void AAIGroupManager::SetGroupLeader(class AMultiplayerActionCharacter* NewLeade
 
     NewLeaderPawn->InitializeGroupMembership(this);
 
-
-    // Now, command every group member to update their target.
     for (AMultiplayerActionCharacter* CurrentMember : GroupMembers)
     {
         if(!CurrentMember)
         {
-            continue; // Skip null members
+            continue;
 		}
 
 		ADefaultAIController* MemberController = Cast<ADefaultAIController>(CurrentMember->GetController());
@@ -141,9 +134,6 @@ void AAIGroupManager::SetGroupLeader(class AMultiplayerActionCharacter* NewLeade
         if (MemberController && MemberController->GetBlackboardComponent())
         {
             int32 OriginalIndex = GroupMembers.Find(CurrentMember);
-            // Set the "Leader" key on each AI's blackboard.
-            // This will cause their Behavior Tree to switch to the "Follow" state.
-            // If the NewLeaderPawn is null, it will clear the value, making them stop following.
             MemberController->GetBlackboardComponent()->SetValueAsBool(IsLeaderKeyName, false);
             MemberController->GetBlackboardComponent()->SetValueAsObject(PatrolLeaderKeyName, NewLeaderPawn);
 

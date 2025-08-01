@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -83,8 +81,6 @@ protected:
 	bool bIsUnlocked = false;
 
 public:	
-	//UFUNCTION()
-	//bool ToggleOpenClose(APawn* InstigatorPawn);//return true if opened, false if closed
 	virtual void OnInteract_Implementation(APawn* InstigatorPawn) override;
 
 	virtual void OnStopInteract_Implementation(APawn* InstigatorPawn) override;
@@ -104,7 +100,6 @@ public:
 	virtual bool IsCompleted() override;
 
 protected:
-	// --- SERVER-SIDE LOGIC ---
 	UFUNCTION(Server, Reliable)
 	void Server_BeginUnlock(APawn* InstigatorPawn);
 
@@ -114,17 +109,6 @@ protected:
 	UFUNCTION()
 	void OnUnlockComplete();
 
-	// --- CLIENT-SIDE UI COMMANDS ---
-	//UFUNCTION(Client, Reliable)
-	//void Client_ShowFeedback(bool bIsLocked, bool bHasKey);
-
-	//UFUNCTION(Client, Reliable)
-	//void Client_ShowUnlockUI();
-
-	//UFUNCTION(Client, Reliable)
-	//void Client_HideUnlockUI();
-
-	// --- REPLICATION ---
 	UFUNCTION()
 	void OnRep_Unlocked();
 };

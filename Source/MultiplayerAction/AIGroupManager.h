@@ -54,5 +54,4 @@ private:
 	TArray<TObjectPtr<class AMultiplayerActionCharacter>> PendingSetupMembers;
 
 	FTimerHandle SetupTimerHandle;
-
 };

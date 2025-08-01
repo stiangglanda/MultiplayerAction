@@ -26,7 +26,6 @@ void UBTService_PlayerLocationifSeen::TickNode(UBehaviorTreeComponent& OwnerComp
         return;
     }
 
-    // Get or create perception component
     UAIPerceptionComponent* PerceptionComp = AIController->GetAIPerceptionComponent();
     if (!PerceptionComp)
     {
@@ -44,11 +43,9 @@ void UBTService_PlayerLocationifSeen::TickNode(UBehaviorTreeComponent& OwnerComp
         PerceptionComp->SetDominantSense(SightConfig->GetSenseImplementation());
     }
 
-    // Get currently perceived actors
     TArray<AActor*> PerceivedActors;
     PerceptionComp->GetCurrentlyPerceivedActors(UAISense_Sight::StaticClass(), PerceivedActors);
 
-    // Find closest perceived player
     float ClosestDistance = MAX_FLT;
     AActor* ClosestActor = nullptr;
 
@@ -69,7 +66,6 @@ void UBTService_PlayerLocationifSeen::TickNode(UBehaviorTreeComponent& OwnerComp
         }
     }
 
-    // Update blackboard
     UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();
     if (BlackboardComp)
     {

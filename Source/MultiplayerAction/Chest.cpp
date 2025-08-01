@@ -38,8 +38,6 @@ AChest::AChest()
 		Mesh->CanCharacterStepUpOn = ECB_Yes;
 		Mesh->SetShouldUpdatePhysicsVolume(true);
 	}
-
-
 }
 
 void AChest::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -55,7 +53,6 @@ void AChest::OpenChest(APawn* InstigatorPawn)
 	APlayerController* PC = Cast<APlayerController>(InstigatorPawn->GetController());
 	if (!PC || !PC->IsLocalController())
 	{
-		// We only want to open the UI for the specific player who interacted.
 		return;
 	}
 
@@ -73,7 +70,6 @@ void AChest::OpenChest(APawn* InstigatorPawn)
 		}
 	}
 
-	// Create and show the chest's inventory widget.
 	if (ChestMenuWidgetClass && !ChestMenuWidget)
 	{
 		ChestMenuWidget = CreateWidget<UChestWidget>(PC, ChestMenuWidgetClass);
@@ -82,8 +78,6 @@ void AChest::OpenChest(APawn* InstigatorPawn)
 			ChestMenuWidget->SetChestReference(this);
 			ChestMenuWidget->AddToViewport();
 
-			// --- RESPONSIBILITY SHIFT ---
-			// The CHEST is now responsible for changing the player's input mode.
 			PC->SetInputMode(FInputModeGameAndUI());
 			PC->bShowMouseCursor = true;
 		}
@@ -98,7 +92,6 @@ void AChest::OnInteract_Implementation(APawn* InstigatorPawn)
 
 	if (bIsUnlocked)
 	{
-		// STATE 3: UNLOCKED - Just open/close the chest
 		if (bOpen)
 		{
 			CloseChest(InstigatorPawn);
@@ -110,11 +103,9 @@ void AChest::OnInteract_Implementation(APawn* InstigatorPawn)
 	}
 	else
 	{
-		// STATE 1: LOCKED - Check for key and begin unlocking
 		ADefaultGameState* GameState = GetWorld()->GetGameState<ADefaultGameState>();
 		if (GameState && GameState->bHasKingsKey)
 		{
-			// Player HAS the key, begin the unlock process.
 			Server_BeginUnlock(InstigatorPawn);
 		}
 		else
@@ -141,12 +132,10 @@ void AChest::OnClientStartInteract_Implementation(AMultiplayerActionCharacter* I
 	APlayerController* PC = InteractingCharacter->GetController<APlayerController>();
 	if (!PC || !PC->IsLocalController()) return;
 
-	// --- LOGIC MOVED FROM PLAYER ---
 	ADefaultGameState* GameState = GetWorld()->GetGameState<ADefaultGameState>();
 
 	if (bIsUnlocked)
 	{
-		// Chest is unlocked, just tell the server to open it.
 		OnInteract_Implementation(InteractingCharacter);
 		//InteractingCharacter->Server_RequestStartInteract(this);
 	}
@@ -161,12 +150,10 @@ void AChest::OnClientStartInteract_Implementation(AMultiplayerActionCharacter* I
 				Widget->AddToViewport();
 				Widget->StartProgress(UnlockDuration);
 
-				// --- HAND OFF THE WIDGET REFERENCE ---
 				InteractingCharacter->SetActiveProgressBar(Widget);
 			}
 		}
 
-		// Tell the server to start the unlock process.
 		InteractingCharacter->Server_RequestStartInteract(this);
 	}
 	else
@@ -179,7 +166,6 @@ void AChest::OnClientStartInteract_Implementation(AMultiplayerActionCharacter* I
 				Widget->AddToViewport();
 				Widget->ShowCompletedMessage();
 
-				// --- HAND OFF THE WIDGET REFERENCE ---
 				InteractingCharacter->SetActiveProgressBar(Widget);
 			}
 		}
@@ -188,8 +174,6 @@ void AChest::OnClientStartInteract_Implementation(AMultiplayerActionCharacter* I
 		{
 			UGameplayStatics::PlaySoundAtLocation(this, ChestLockedSound, GetActorLocation());
 		}
-		// Chest is locked, no key. Show locked message.
-		// ... create and show temporary "locked" widget ...
 	}
 }
 
@@ -215,15 +199,12 @@ void AChest::CloseChest(APawn* InstigatorPawn)
 		}
 	}
 
-	// Remove the widget from the screen.
 	if (ChestMenuWidget)
 	{
 		ChestMenuWidget->RemoveFromParent();
 		ChestMenuWidget = nullptr;
 	}
 
-	// --- RESPONSIBILITY SHIFT ---
-	// The CHEST tells the player's controller to return to game-only input.
 	if (PC && PC->IsLocalController())
 	{
 		PC->SetInputMode(FInputModeGameOnly());
@@ -270,13 +251,11 @@ void AChest::BeginPlay()
 	{
 		Weapon = NewObject<UWeapon>(this, WeaponClass);
 	}
-
 }
 
 void AChest::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 bool AChest::IsCompleted()
@@ -288,16 +267,14 @@ void AChest::OnUnlockComplete()
 {
 	if (!InteractingPlayer) return;
 
-	// Stop the player's animation
 	if (AMultiplayerActionCharacter* Char = Cast<AMultiplayerActionCharacter>(InteractingPlayer))
 	{
 		Char->Client_OnInteractionSuccess();
 		Char->StopInteractionMontage();
 	}
 
-	// Set the replicated state
 	bIsUnlocked = true;
-	OnRep_Unlocked(); // Call for server
+	OnRep_Unlocked();
 
 	InteractingPlayer = nullptr;
 }
@@ -343,15 +320,11 @@ void AChest::Server_BeginUnlock_Implementation(APawn* InstigatorPawn)
 		UE_LOG(LogTemp, Log, TEXT("Chest (Server): Reporting to GameState that unlocking has started."));
 	}
 
-	// Start the server-side timer
 	GetWorld()->GetTimerManager().SetTimer(UnlockTimerHandle, this, &AChest::OnUnlockComplete, UnlockDuration, false);
 
-	// Tell the player to start their unlock animation
 	if (AMultiplayerActionCharacter* Char = Cast<AMultiplayerActionCharacter>(InstigatorPawn))
 	{
-		// Now we pass our specific UnlockMontage to the generic function
 		Char->PlayInteractionMontage(UnlockMontage);
 	}
-
 }
 

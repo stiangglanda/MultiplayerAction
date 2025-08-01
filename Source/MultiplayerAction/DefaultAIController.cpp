@@ -23,14 +23,6 @@ ADefaultAIController::ADefaultAIController()
     SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
 
     AIPerceptionComponent->ConfigureSense(*SightConfig);
-
-    //DamageConfig = CreateDefaultSubobject<UAISenseConfig_Damage>(TEXT("DamageConfig"));
-    //if (DamageConfig)
-    //{
-    //    DamageConfig->SetMaxAge(5.0f);
-    //    AIPerceptionComponent->ConfigureSense(*DamageConfig);
-    //}
-
     AIPerceptionComponent->SetDominantSense(SightConfig->GetSenseImplementation());
     AIPerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ADefaultAIController::OnTargetPerceptionUpdated);
 }
@@ -109,7 +101,6 @@ void ADefaultAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus 
     {
         return;
     }
-
 
     static const FName TargetActorKey = TEXT("Player");
 

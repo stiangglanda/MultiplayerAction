@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -21,14 +19,12 @@ class MULTIPLAYERACTION_API ADefaultGameState : public AGameStateBase
 public:
 	ADefaultGameState();
 
-	// We'll use an OnRep function so other actors can react when the key is acquired.
 	UPROPERTY(ReplicatedUsing = OnRep_KingsKeyAcquired)
 	bool bHasKingsKey = false;
 
 	UFUNCTION()
 	void OnRep_KingsKeyAcquired();
 
-	// A public server-only function to set the state
 	void SetHasKingsKey(bool bNewState);
 
 	UPROPERTY(ReplicatedUsing = OnRep_StartedUnlockingChest)

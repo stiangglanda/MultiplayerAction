@@ -26,22 +26,14 @@
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
-//////////////////////////////////////////////////////////////////////////
-// AMyLevelPlaygroundCharacter
-
 AMultiplayerActionCharacter::AMultiplayerActionCharacter()
 {
-	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
-	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationRoll = false;
 
-
-	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
-	// instead of recompiling to adjust them
 	GetCharacterMovement()->JumpZVelocity = 700.f;
 	GetCharacterMovement()->AirControl = 0.35f;
 	GetCharacterMovement()->MaxWalkSpeed = 500.f;
@@ -50,17 +42,14 @@ AMultiplayerActionCharacter::AMultiplayerActionCharacter()
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 
-
-	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 400.0f; // The camera follows at this distance behind the character	
-	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
+	CameraBoom->TargetArmLength = 400.0f;
+	CameraBoom->bUsePawnControlRotation = true;
 
-	// Create a follow camera
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
-	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	FollowCamera->bUsePawnControlRotation = false;
 
 	bReplicates = true;
 
@@ -69,7 +58,6 @@ AMultiplayerActionCharacter::AMultiplayerActionCharacter()
 	SphereCollider = CreateDefaultSubobject<USphereComponent>(TEXT("Chest Collider"));
 	SphereCollider->InitSphereRadius(SphereColliderRadius);
 
-	// Add these lines to ensure proper collision setup
 	SphereCollider->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	SphereCollider->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
 	SphereCollider->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
@@ -95,7 +83,6 @@ AMultiplayerActionCharacter::AMultiplayerActionCharacter()
 
 void AMultiplayerActionCharacter::BeginPlay()
 {
-	// Call the base class  
 	Super::BeginPlay();
 
 	SphereCollider->OnComponentBeginOverlap.AddDynamic(this, &AMultiplayerActionCharacter::OnOverlapBegin);
@@ -112,12 +99,8 @@ void AMultiplayerActionCharacter::BeginPlay()
 	}
 }
 
-//////////////////////////////////////////////////////////////////////////
-// Input
-
 void AMultiplayerActionCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	// Add Input Mapping Context
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
@@ -126,33 +109,19 @@ void AMultiplayerActionCharacter::SetupPlayerInputComponent(UInputComponent* Pla
 		}
 	}
 
-	// Set up action bindings
-	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
-
-		// Jumping
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) 
+	{
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AMultiplayerActionCharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
-
-		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::Move);
-
-		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::Look);
-
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::AttackInputMapping);
-
 		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::Block);
-
 		EnhancedInputComponent->BindAction(LockAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::Lock);
-
 		EnhancedInputComponent->BindAction(RollAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::Roll);
-
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &AMultiplayerActionCharacter::Interact);
-
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &AMultiplayerActionCharacter::StopInteract);
-
 		EnhancedInputComponent->BindAction(HeavyAttackAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::HeavyAttack);
-
 		EnhancedInputComponent->BindAction(EscapeAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::Escape);
 	}
 	else
@@ -204,14 +173,8 @@ void AMultiplayerActionCharacter::Tick(float DeltaTime)
 	}
 }
 
-AMultiplayerActionCharacter::~AMultiplayerActionCharacter()
-{
-
-}
-
 void AMultiplayerActionCharacter::OnRep_CurrentHealth()
 {
-	//Client-specific functionality
 	if (IsLocallyControlled())
 	{
 		//FString healthMessage = FString::Printf(TEXT("You now have %f health remaining."), Health);
@@ -224,7 +187,6 @@ void AMultiplayerActionCharacter::OnRep_CurrentHealth()
 		}
 	}
 
-	//Server-specific functionality
 	if (GetLocalRole() == ROLE_Authority)
 	{
 		//FString healthMessage = FString::Printf(TEXT("%s now has %f health remaining."), *GetFName().ToString(), Health);
@@ -354,7 +316,6 @@ void AMultiplayerActionCharacter::Block(const FInputActionValue& Value)
 
 void AMultiplayerActionCharacter::HeavyAttack(const FInputActionValue& Value)
 {
-	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("HeavyAttack"));
 	ServerReliableRPC_HeavyAttack();
 }
 
@@ -407,15 +368,10 @@ void AMultiplayerActionCharacter::Interact(const FInputActionValue& Value)
 
 void AMultiplayerActionCharacter::StopInteract(const FInputActionValue& Value)
 {
-	//if (ShrineProgressWidget)
-	//{
-	//	ShrineProgressWidget->RemoveFromParent();
-	//	ShrineProgressWidget = nullptr; // Set pointer to null so it can be created again.
-	//}
 	if (ActiveProgressBarWidget)
 	{
 		ActiveProgressBarWidget->RemoveFromParent();
-		ActiveProgressBarWidget = nullptr; // Clear the pointer.
+		ActiveProgressBarWidget = nullptr;
 	}
 
 	if (CurrentInteractable)
@@ -423,7 +379,6 @@ void AMultiplayerActionCharacter::StopInteract(const FInputActionValue& Value)
 		AActor* InteractableActor = Cast<AActor>(CurrentInteractable.GetObject());
 		if (InteractableActor)
 		{
-			// Tell the server we stopped.
 			Server_RequestStopInteract(InteractableActor);
 		}
 	}
@@ -502,17 +457,13 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 		return 0;
 	}
 
-	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("TakeDamage"));
 	DamageApplied = FMath::Min(Health, DamageApplied);
-
 	Health -= DamageApplied;
-
 	UE_LOG(LogTemp, Display, TEXT("Health: %f"), Health);
 	OnRep_CurrentHealth();
 
-	if (EventInstigator != nullptr && DamageCauser != nullptr)// this is for the AIPerceptionComponent to persive the damage event
+	if (EventInstigator != nullptr && DamageCauser != nullptr)
 	{
-
 		AAIController* MyController = Cast<AAIController>(GetController());
 		if (MyController)
 		{
@@ -537,12 +488,11 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 
 	if (IsDead())
 	{
-		if (HasAuthority()) // CRITICAL: Only the server can change the GameMode state.
+		if (HasAuthority())
 		{
 			AMultiplayerActionGameMode* GameMode = GetWorld()->GetAuthGameMode<AMultiplayerActionGameMode>();
 			if (GameMode)
 			{
-				// This cast will now work because the compiler has the full definition of ABossEnemyCharacter.
 				if (ABossEnemyCharacter* Boss = Cast<ABossEnemyCharacter>(this))
 				{
 					GameMode->OnBossDied(Boss);
@@ -560,9 +510,7 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 		}
 
 		GetCharacterMovement()->DisableMovement();
-
-		// Ragdoll
-		GetMesh()->SetSimulatePhysics(true);
+		GetMesh()->SetSimulatePhysics(true);// Ragdoll
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		SetLifeSpan(10.0f);
 	}
@@ -573,8 +521,6 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 void AMultiplayerActionCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	//Replicate current health.
 	DOREPLIFETIME(AMultiplayerActionCharacter, Health);
 	DOREPLIFETIME(AMultiplayerActionCharacter, WeaponClass);
 	DOREPLIFETIME(AMultiplayerActionCharacter, CurrentInteractionMontage);
@@ -646,8 +592,6 @@ void AMultiplayerActionCharacter::Server_RequestStartInteract_Implementation(AAc
 {
 	if (InteractableActor && InteractableActor->Implements<UOutpostInteractable>())
 	{
-		// Call the interface function on the shrine (or chest, etc.).
-		// The 'this' pointer here refers to the server-side pawn.
 		IOutpostInteractable::Execute_OnInteract(InteractableActor, this);
 	}
 }
@@ -690,8 +634,8 @@ void AMultiplayerActionCharacter::PerformWeaponTrace()
 					{
 						UGameplayStatics::PlaySoundAtLocation(this, AttackSound, GetActorLocation());
 					}
-					FPointDamageEvent DamageEvent(WeaponDamage, hits[i], -GetActorLocation(), nullptr);
-					unit->TakeDamage(WeaponDamage, DamageEvent, GetController(), this);
+					FPointDamageEvent DamageEvent(Weapon->WeaponData.WeaponDamage, hits[i], -GetActorLocation(), nullptr);
+					unit->TakeDamage(Weapon->WeaponData.WeaponDamage, DamageEvent, GetController(), this);
 					ActorsHit.Add(unit);
 				}
 			}
@@ -803,14 +747,11 @@ void AMultiplayerActionCharacter::OnOverlapBegin(UPrimitiveComponent* Overlapped
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
 	const FHitResult& SweepResult)
 {
-
 	if (!OtherActor)
 	{
 		return;
 	}
 
-	// 1. Check if the overlapped actor implements our interface.
-	// This replaces "IsA(AChest::StaticClass())".
 	if (OtherActor->Implements<UOutpostInteractable>())
 	{
 		if (InteractionWidgetClass && !InteractionWidget)
@@ -825,34 +766,10 @@ void AMultiplayerActionCharacter::OnOverlapBegin(UPrimitiveComponent* Overlapped
 				}
 			}
 		}
-		// 2. Tell the object that we are now "focused" on it.
-		// This lets the object decide whether to show a prompt.
-		// We use Execute_ to safely call interface functions.
-		IOutpostInteractable::Execute_OnBeginFocus(OtherActor, this);
 
-		// 3. Store a reference to this interactable object.
+		IOutpostInteractable::Execute_OnBeginFocus(OtherActor, this);
 		CurrentInteractable = OtherActor;
 	}
-
-	//if (OtherActor && OtherActor->IsA(AChest::StaticClass()))
-	//{
-	//	// Create and show widget
-	//	if (InteractionWidgetClass && !InteractionWidget)
-	//	{
-	//		APlayerController* PC = Cast<APlayerController>(GetController());
-	//		if (PC)
-	//		{
-	//			InteractionWidget = CreateWidget<UUserWidget>(PC, InteractionWidgetClass);
-	//			if (InteractionWidget)
-	//			{
-	//				InteractionWidget->AddToViewport();
-	//			}
-	//		}
-	//	}
-
-	//	AChest* chest = Cast<AChest>(OtherActor);
-	//	OverlappingChest = chest;
-	//}
 }
 
 void AMultiplayerActionCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -863,7 +780,6 @@ void AMultiplayerActionCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedCo
 		return;
 	}
 
-	// 1. Check if the actor we are no longer overlapping is the one we were interacting with.
 	if (OtherActor == CurrentInteractable.GetObject())
 	{
 		if (InteractionWidget)
@@ -878,17 +794,7 @@ void AMultiplayerActionCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedCo
 			ActiveProgressBarWidget = nullptr;
 		}
 
-		//if (ShrineProgressWidget)
-		//{
-		//	ShrineProgressWidget->RemoveFromParent();
-		//	ShrineProgressWidget = nullptr; // Set pointer to null so it can be created again.
-		//}
-
-		// 2. Tell the object that we are no longer focused on it.
-		// This lets the object hide its own UI prompt.
 		IOutpostInteractable::Execute_OnEndFocus(OtherActor, this);
-
-		// 3. Clear our reference.
 		CurrentInteractable = nullptr;
 
 		APlayerController* PC = Cast<APlayerController>(GetController());
@@ -898,50 +804,23 @@ void AMultiplayerActionCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedCo
 			PC->bShowMouseCursor = false;
 		}
 	}
-
-	//if (OtherActor && OtherActor->IsA(AChest::StaticClass()))
-	//{
-	//	// Remove widget from viewport
-	//	if (InteractionWidget)
-	//	{
-	//		InteractionWidget->RemoveFromParent();
-	//		InteractionWidget = nullptr;
-	//	}
-
-	//	APlayerController* PC = Cast<APlayerController>(GetController());
-	//	if (PC)
-	//	{
-	//		PC->SetInputMode(FInputModeGameOnly());
-	//		PC->bShowMouseCursor = false;
-	//	}
-
-	//	OverlappingChest->CloseChest(); // Close the chest if it was open
-	//	OverlappingChest = nullptr;
-	//}
 }
 
 void AMultiplayerActionCharacter::PlayInteractionMontage(UAnimMontage* MontageToPlay)
 {
-	// Only the server should be able to initiate this replicated animation
 	if (HasAuthority() && MontageToPlay)
 	{
-		// Set the current montage on the server
 		CurrentInteractionMontage = MontageToPlay;
-
-		// Call the multicast function, passing the montage along
 		Multicast_PlayInteractionMontage(MontageToPlay);
 	}
 }
 
-// This function is called BY THE SERVER (e.g., from the Shrine)
 void AMultiplayerActionCharacter::StopInteractionMontage()
 {
 	if (HasAuthority())
 	{
-		// The multicast stop doesn't need a parameter, it will use CurrentInteractionMontage
 		Multicast_StopInteractionMontage();
 
-		// Clear the current montage on the server
 		CurrentInteractionMontage = nullptr;
 	}
 }
@@ -954,151 +833,38 @@ void AMultiplayerActionCharacter::SetActiveProgressBar(UInteractionProgressBarWi
 		ActiveProgressBarWidget = nullptr;
 	}
 
-	// Store the pointer to the new widget.
 	ActiveProgressBarWidget = Widget;
 }
 
-//void AMultiplayerActionCharacter::ShowEndOfMatchUI(EMatchState MatchResult)
-//{
-//	APlayerController* PC = GetController<APlayerController>();
-//	if (!PC || !PC->IsLocalController())
-//	{
-//		return;
-//	}
-//
-//	TSubclassOf<UUserWidget> WidgetToShowClass = nullptr;
-//
-//	if (MatchResult == EMatchState::Victory)
-//	{
-//		WidgetToShowClass = VictoryWidgetClass;
-//	}
-//	else if (MatchResult == EMatchState::Defeat)
-//	{
-//		WidgetToShowClass = DefeatWidgetClass;
-//	}
-//
-//	if (WidgetToShowClass)
-//	{
-//		UUserWidget* EndOfMatchWidget = CreateWidget<UUserWidget>(PC, WidgetToShowClass);
-//		if (EndOfMatchWidget)
-//		{
-//			EndOfMatchWidget->AddToViewport();
-//
-//			// Set input mode to UI only and show the mouse cursor
-//			PC->SetInputMode(FInputModeUIOnly());
-//			PC->bShowMouseCursor = true;
-//		}
-//	}
-//}
-
-
-// This function executes on the SERVER and then REPLICATES to ALL CLIENTS
 void AMultiplayerActionCharacter::Multicast_PlayInteractionMontage_Implementation(UAnimMontage* MontageToPlay)
 {
 	if (Weapon) { Weapon->SetVisibility(false); }
 	if (ShieldMesh) { ShieldMesh->SetVisibility(false); }
 
-	// Play the specific montage that was passed from the server
 	if (MontageToPlay)
 	{
-		CurrentInteractionMontage = MontageToPlay; // Ensure clients also have the correct reference
-		PlayAnimMontage(MontageToPlay); // You can specify a section name if needed, e.g., FName("Loop")
+		CurrentInteractionMontage = MontageToPlay;
+		PlayAnimMontage(MontageToPlay);
 	}
 }
 
-// This function executes on the SERVER and then REPLICATES to ALL CLIENTS
 void AMultiplayerActionCharacter::Multicast_StopInteractionMontage_Implementation()
 {
 	if (Weapon) { Weapon->SetVisibility(true); }
 	if (ShieldMesh) { ShieldMesh->SetVisibility(true); }
 
-	// Stop the currently playing interaction montage
 	if (CurrentInteractionMontage)
 	{
 		StopAnimMontage(CurrentInteractionMontage);
 	}
 }
 
-//void AMultiplayerActionCharacter::PlayPrayMontage()
-//{
-//	// Only the server should be able to initiate this replicated animation
-//	if (HasAuthority())
-//	{
-//		Multicast_PlayPrayMontage();
-//	}
-//}
-//
-//// This function is called BY THE SERVER (e.g., from the Shrine)
-//void AMultiplayerActionCharacter::StopPrayMontage()
-//{
-//	if (HasAuthority())
-//	{
-//		Multicast_StopPrayMontage();
-//	}
-//}
-
-
-// This function executes on the SERVER and then REPLICATES to ALL CLIENTS
-//void AMultiplayerActionCharacter::Multicast_PlayPrayMontage_Implementation()
-//{
-//	if (Weapon) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
-//	{
-//		Weapon->SetVisibility(false);
-//	}
-//
-//	if (ShieldMesh) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
-//	{
-//		ShieldMesh->SetVisibility(false);
-//	}
-//
-//	if (PrayMontage)
-//	{
-//		// Play the looping section of the montage
-//		PlayAnimMontage(PrayMontage, 1.0f);
-//	}
-//}
-//
-//// This function executes on the SERVER and then REPLICATES to ALL CLIENTS
-//void AMultiplayerActionCharacter::Multicast_StopPrayMontage_Implementation()
-//{
-//	if (Weapon) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
-//	{
-//		Weapon->SetVisibility(true);
-//	}
-//
-//	if (ShieldMesh) // Assuming CurrentWeapon is your TObjectPtr<AWeapon>
-//	{
-//		ShieldMesh->SetVisibility(true);
-//	}
-//
-//	if (PrayMontage)
-//	{
-//		// Stop any instance of this montage that is currently playing.
-//		StopAnimMontage(PrayMontage);
-//	}
-//}
-
 void AMultiplayerActionCharacter::Client_OnInteractionSuccess_Implementation()
 {
-	//if (ShrineProgressWidget)
-	//{
-	//	UE_LOG(LogTemp, Log, TEXT("Client: Interaction succeeded. Hiding progress UI."));
-	//	ShrineProgressWidget->RemoveFromParent();
-	//	ShrineProgressWidget = nullptr;
-	//}
 	if (ActiveProgressBarWidget)
 	{
 		ActiveProgressBarWidget->RemoveFromParent();
 		ActiveProgressBarWidget = nullptr;
-	}
-}
-
-void AMultiplayerActionCharacter::HideTemporaryInteractionWidget()
-{
-	if (ShrineProgressWidget)
-	{
-		ShrineProgressWidget->RemoveFromParent();
-		ShrineProgressWidget = nullptr;
 	}
 }
 

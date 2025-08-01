@@ -26,30 +26,24 @@ class AMultiplayerActionCharacter : public ACharacter
 
 protected:
 
-    /** Camera boom positioning the camera behind the character */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
     USpringArmComponent* CameraBoom;
 
-    /** Follow camera */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
     UCameraComponent* FollowCamera;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
     TObjectPtr<USkeletalMeshComponent> ShieldMesh;
 
-    /** MappingContext */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputMappingContext* DefaultMappingContext;
 
-    /** Jump Input Action */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputAction* JumpAction;
 
-    /** Attack Input Action */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputAction* AttackAction;
 
-    /** Lock on Input Action */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputAction* LockAction;
 
@@ -59,23 +53,18 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputAction* RollAction;
 
-    /** Move Input Action */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputAction* MoveAction;
 
-    /** Look Input Action */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputAction* LookAction;
 
-    /** Interact Input Action */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputAction* InteractAction;
 
-    /** Escape Input Action */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputAction* EscapeAction;
     
-    /** Heavy Attack Input Action */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputAction* HeavyAttackAction;
 
@@ -100,12 +89,6 @@ protected:
     UPROPERTY(Replicated)
     TObjectPtr<UAnimMontage> CurrentInteractionMontage;
 
-    //UPROPERTY(EditDefaultsOnly, Category = "Animation")
-    //TObjectPtr<UAnimMontage> PrayMontage;
-
-    UPROPERTY(EditAnywhere)
-    float WeaponDamage = 20;
-
     UPROPERTY(EditAnywhere)
     float SphereTraceRadiusWeapon = 20;
 
@@ -125,8 +108,6 @@ public:
     UFUNCTION(Client, Reliable)
     void Client_OnInteractionSuccess();
 
-    void HideTemporaryInteractionWidget();
-
     UPROPERTY(EditAnywhere)
     TObjectPtr<class AAIGroupManager> AIGroupManager;
 
@@ -142,8 +123,6 @@ public:
     TSubclassOf<UWeapon> WeaponClass;
 
     AMultiplayerActionCharacter();
-
-    ~AMultiplayerActionCharacter();
 
     UFUNCTION(BlueprintPure)
     bool IsDead();
@@ -179,10 +158,6 @@ public:
 
     void StopInteractionMontage();
 
-    //void PlayPrayMontage();
-
-    //void StopPrayMontage();
-
     void SetActiveProgressBar(UInteractionProgressBarWidget* Widget);
 
     UFUNCTION(Server, Reliable)
@@ -190,8 +165,6 @@ public:
 
     UFUNCTION(Server, Reliable)
     void Server_RequestStopInteract(AActor* InteractableActor);
-
-    //void ShowEndOfMatchUI(EMatchState MatchResult);
 
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio")
@@ -238,16 +211,6 @@ protected:
 
     UPROPERTY()
     UUserWidget* InteractionWidget;
-
-    UPROPERTY()
-    TObjectPtr<UInteractionProgressBarWidget> ShrineProgressWidget;
-
-    //UPROPERTY(EditDefaultsOnly, Category = "UI")
-    //TSubclassOf<UUserWidget> VictoryWidgetClass;
-
-    ///** The widget class to show on Defeat. */
-    //UPROPERTY(EditDefaultsOnly, Category = "UI")
-    //TSubclassOf<UUserWidget> DefeatWidgetClass;
 
     bool bIsAttacking = false;
     bool IsRolling = false;
@@ -306,12 +269,6 @@ protected:
     UFUNCTION(NetMulticast, Reliable)
     void Multicast_StopInteractionMontage();
 
-    //UFUNCTION(NetMulticast, Reliable)
-    //void Multicast_PlayPrayMontage();
-
-    //UFUNCTION(NetMulticast, Reliable)
-    //void Multicast_StopPrayMontage();
-
     FTimerHandle WeaponTraceTimer;
     virtual void PerformWeaponTrace();
     void StartWeaponTrace();
@@ -323,17 +280,14 @@ protected:
     UPROPERTY(EditAnywhere)
     float MaxHealth = 100;
 
-    /** RepNotify for changes made to current health.*/
-    UFUNCTION()
-    void OnRep_CurrentHealth();
-
     UPROPERTY(ReplicatedUsing = OnRep_CurrentHealth)
     float Health;
 
-    /** Called for movement input */
+    UFUNCTION()
+    void OnRep_CurrentHealth();
+
     void Move(const FInputActionValue& Value);
 
-    /** Called for looking input */
     void Look(const FInputActionValue& Value);
 
     void Block(const FInputActionValue& Value);
@@ -352,15 +306,9 @@ protected:
 
     void Jump() override;
 
-    /** Called for Attack input */
     void AttackInputMapping(const FInputActionValue& Value);
 
-    //void PlayImpactAnimation();
-
-    /** Property replication */
     void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-    //void OnHealthUpdate();
 
     UFUNCTION()
     virtual void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -372,10 +320,8 @@ protected:
         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 protected:
-    // APawn interface
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-    // To add mapping context
     virtual void BeginPlay() override;
 
     virtual void Tick(float DeltaTime) override;
@@ -385,12 +331,11 @@ public:
 
     float TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser);
 
-    /** Returns CameraBoom subobject **/
     FORCEINLINE class USpringArmComponent* GetCameraBoom() const
     {
         return CameraBoom;
     }
-    /** Returns FollowCamera subobject **/
+
     FORCEINLINE class UCameraComponent* GetFollowCamera() const
     {
         return FollowCamera;

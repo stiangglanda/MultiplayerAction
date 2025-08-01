@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -12,9 +10,6 @@
 #include "AIGroupAlertInterface.h"
 #include "DefaultAIController.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class MULTIPLAYERACTION_API ADefaultAIController : public AAIController, public IAIGroupAlertInterface
 {
@@ -41,7 +36,6 @@ private:
 	UPROPERTY(EditAnywhere)
 	float AcceptenceRadius = 200;
 
-	// AI Perception components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UAIPerceptionComponent> AIPerceptionComponent;
 

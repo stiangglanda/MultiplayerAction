@@ -10,12 +10,9 @@ void ABossEnemyCharacter::BeginPlay()
 
 	if (HasAuthority())
 	{
-		// Get the current GameState.
 		ADefaultGameState* GameState = GetWorld()->GetGameState<ADefaultGameState>();
 		if (GameState)
 		{
-			// Bind our local function 'OnChestUnlockingStarted' to the delegate.
-			// Now, whenever the GameState broadcasts this delegate, our function will be called.
 			GameState->OnStartedUnlockingChestDelegate.AddDynamic(this, &ABossEnemyCharacter::OnChestUnlockingStarted);
 			UE_LOG(LogTemp, Log, TEXT("BossEnemyCharacter has subscribed to OnStartedUnlockingChestDelegate."));
 		}
@@ -62,8 +59,8 @@ void ABossEnemyCharacter::PerformWeaponTrace()
 				AMultiplayerActionCharacter* unit = Cast<AMultiplayerActionCharacter>(hits[i].GetActor());
 				if (unit && unit->GetTeam() != GetTeam())
 				{
-					FPointDamageEvent DamageEvent(WeaponDamage, hits[i], -GetActorLocation(), nullptr);
-					unit->TakeDamage(WeaponDamage, DamageEvent, GetController(), this);
+					FPointDamageEvent DamageEvent(BossDamage, hits[i], -GetActorLocation(), nullptr);
+					unit->TakeDamage(BossDamage, DamageEvent, GetController(), this);
 					ActorsHit.Add(unit);
 					ApplyKnockbackToPlayer(unit, hits[i]);
 				}
@@ -91,10 +88,8 @@ void ABossEnemyCharacter::ApplyKnockbackToPlayer(ACharacter* PlayerToLaunch, con
 
 void ABossEnemyCharacter::OnChestUnlockingStarted()
 {
-	// This code will execute on the server when the delegate is broadcast.
 	UE_LOG(LogTemp, Warning, TEXT("BOSS ENEMY: Alerted! Abandoning patrol and moving to start location."));
 
-	// Get the AI Controller that is possessing this boss character.
 	AAIController* MyAIController = GetController<AAIController>();
 	if (!MyAIController)
 	{
@@ -102,7 +97,6 @@ void ABossEnemyCharacter::OnChestUnlockingStarted()
 		return;
 	}
 
-	// Get the Blackboard component from the AI Controller.
 	UBlackboardComponent* MyBlackboard = MyAIController->GetBlackboardComponent();
 	if (!MyBlackboard)
 	{
@@ -110,23 +104,13 @@ void ABossEnemyCharacter::OnChestUnlockingStarted()
 		return;
 	}
 
-	// --- BLACKBOARD MANIPULATION ---
-
-	// 1. Clear the "PatrolPath" key.
-	// This will cause any Behavior Tree branch that depends on this key (e.g., the "Patrol" sequence) to fail.
-	// We use the key's name as an FName. Make sure this matches the name in your Blackboard asset EXACTLY.
 	MyBlackboard->ClearValue(TEXT("PatrolPath"));
 	UE_LOG(LogTemp, Log, TEXT("Boss AI: Cleared 'PatrolPath' key."));
 
-	// 2. Get the "StartLocation" value and set it as the new "MoveToLocation".
-	// We assume you have a key named "StartLocation" of type Vector and a key named "MoveToLocation" of type Vector.
-	// If you have a single "TargetLocation" key, you would use that instead.
 	const FVector StartLocation = MyBlackboard->GetValueAsVector(TEXT("Start Location"));
 
-	// Check if the StartLocation is valid (not zero).
 	if (StartLocation != FVector::ZeroVector)
 	{
-		// Set the "MoveToLocation" key. This will trigger a "Move To" task in your Behavior Tree.
 		MyBlackboard->SetValueAsVector(TEXT("BossReturnLocation"), StartLocation);
 		UE_LOG(LogTemp, Log, TEXT("Boss AI: Setting 'MoveToLocation' to StartLocation: %s"), *StartLocation.ToString());
 	}
@@ -134,7 +118,4 @@ void ABossEnemyCharacter::OnChestUnlockingStarted()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Boss AI: 'StartLocation' key is not set on the Blackboard. Cannot move to start."));
 	}
-
-	// Any other logic, like setting an "bIsEnraged" boolean, would go here.
-	// MyBlackboard->SetValueAsBool(TEXT("bIsEnraged"), true);
 }

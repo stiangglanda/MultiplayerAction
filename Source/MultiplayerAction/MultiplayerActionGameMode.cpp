@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "MultiplayerActionGameMode.h"
 #include "MultiplayerActionCharacter.h"
 #include "UObject/ConstructorHelpers.h"
@@ -25,11 +23,8 @@ void AMultiplayerActionGameMode::StartPlay()
 {
 	Super::StartPlay();
 
-	// --- INITIALIZE ACTOR TRACKING ---
-	// Clear any existing data first to be safe.
 	ActiveBosses.Empty();
 
-	// Find all instances of the Boss character class in the level.
 	TArray<AActor*> FoundBosses;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABossEnemyCharacter::StaticClass(), FoundBosses);
 
@@ -62,20 +57,15 @@ APawn* AMultiplayerActionGameMode::FindNextSpectatorTarget(APlayerController* De
 {
 	for (APlayerController* PC : ActivePlayerControllers)
 	{
-		// Make sure it's not the controller of the player who just died,
-		// and that they have a valid pawn to watch.
 		if (PC && PC != DeadPlayerController && PC->GetPawn() != nullptr)
 		{
-			// Found a valid target.
 			return PC->GetPawn();
 		}
 	}
 
-	// No other living players were found.
 	return nullptr;
 }
 
-// This function will be called by your player character's death logic.
 void AMultiplayerActionGameMode::OnPlayerDied(AMultiplayerActionCharacter* DeadPlayer)
 {
 	if (!DeadPlayer) return;
@@ -83,37 +73,26 @@ void AMultiplayerActionGameMode::OnPlayerDied(AMultiplayerActionCharacter* DeadP
 	APlayerController* PC = DeadPlayer->GetController<APlayerController>();
 	if (!PC) return;
 
-	// --- SPECTATING LOGIC ---
-	// This must run before we remove the player from the active list.
 	APawn* SpectatorTarget = FindNextSpectatorTarget(PC);
 	if (SpectatorTarget)
 	{
-		// 1. Tell the PlayerController to begin spectating.
-		// This will unpossess the dead pawn and may spawn a SpectatorPawn.
 		PC->PlayerState->SetIsSpectator(true);
 		PC->ChangeState(NAME_Spectating);
 
-		// 2. Set the camera to view the new target.
-		// The blend time makes for a smooth transition.
 		PC->SetViewTargetWithBlend(SpectatorTarget, 0.5f, EViewTargetBlendFunction::VTBlend_Cubic);
 	}
 	else
 	{
-		// No one left to spectate. Handle game over or final state.
-		// For now, they will just be a free-roaming spectator.
 		PC->PlayerState->SetIsSpectator(true);
 		PC->ChangeState(NAME_Spectating);
 	}
-	// --- END SPECTATING LOGIC ---
 
-	// Now remove the player's controller from the active list for win/loss checks.
 	ActivePlayerControllers.Remove(PC);
 	UE_LOG(LogTemp, Log, TEXT("Player died and is now spectating. Players remaining: %d"), ActivePlayerControllers.Num());
 
 	CheckWinLossConditions();
 }
 
-// This function will be called by your boss character's death logic.
 void AMultiplayerActionGameMode::OnBossDied(ABossEnemyCharacter* DeadBoss)
 {
 	if (DeadBoss)
@@ -129,7 +108,6 @@ void AMultiplayerActionGameMode::CheckWinLossConditions()
 {
 	if (bMatchHasEnded) return;
 
-	// LOSS Condition
 	if (ActivePlayerControllers.Num() <= 0)
 	{
 		bMatchHasEnded = true;
@@ -137,8 +115,6 @@ void AMultiplayerActionGameMode::CheckWinLossConditions()
 		return;
 	}
 
-	// WIN Condition
-	// Only check for a win if there were bosses to defeat in the first place.
 	if (InitialBossCount > 0 && ActiveBosses.Num() <= 0)
 	{
 		bMatchHasEnded = true;
@@ -148,7 +124,6 @@ void AMultiplayerActionGameMode::CheckWinLossConditions()
 
 void AMultiplayerActionGameMode::EndGame(bool bPlayersWon)
 {
-	// Get the GameState and tell it to update the match state for all clients.
 	ADefaultGameState* MyGameState = GetGameState<ADefaultGameState>();
 	if (MyGameState)
 	{
@@ -161,7 +136,6 @@ void AMultiplayerActionGameMode::EndGame(bool bPlayersWon)
 		UE_LOG(LogTemp, Error, TEXT("GAMEMODE (SERVER): FAILED to get GameState in EndGame!"));
 	}
 
-	// You might also want to disable player input here.
 	for (APlayerController* PC : ActivePlayerControllers)
 	{
 		PC->DisableInput(nullptr);

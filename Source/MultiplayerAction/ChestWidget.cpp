@@ -9,11 +9,9 @@ void UChestWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    // Initialize widget with chest data
     if (ChestReference)
     {
-        // You can call BP implementable event here to update UI
-        // or directly update C++ widgets
+        // call BP implementable event here to update UI
     }
 }
 

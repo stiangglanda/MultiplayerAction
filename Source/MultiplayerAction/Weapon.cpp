@@ -1,11 +1,8 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Weapon.h"
 
 UWeapon::UWeapon()
 {
-	WeaponData = FWeaponData(nullptr, FText::FromString(TEXT("Weapon")), FText::FromString(TEXT("A weapon description")));
+	WeaponData = FWeaponData(nullptr, FText::FromString(TEXT("Weapon")), FText::FromString(TEXT("A weapon description")), 20);
 }
 
 void UWeapon::BeginPlay()
