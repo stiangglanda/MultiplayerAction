@@ -23,6 +23,7 @@
 #include "KingsShrine.h"
 #include "MultiplayerActionGameMode.h"
 #include "BossEnemyCharacter.h"
+#include "DefaultPlayerController.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -168,13 +169,20 @@ void AMultiplayerActionCharacter::Tick(float DeltaTime)
 			{
 				SetActorRotation(LookAtYawRotation);
 			}
-			GetController()->SetControlRotation(LookAtRotation);
+			//GetController()->SetControlRotation(LookAtRotation);
 		}
 	}
 }
 
 void AMultiplayerActionCharacter::OnRep_MaxHealth()
 {
+	if (ADefaultPlayerController* PC = GetController<ADefaultPlayerController>())
+	{
+		if (UPlayerHUDWidget* HUD = PC->GetHUD())
+		{
+			HUD->UpdateHealthBar(MaxHealth);
+		}
+	}
 }
 
 void AMultiplayerActionCharacter::OnRep_CurrentHealth()
@@ -276,7 +284,7 @@ void AMultiplayerActionCharacter::Lock(const FInputActionValue& Value)
 {
 	if (IsLockedOn == true)
 	{
-		GetController()->ResetIgnoreLookInput();
+		//GetController()->ResetIgnoreLookInput();
 		IsLockedOn = false;
 		LockedOnTarget = nullptr;
 		return;
@@ -309,7 +317,7 @@ void AMultiplayerActionCharacter::Lock(const FInputActionValue& Value)
 void AMultiplayerActionCharacter::SetLockedOnTarget(AMultiplayerActionCharacter* unit)
 {
 	IsLockedOn = true;
-	GetController()->SetIgnoreLookInput(true);
+	//GetController()->SetIgnoreLookInput(true);
 	LockedOnTarget = unit;
 }
 

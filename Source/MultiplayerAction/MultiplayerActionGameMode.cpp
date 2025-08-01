@@ -19,6 +19,11 @@ AMultiplayerActionGameMode::AMultiplayerActionGameMode()
 	GameStateClass = ADefaultGameState::StaticClass();
 }
 
+bool AMultiplayerActionGameMode::PlayerCanRestart_Implementation(APlayerController* Player)
+{
+	return true;
+}
+
 void AMultiplayerActionGameMode::StartPlay()
 {
 	Super::StartPlay();
@@ -43,7 +48,7 @@ void AMultiplayerActionGameMode::StartPlay()
 
 void AMultiplayerActionGameMode::PostLogin(APlayerController* NewPlayer)
 {
-	Super::PostLogin(NewPlayer);
+	//Super::PostLogin(NewPlayer);
 
 	// Add the new player to our tracking list.
 	if (NewPlayer)
@@ -102,6 +107,11 @@ void AMultiplayerActionGameMode::OnBossDied(ABossEnemyCharacter* DeadBoss)
 	}
 
 	CheckWinLossConditions();
+}
+
+void AMultiplayerActionGameMode::RestartPlayer(AController* NewPlayer)
+{
+	Super::RestartPlayer(NewPlayer);
 }
 
 void AMultiplayerActionGameMode::CheckWinLossConditions()

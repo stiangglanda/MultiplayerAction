@@ -4,6 +4,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Blueprint/UserWidget.h"
 #include "DefaultGameState.h"
+#include "PlayerHUDWidget.h"
 #include "DefaultPlayerController.generated.h"
 
 UCLASS()
@@ -13,15 +14,32 @@ class MULTIPLAYERACTION_API ADefaultPlayerController : public APlayerController
 public:
 	void ShowEndOfMatchUI(EMatchState MatchResult);
 
+	UPlayerHUDWidget* GetHUD();
+
+	UFUNCTION(BlueprintCallable, Category = "Game Flow")
+	void OnWelcomeScreenDismissed();
+
+	UFUNCTION(Client, Reliable)
+	void Client_SetGameInputMode();
+
 protected:
 	virtual void BeginPlay() override;
+
+	UFUNCTION(Server, Reliable)
+	void Server_RequestBeginPlay();
+
 private:
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> WelcomeWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<UUserWidget> WelcomeWidgetInstance;
 
 	UPROPERTY(EditAnywhere)
-	TSubclassOf<class UUserWidget> CrossHairHUD;
+	TSubclassOf<UPlayerHUDWidget> CrossHairHUD;
 
 	UPROPERTY(VisibleAnywhere)
-	UUserWidget* HUD;
+	UPlayerHUDWidget* HUD;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UUserWidget> VictoryWidgetClass;

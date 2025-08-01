@@ -19,7 +19,10 @@ public:
 
 	void OnBossDied(ABossEnemyCharacter* DeadBoss);
 
+	virtual void RestartPlayer(AController* NewPlayer) override;
+
 protected:
+	virtual bool PlayerCanRestart_Implementation(APlayerController* Player) override;
 	virtual void StartPlay() override;
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
