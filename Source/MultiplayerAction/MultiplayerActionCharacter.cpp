@@ -169,7 +169,7 @@ void AMultiplayerActionCharacter::Tick(float DeltaTime)
 			{
 				SetActorRotation(LookAtYawRotation);
 			}
-			//GetController()->SetControlRotation(LookAtRotation);
+			GetController()->SetControlRotation(LookAtRotation);
 		}
 	}
 }
@@ -284,7 +284,7 @@ void AMultiplayerActionCharacter::Lock(const FInputActionValue& Value)
 {
 	if (IsLockedOn == true)
 	{
-		//GetController()->ResetIgnoreLookInput();
+		GetController()->ResetIgnoreLookInput();
 		IsLockedOn = false;
 		LockedOnTarget = nullptr;
 		return;
@@ -317,7 +317,7 @@ void AMultiplayerActionCharacter::Lock(const FInputActionValue& Value)
 void AMultiplayerActionCharacter::SetLockedOnTarget(AMultiplayerActionCharacter* unit)
 {
 	IsLockedOn = true;
-	//GetController()->SetIgnoreLookInput(true);
+	GetController()->SetIgnoreLookInput(true);
 	LockedOnTarget = unit;
 }
 
