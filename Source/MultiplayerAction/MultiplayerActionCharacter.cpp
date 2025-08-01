@@ -173,6 +173,10 @@ void AMultiplayerActionCharacter::Tick(float DeltaTime)
 	}
 }
 
+void AMultiplayerActionCharacter::OnRep_MaxHealth()
+{
+}
+
 void AMultiplayerActionCharacter::OnRep_CurrentHealth()
 {
 	if (IsLocallyControlled())
@@ -524,6 +528,7 @@ void AMultiplayerActionCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePro
 	DOREPLIFETIME(AMultiplayerActionCharacter, Health);
 	DOREPLIFETIME(AMultiplayerActionCharacter, WeaponClass);
 	DOREPLIFETIME(AMultiplayerActionCharacter, CurrentInteractionMontage);
+	DOREPLIFETIME(AMultiplayerActionCharacter, MaxHealth);
 }
 
 bool AMultiplayerActionCharacter::IsDead()
@@ -834,6 +839,24 @@ void AMultiplayerActionCharacter::SetActiveProgressBar(UInteractionProgressBarWi
 	}
 
 	ActiveProgressBarWidget = Widget;
+}
+
+void AMultiplayerActionCharacter::SetMaxHealth(float NewValue)
+{
+	if (HasAuthority())
+	{
+		MaxHealth = NewValue;
+		OnRep_MaxHealth();
+	}
+}
+
+void AMultiplayerActionCharacter::SetHealth(float NewValue)
+{
+	if (HasAuthority())
+	{
+		Health = FMath::Clamp(NewValue, 0.f, MaxHealth);
+		OnRep_CurrentHealth();
+	}
 }
 
 void AMultiplayerActionCharacter::Multicast_PlayInteractionMontage_Implementation(UAnimMontage* MontageToPlay)

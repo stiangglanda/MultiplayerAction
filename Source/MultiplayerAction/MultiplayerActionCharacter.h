@@ -166,6 +166,9 @@ public:
     UFUNCTION(Server, Reliable)
     void Server_RequestStopInteract(AActor* InteractableActor);
 
+    void SetMaxHealth(float NewValue);
+    void SetHealth(float NewValue);
+
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio")
     TObjectPtr<UAudioComponent> MovementAudioComponent;
@@ -277,11 +280,14 @@ protected:
 
     TArray<AActor*> ActorsHit;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditDefaultsOnly, Category = "Health", ReplicatedUsing = OnRep_MaxHealth)
     float MaxHealth = 100;
 
     UPROPERTY(ReplicatedUsing = OnRep_CurrentHealth)
     float Health;
+
+    UFUNCTION()
+    void OnRep_MaxHealth();
 
     UFUNCTION()
     void OnRep_CurrentHealth();
