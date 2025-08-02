@@ -124,6 +124,7 @@ void AMultiplayerActionCharacter::SetupPlayerInputComponent(UInputComponent* Pla
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &AMultiplayerActionCharacter::StopInteract);
 		EnhancedInputComponent->BindAction(HeavyAttackAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::HeavyAttack);
 		EnhancedInputComponent->BindAction(EscapeAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::Escape);
+		EnhancedInputComponent->BindAction(GroupControlAction, ETriggerEvent::Triggered, this, &AMultiplayerActionCharacter::GroupControl);
 	}
 	else
 	{
@@ -437,12 +438,33 @@ void AMultiplayerActionCharacter::Escape(const FInputActionValue& Value)
 	}
 }
 
+void AMultiplayerActionCharacter::GroupControl(const FInputActionValue& Value)
+{
+	if (AIGroupManager)
+	{
+		AIGroupManager->AllowCombat(this, allowCombat);
+		allowCombat = !allowCombat;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No Group Manager found in the current game mode."));
+	}
+}
+
 void AMultiplayerActionCharacter::Jump()
 {
 	Super::Jump();
 	if (JumpSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, JumpSound, GetActorLocation());
+	}
+}
+
+void AMultiplayerActionCharacter::SetTeam(int NewTeam)
+{
+	if (HasAuthority())
+	{
+		Team = NewTeam;
 	}
 }
 
@@ -537,6 +559,7 @@ void AMultiplayerActionCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePro
 	DOREPLIFETIME(AMultiplayerActionCharacter, WeaponClass);
 	DOREPLIFETIME(AMultiplayerActionCharacter, CurrentInteractionMontage);
 	DOREPLIFETIME(AMultiplayerActionCharacter, MaxHealth);
+	DOREPLIFETIME(AMultiplayerActionCharacter, Team);
 }
 
 bool AMultiplayerActionCharacter::IsDead()

@@ -23,6 +23,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "AI Group")
 	void SetGroupLeader(class AMultiplayerActionCharacter* NewLeaderPawn);
 
+	UFUNCTION(BlueprintCallable, Category = "AI Group")
+	void AllowCombat(class AMultiplayerActionCharacter* CallerPawn, bool bAllow);
+
+	void UnregisterMember(class AMultiplayerActionCharacter* MemberToRemove);
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -40,6 +45,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "AI Group|Blackboard")
 	FName PatrolLeaderKeyName = "PatrolLeader";
+
+	UPROPERTY(EditDefaultsOnly, Category = "AI Group|Blackboard")
+	FName AllowCombatKeyName = "AllowCombat";
 
 	UPROPERTY(EditDefaultsOnly, Category = "AI Group|Blackboard")
 	FName FormationOffsetKeyName = "FormationOffset";

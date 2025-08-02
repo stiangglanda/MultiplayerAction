@@ -45,6 +45,20 @@ void ADefaultAIController::OnPossess(APawn* InPawn)
     Super::OnPossess(InPawn);
 }
 
+void ADefaultAIController::OnUnPossess()
+{
+    AMultiplayerActionCharacter* ControlledCharacter = Cast<AMultiplayerActionCharacter>(GetPawn());
+    if (ControlledCharacter)
+    {
+        if(ControlledCharacter->AIGroupManager)
+        {
+            ControlledCharacter->AIGroupManager->UnregisterMember(ControlledCharacter);
+		}
+    }
+
+    Super::OnUnPossess();
+}
+
 bool ADefaultAIController::IsDead() const
 {
     AMultiplayerActionCharacter* ControlledCharacter = Cast<AMultiplayerActionCharacter>(GetPawn());

@@ -29,6 +29,8 @@ protected:
 
 	virtual void OnPossess(APawn* InPawn) override;
 
+	virtual void OnUnPossess() override;
+
 private:
 	UPROPERTY(EditAnywhere)
 	UBehaviorTree* AIBehavior;

@@ -63,6 +63,9 @@ protected:
     UInputAction* InteractAction;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* GroupControlAction;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputAction* EscapeAction;
     
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -95,7 +98,7 @@ protected:
     UPROPERTY(EditAnywhere)
     float SphereTraceRadiusLockOn = 900;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(Replicated, EditAnywhere)
     int Team = 0;
 
     UPROPERTY(Category = Chest, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -103,6 +106,8 @@ protected:
 
     UPROPERTY(EditAnywhere, Category = "Chest")
     float SphereColliderRadius = 200.0f;
+
+    bool allowCombat = false;
 
 public:
     UFUNCTION(Client, Reliable)
@@ -310,6 +315,8 @@ protected:
 
     void Escape(const FInputActionValue& Value);
 
+    void GroupControl(const FInputActionValue& Value);
+
     void Jump() override;
 
     void AttackInputMapping(const FInputActionValue& Value);
@@ -334,6 +341,8 @@ protected:
 
 public:
     int GetTeam();
+
+    void SetTeam(int NewTeam);
 
     float TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser);
 

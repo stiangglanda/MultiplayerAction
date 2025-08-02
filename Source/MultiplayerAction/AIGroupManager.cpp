@@ -21,7 +21,7 @@ void AAIGroupManager::BroadcastAlert(AActor* SentryPawn, AActor* TargetActor)
 
     for (AMultiplayerActionCharacter* CurrentMember : GroupMembers)
     {
-        if (CurrentMember && CurrentMember != SentryPawn)
+        if (IsValid(CurrentMember) && CurrentMember != SentryPawn)
         {
             if (CurrentMember->GetController()->Implements<UAIGroupAlertInterface>())
             {
@@ -129,6 +129,8 @@ void AAIGroupManager::SetGroupLeader(class AMultiplayerActionCharacter* NewLeade
             continue;
 		}
 
+        CurrentMember->SetTeam(NewLeaderPawn->GetTeam());
+
 		ADefaultAIController* MemberController = Cast<ADefaultAIController>(CurrentMember->GetController());
 
         if (MemberController && MemberController->GetBlackboardComponent())
@@ -136,12 +138,39 @@ void AAIGroupManager::SetGroupLeader(class AMultiplayerActionCharacter* NewLeade
             int32 OriginalIndex = GroupMembers.Find(CurrentMember);
             MemberController->GetBlackboardComponent()->SetValueAsBool(IsLeaderKeyName, false);
             MemberController->GetBlackboardComponent()->SetValueAsObject(PatrolLeaderKeyName, NewLeaderPawn);
+            MemberController->GetBlackboardComponent()->ClearValue(PatrolPathKeyName);
 
             if (FormationOffsets.IsValidIndex(OriginalIndex))
             {
                 MemberController->GetBlackboardComponent()->SetValueAsVector(FormationOffsetKeyName, FormationOffsets[OriginalIndex]);
             }
         }
+    }
+}
+
+void AAIGroupManager::AllowCombat(AMultiplayerActionCharacter* CallerPawn, bool bAllow)
+{
+    for (AMultiplayerActionCharacter* CurrentMember : GroupMembers)
+    {
+        if (!CurrentMember || CurrentMember == CallerPawn)
+        {
+            continue;
+        }
+
+        ADefaultAIController* MemberController = Cast<ADefaultAIController>(CurrentMember->GetController());
+
+        if (MemberController && MemberController->GetBlackboardComponent())
+        {
+            MemberController->GetBlackboardComponent()->SetValueAsBool(AllowCombatKeyName, bAllow);
+        }
+    }
+}
+
+void AAIGroupManager::UnregisterMember(AMultiplayerActionCharacter* MemberToRemove)
+{
+    if (MemberToRemove)
+    {
+        GroupMembers.Remove(MemberToRemove);
     }
 }
 
