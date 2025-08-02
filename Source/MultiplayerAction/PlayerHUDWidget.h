@@ -11,4 +11,7 @@ class MULTIPLAYERACTION_API UPlayerHUDWidget : public UUserWidget
 public:
     UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "HUD")
     void UpdateHealthBar(float NewMaxHealth);
+
+    UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "HUD")
+    void PlayerGetsFollowers();
 };

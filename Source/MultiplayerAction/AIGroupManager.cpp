@@ -109,6 +109,7 @@ void AAIGroupManager::AttemptGroupSetup()
 
 void AAIGroupManager::SetGroupLeader(class AMultiplayerActionCharacter* NewLeaderPawn)
 {
+    UE_LOG(LogTemp, Warning, TEXT("Set Group Leader"));
     if (!HasAuthority())
     {
         return;
@@ -124,7 +125,9 @@ void AAIGroupManager::SetGroupLeader(class AMultiplayerActionCharacter* NewLeade
 
     for (AMultiplayerActionCharacter* CurrentMember : GroupMembers)
     {
-        if(!CurrentMember)
+        if (!HasAuthority()) return;
+
+        if(!IsValid(CurrentMember))
         {
             continue;
 		}
@@ -168,9 +171,46 @@ void AAIGroupManager::AllowCombat(AMultiplayerActionCharacter* CallerPawn, bool 
 
 void AAIGroupManager::UnregisterMember(AMultiplayerActionCharacter* MemberToRemove)
 {
-    if (MemberToRemove)
+    if (!HasAuthority() || !MemberToRemove)
     {
-        GroupMembers.Remove(MemberToRemove);
+        return;
+    }
+
+    ADefaultAIController* ControllerToRemove = MemberToRemove->GetController<ADefaultAIController>();
+    if (!ControllerToRemove)
+    {
+        return;
+    }
+
+    bool bWasLeader = false;
+    if (UBlackboardComponent* Blackboard = ControllerToRemove->GetBlackboardComponent())
+    {
+        bWasLeader = Blackboard->GetValueAsBool(IsLeaderKeyName);
+    }
+
+    GroupMembers.Remove(MemberToRemove);
+    UE_LOG(LogTemp, Log, TEXT("GroupManager: Unregistered member %s. %d members remain."), *MemberToRemove->GetName(), GroupMembers.Num());
+
+
+    if (bWasLeader)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("GroupManager: The group leader has died! Followers are dispersing."));
+
+        for (AMultiplayerActionCharacter* FollowerMember : GroupMembers)
+        {
+            if (IsValid(FollowerMember))
+            {
+                ADefaultAIController* FollowerController = FollowerMember->GetController<ADefaultAIController>();
+                if (IsValid(FollowerController))
+                {
+                    UBlackboardComponent* FollowerBlackboard = FollowerController->GetBlackboardComponent();
+                    if (FollowerBlackboard)
+                    {
+                        FollowerBlackboard->ClearValue(IsLeaderKeyName);
+                    }
+                }
+            }
+        }
     }
 }
 

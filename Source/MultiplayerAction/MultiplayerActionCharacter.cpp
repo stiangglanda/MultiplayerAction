@@ -440,15 +440,7 @@ void AMultiplayerActionCharacter::Escape(const FInputActionValue& Value)
 
 void AMultiplayerActionCharacter::GroupControl(const FInputActionValue& Value)
 {
-	if (AIGroupManager)
-	{
-		AIGroupManager->AllowCombat(this, allowCombat);
-		allowCombat = !allowCombat;
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("No Group Manager found in the current game mode."));
-	}
+	Server_RequestToggleGroupCombat();
 }
 
 void AMultiplayerActionCharacter::Jump()
@@ -464,6 +456,7 @@ void AMultiplayerActionCharacter::SetTeam(int NewTeam)
 {
 	if (HasAuthority())
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Team was updated"));
 		Team = NewTeam;
 	}
 }
@@ -560,11 +553,18 @@ void AMultiplayerActionCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePro
 	DOREPLIFETIME(AMultiplayerActionCharacter, CurrentInteractionMontage);
 	DOREPLIFETIME(AMultiplayerActionCharacter, MaxHealth);
 	DOREPLIFETIME(AMultiplayerActionCharacter, Team);
+	DOREPLIFETIME(AMultiplayerActionCharacter, AIGroupManager);
+	DOREPLIFETIME(AMultiplayerActionCharacter, allowCombat);
 }
 
 bool AMultiplayerActionCharacter::IsDead()
 {
 	return Health<=0;
+}
+
+bool AMultiplayerActionCharacter::GetAllowCombat()
+{
+	return allowCombat;
 }
 
 float AMultiplayerActionCharacter::GetHeathPercent() const
@@ -922,12 +922,66 @@ void AMultiplayerActionCharacter::Client_OnInteractionSuccess_Implementation()
 	}
 }
 
+void AMultiplayerActionCharacter::Client_OnBecameGroupLeader_Implementation()
+{
+	UE_LOG(LogTemplateCharacter, Log, TEXT("CLIENT received OnBecameGroupLeader notification."));
+
+	// Now that we are on the client, we can safely access the local HUD.
+	if (ADefaultPlayerController* PC = GetController<ADefaultPlayerController>())
+	{
+		// This check is an extra layer of safety.
+		if (PC->IsLocalController())
+		{
+			if (UPlayerHUDWidget* HUD = PC->GetHUD())
+			{
+				// This will now work correctly!
+				HUD->PlayerGetsFollowers();
+			}
+			else
+			{
+				UE_LOG(LogTemplateCharacter, Warning, TEXT("Client_OnBecameGroupLeader: Could not get HUD from local PlayerController."));
+			}
+		}
+	}
+}
+
+void AMultiplayerActionCharacter::Server_RequestToggleGroupCombat_Implementation()
+{
+	if (AIGroupManager)
+	{
+		// Toggle the state
+		allowCombat = !allowCombat;
+
+		// Call the manager's function with the new state
+		AIGroupManager->AllowCombat(this, allowCombat);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Server: Player %s tried to toggle group combat but has no Group Manager."), *GetName());
+	}
+}
+
 void AMultiplayerActionCharacter::InitializeGroupMembership(TObjectPtr<class AAIGroupManager> GroupManager)
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
+
 	if (GroupManager)
 	{
 		UE_LOG(LogTemplateCharacter, Log, TEXT("GroupManager initialized successfull"));
 		AIGroupManager = GroupManager;
+
+		Client_OnBecameGroupLeader();
+
+		//if (ADefaultPlayerController* PC = GetController<ADefaultPlayerController>())
+		//{
+		//	if (UPlayerHUDWidget* HUD = PC->GetHUD())
+		//	{
+		//		HUD->PlayerGetsFollowers();
+		//	}
+		//}
 	}
 	else
 	{

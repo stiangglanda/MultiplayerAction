@@ -106,14 +106,20 @@ protected:
 
     UPROPERTY(EditAnywhere, Category = "Chest")
     float SphereColliderRadius = 200.0f;
+    UPROPERTY(Replicated)
+    bool allowCombat = true;
 
-    bool allowCombat = false;
+    UFUNCTION(Client, Reliable)
+    void Client_OnBecameGroupLeader();
+
+    UFUNCTION(Server, Reliable)
+    void Server_RequestToggleGroupCombat();
 
 public:
     UFUNCTION(Client, Reliable)
     void Client_OnInteractionSuccess();
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(Replicated, EditAnywhere)
     TObjectPtr<class AAIGroupManager> AIGroupManager;
 
     void InitializeGroupMembership(TObjectPtr<class AAIGroupManager> AIGroupManager);
@@ -131,6 +137,9 @@ public:
 
     UFUNCTION(BlueprintPure)
     bool IsDead();
+
+    UFUNCTION(BlueprintPure)
+    bool GetAllowCombat();
 
     UFUNCTION(BlueprintPure)
     float GetHeathPercent() const;
