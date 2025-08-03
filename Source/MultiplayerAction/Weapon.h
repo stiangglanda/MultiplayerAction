@@ -20,15 +20,19 @@ struct FWeaponData
     FText WeaponDescription = FText::GetEmpty();
 
     UPROPERTY(EditAnywhere)
-    float WeaponDamage = 20;
+    float WeaponDamage = 25;
+
+    UPROPERTY(EditAnywhere)
+    float WeaponHeavyDamage = 50;
 
     FWeaponData() = default;
 
-    FWeaponData(UTexture2D* InThumbnail, const FText& InName, const FText& InDescription, float WeaponDamage)
+    FWeaponData(UTexture2D* InThumbnail, const FText& InName, const FText& InDescription, float WeaponDamage, float WeaponHeavyDamage)
         : ThumbnailImage(InThumbnail)
         , WeaponName(InName)
         , WeaponDescription(InDescription)
 		, WeaponDamage(WeaponDamage)
+		, WeaponHeavyDamage(WeaponHeavyDamage)
     {
     }
 };

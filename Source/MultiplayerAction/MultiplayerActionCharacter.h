@@ -9,6 +9,7 @@
 #include <Components/SphereComponent.h>
 #include "OutpostInteractable.h"
 #include "InteractionProgressBarWidget.h"
+#include "CombatDataTypes.h"
 #include "MultiplayerActionCharacter.generated.h"
 
 class USpringArmComponent;
@@ -107,7 +108,7 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Chest")
     float SphereColliderRadius = 200.0f;
     UPROPERTY(Replicated)
-    bool allowCombat = true;
+    bool bfollowMode = false;
 
     UFUNCTION(Client, Reliable)
     void Client_OnBecameGroupLeader();
@@ -139,19 +140,19 @@ public:
     bool IsDead();
 
     UFUNCTION(BlueprintPure)
-    bool GetAllowCombat();
+    bool GetFollowMode();
 
     UFUNCTION(BlueprintPure)
     float GetHeathPercent() const;
 
     UFUNCTION(Server, Reliable)
-    void ServerReliableRPC_Attack();
+    void Server_RequestAttack();
 
     UFUNCTION(Server, Reliable)
-    void ServerReliableRPC_HeavyAttack();
+    void Server_RequestHeavyAttack();
 
     UFUNCTION(Server, Reliable)
-    void ServerReliableRPC_Block();
+    void Server_RequestBlock();
 
     UFUNCTION(Server, Reliable)
     void ServerReliableRPC_SwapWeapon(TSubclassOf<UWeapon> NewWeaponClass);
@@ -229,10 +230,21 @@ protected:
     UPROPERTY()
     UUserWidget* InteractionWidget;
 
+    UPROPERTY(Replicated)
     bool bIsAttacking = false;
-    bool IsRolling = false;
+
+    UPROPERTY(Replicated)
     bool AttackAnim = false;
-    bool IsBlocking = false;
+
+    UPROPERTY(ReplicatedUsing = OnRep_IsRolling)
+    bool bIsRolling;
+
+    UFUNCTION()
+    void OnRep_IsRolling();
+
+    UPROPERTY(Replicated)
+    bool bIsBlocking;
+
     bool IsLockedOn = false;
 
 	FRotator RotationBeforeAttack;// Root moten messes with the rotation, so we store the rotation before attack to restore it after the attack animation ends.
@@ -266,19 +278,19 @@ protected:
     void OnRollMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
     UFUNCTION(NetMulticast, Reliable)
-    void NetMulticastReliableRPC_Attack();
+    void Multicast_PlayAttackEffects(UAnimMontage* MontageToPlay);
 
     UFUNCTION(NetMulticast, Reliable)
-    void NetMulticastReliableRPC_Block();
+    void Multicast_PlayBlockEffects();
 
     UFUNCTION(Server, Reliable)
-    void ServerReliableRPC_Roll();
+    void Server_RequestRoll();
 
     UFUNCTION(NetMulticast, Reliable)
-    void NetMulticastReliableRPC_Roll();
+    void Multicast_PlayHeavyAttackEffects();
 
     UFUNCTION(NetMulticast, Reliable)
-    void NetMulticastReliableRPC_HeavyAttack();
+    void Multicast_ConcludeHeavyAttack(const FRotator& NewRotation);
 
     UFUNCTION(NetMulticast, Reliable)
     void Multicast_PlayInteractionMontage(UAnimMontage* MontageToPlay);
@@ -291,6 +303,8 @@ protected:
     void StartWeaponTrace();
     void StopWeaponTrace();
     const float WeaponTraceInterval = 0.01f;// 100 traces per second
+
+	EAttackType CurrentAttackType = EAttackType::EAT_None;
 
     TArray<AActor*> ActorsHit;
 

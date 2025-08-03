@@ -141,7 +141,7 @@ void AMultiplayerActionCharacter::Tick(float DeltaTime)
 		return;
 	}
 
-	if (IsRolling)
+	if (bIsRolling)
 	{
 		FVector ForwardVector = GetCharacterMovement()->GetLastInputVector();
 		if (ForwardVector == FVector::ZeroVector)
@@ -166,7 +166,7 @@ void AMultiplayerActionCharacter::Tick(float DeltaTime)
 			FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), LookAtVector);
 			FRotator LookAtYawRotation = FRotator(0, LookAtRotation.Yaw, 0);
 
-			if (!IsRolling)
+			if (!bIsRolling)
 			{
 				SetActorRotation(LookAtYawRotation);
 			}
@@ -238,21 +238,9 @@ void AMultiplayerActionCharacter::Look(const FInputActionValue& Value)
 
 void AMultiplayerActionCharacter::Roll(const FInputActionValue& Value)
 {
-	ServerReliableRPC_Roll();
-}
-
-void AMultiplayerActionCharacter::ServerReliableRPC_Roll_Implementation()
-{
-	NetMulticastReliableRPC_Roll();
-}
-
-void AMultiplayerActionCharacter::NetMulticastReliableRPC_Roll_Implementation()
-{
-	if (RollMontage)
+	if (!bIsRolling && RollMontage)
 	{
-		IsBlocking = true;
-		IsRolling = true;
-
+		bIsRolling = true;
 		DisableInput(Cast<APlayerController>(GetController()));
 
 		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
@@ -272,13 +260,35 @@ void AMultiplayerActionCharacter::NetMulticastReliableRPC_Roll_Implementation()
 			AnimInstance->Montage_SetEndDelegate(RollMontageEndedDelegate, RollMontage);
 		}
 	}
+	Server_RequestRoll();
+}
+
+void AMultiplayerActionCharacter::Server_RequestRoll_Implementation()
+{
+	if (!bIsRolling && RollMontage)
+	{
+		bIsRolling = true;
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance)
+		{
+			if (!RollMontageEndedDelegate.IsBound())
+			{
+				RollMontageEndedDelegate.BindUObject(this, &AMultiplayerActionCharacter::OnRollMontageEnded);
+			}
+			AnimInstance->Montage_Play(RollMontage);
+			AnimInstance->Montage_SetEndDelegate(RollMontageEndedDelegate, RollMontage);
+		}
+	}
 }
 
 void AMultiplayerActionCharacter::OnRollMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	IsBlocking = false;
-	IsRolling = false;
-	EnableInput(Cast<APlayerController>(GetController()));
+	bIsRolling = false;
+
+	if (IsLocallyControlled())
+	{
+		EnableInput(Cast<APlayerController>(GetController()));
+	}
 }
 
 void AMultiplayerActionCharacter::Lock(const FInputActionValue& Value)
@@ -324,43 +334,49 @@ void AMultiplayerActionCharacter::SetLockedOnTarget(AMultiplayerActionCharacter*
 
 void AMultiplayerActionCharacter::Block(const FInputActionValue& Value)
 {
-	ServerReliableRPC_Block();
+	Server_RequestBlock();
 }
 
 void AMultiplayerActionCharacter::HeavyAttack(const FInputActionValue& Value)
 {
-	ServerReliableRPC_HeavyAttack();
+	Server_RequestHeavyAttack();
 }
 
-void AMultiplayerActionCharacter::ServerReliableRPC_HeavyAttack_Implementation()
-{
-	NetMulticastReliableRPC_HeavyAttack();
-}
-
-void AMultiplayerActionCharacter::NetMulticastReliableRPC_HeavyAttack_Implementation()
+void AMultiplayerActionCharacter::Server_RequestHeavyAttack_Implementation()
 {
 	if (!bIsAttacking && HeavyAttackMontage)
 	{
 		bIsAttacking = true;
 
-		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-		if (AnimInstance)
+		RotationBeforeAttack = GetActorRotation();
+
+		CurrentAttackType = EAttackType::EAT_Heavy;
+
+		Multicast_PlayHeavyAttackEffects();
+
+		StartWeaponTrace();
+	}
+}
+
+void AMultiplayerActionCharacter::Multicast_PlayHeavyAttackEffects_Implementation()
+{
+	if (HeavyAttackGruntSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, HeavyAttackGruntSound, GetActorLocation());
+	}
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && HeavyAttackMontage)
+	{
+		AnimInstance->Montage_Play(HeavyAttackMontage);
+
+		if (HasAuthority())
 		{
 			if (!HeavyAttackMontageEndedDelegate.IsBound())
 			{
 				HeavyAttackMontageEndedDelegate.BindUObject(this, &AMultiplayerActionCharacter::OnHeavyAttackMontageEnded);
 			}
-			RotationBeforeAttack = GetActorRotation();
-
-			if (HeavyAttackGruntSound)
-			{
-				UGameplayStatics::PlaySoundAtLocation(this, HeavyAttackGruntSound, GetActorLocation());
-			}
-
-			AnimInstance->Montage_Play(HeavyAttackMontage);
 			AnimInstance->Montage_SetEndDelegate(HeavyAttackMontageEndedDelegate, HeavyAttackMontage);
-
-			StartWeaponTrace();
 		}
 	}
 }
@@ -417,7 +433,7 @@ void AMultiplayerActionCharacter::Escape(const FInputActionValue& Value)
 		{
 			EscapeWidget->AddToViewport();
 		}
-		PC->SetInputMode(FInputModeGameAndUI());
+		PC->SetInputMode(FInputModeUIOnly());
 		PC->bShowMouseCursor = true;
 		return;
 	}
@@ -475,7 +491,7 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 
 	float DamageApplied = Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
 
-	if (IsBlocking)
+	if (bIsBlocking)
 	{
 		if (BlockSound)
 		{
@@ -554,7 +570,11 @@ void AMultiplayerActionCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePro
 	DOREPLIFETIME(AMultiplayerActionCharacter, MaxHealth);
 	DOREPLIFETIME(AMultiplayerActionCharacter, Team);
 	DOREPLIFETIME(AMultiplayerActionCharacter, AIGroupManager);
-	DOREPLIFETIME(AMultiplayerActionCharacter, allowCombat);
+	DOREPLIFETIME(AMultiplayerActionCharacter, bfollowMode);
+	DOREPLIFETIME(AMultiplayerActionCharacter, bIsAttacking);
+	DOREPLIFETIME(AMultiplayerActionCharacter, AttackAnim);
+	DOREPLIFETIME(AMultiplayerActionCharacter, bIsBlocking);
+	DOREPLIFETIME_CONDITION(AMultiplayerActionCharacter, bIsRolling, COND_SkipOwner);
 }
 
 bool AMultiplayerActionCharacter::IsDead()
@@ -562,9 +582,9 @@ bool AMultiplayerActionCharacter::IsDead()
 	return Health<=0;
 }
 
-bool AMultiplayerActionCharacter::GetAllowCombat()
+bool AMultiplayerActionCharacter::GetFollowMode()
 {
-	return allowCombat;
+	return bfollowMode;
 }
 
 float AMultiplayerActionCharacter::GetHeathPercent() const
@@ -640,6 +660,16 @@ void AMultiplayerActionCharacter::Server_RequestStopInteract_Implementation(AAct
 	}
 }
 
+void AMultiplayerActionCharacter::Multicast_ConcludeHeavyAttack_Implementation(const FRotator& NewRotation)
+{
+	if (HeavyAttackMontage)
+	{
+		StopAnimMontage(HeavyAttackMontage);
+	}
+
+	SetActorRotation(NewRotation);
+}
+
 void AMultiplayerActionCharacter::PerformWeaponTrace()
 {
 	if (!IsValid(Weapon))
@@ -670,8 +700,26 @@ void AMultiplayerActionCharacter::PerformWeaponTrace()
 					{
 						UGameplayStatics::PlaySoundAtLocation(this, AttackSound, GetActorLocation());
 					}
-					FPointDamageEvent DamageEvent(Weapon->WeaponData.WeaponDamage, hits[i], -GetActorLocation(), nullptr);
-					unit->TakeDamage(Weapon->WeaponData.WeaponDamage, DamageEvent, GetController(), this);
+
+					float Damage = 0.0f;
+
+					switch (CurrentAttackType)	
+					{
+					case EAttackType::EAT_None:
+						Damage = 0.0f;
+						break;
+					case EAttackType::EAT_Regular:
+						Damage = Weapon->WeaponData.WeaponDamage;
+						break;
+					case EAttackType::EAT_Heavy:
+						Damage = Weapon->WeaponData.WeaponHeavyDamage;
+						break;
+					default:
+						break;
+					}
+
+					FPointDamageEvent DamageEvent(Damage, hits[i], -GetActorLocation(), nullptr);
+					unit->TakeDamage(Damage, DamageEvent, GetController(), this);
 					ActorsHit.Add(unit);
 				}
 			}
@@ -681,94 +729,118 @@ void AMultiplayerActionCharacter::PerformWeaponTrace()
 
 void AMultiplayerActionCharacter::StartWeaponTrace()
 {
-	ActorsHit.Empty();
-	GetWorld()->GetTimerManager().SetTimer(WeaponTraceTimer, this, &AMultiplayerActionCharacter::PerformWeaponTrace, WeaponTraceInterval, true);
+	if (HasAuthority())
+	{
+		ActorsHit.Empty();
+		GetWorld()->GetTimerManager().SetTimer(WeaponTraceTimer, this, &AMultiplayerActionCharacter::PerformWeaponTrace, WeaponTraceInterval, true);
+	}
 }
 
 void AMultiplayerActionCharacter::StopWeaponTrace()
 {
-	GetWorld()->GetTimerManager().ClearTimer(WeaponTraceTimer);
-	ActorsHit.Empty();
+	if (HasAuthority())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(WeaponTraceTimer);
+		ActorsHit.Empty();
+	}
 }
 
 void AMultiplayerActionCharacter::AttackInputMapping(const FInputActionValue& Value)
 {
-	ServerReliableRPC_Attack();
+	Server_RequestAttack();
 }
 
-void AMultiplayerActionCharacter::ServerReliableRPC_Attack_Implementation()
-{
-	NetMulticastReliableRPC_Attack();
-}
-
-void AMultiplayerActionCharacter::NetMulticastReliableRPC_Attack_Implementation()
+void AMultiplayerActionCharacter::Server_RequestAttack_Implementation()
 {
 	if (!bIsAttacking && CombatMontage && CombatMontageAlt)
 	{
 		bIsAttacking = true;
 
-		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-		if (AnimInstance)
+		UAnimMontage* MontageToPlay = AttackAnim ? CombatMontage : CombatMontageAlt;
+		AttackAnim = !AttackAnim;
+
+		CurrentAttackType = EAttackType::EAT_Regular;
+
+		Multicast_PlayAttackEffects(MontageToPlay);
+
+		StartWeaponTrace();
+	}
+}
+
+void AMultiplayerActionCharacter::Multicast_PlayAttackEffects_Implementation(UAnimMontage* MontageToPlay)
+{
+	if (AttackGruntSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, AttackGruntSound, GetActorLocation());
+	}
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && MontageToPlay)
+	{
+		AnimInstance->Montage_Play(MontageToPlay);
+
+		if (HasAuthority())
 		{
 			if (!AttackMontageEndedDelegate.IsBound())
 			{
 				AttackMontageEndedDelegate.BindUObject(this, &AMultiplayerActionCharacter::OnAttackMontageEnded);
 			}
-
-			if (AttackGruntSound)
-			{
-				UGameplayStatics::PlaySoundAtLocation(this, AttackGruntSound, GetActorLocation());
-			}
-
-			if (AttackAnim)
-			{
-				AnimInstance->Montage_Play(CombatMontage);
-				AnimInstance->Montage_SetEndDelegate(AttackMontageEndedDelegate, CombatMontage);
-			}
-			else 
-			{
-				AnimInstance->Montage_Play(CombatMontageAlt);
-				AnimInstance->Montage_SetEndDelegate(AttackMontageEndedDelegate, CombatMontageAlt);
-			}
-
-			AttackAnim = !AttackAnim;
-			StartWeaponTrace();
+			AnimInstance->Montage_SetEndDelegate(AttackMontageEndedDelegate, MontageToPlay);
 		}
+	}
+}
+
+void AMultiplayerActionCharacter::OnRep_IsRolling()
+{
+	if (bIsRolling)
+	{
+		PlayAnimMontage(RollMontage);
 	}
 }
 
 void AMultiplayerActionCharacter::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	bIsAttacking = false;
-	StopWeaponTrace();
+	if (HasAuthority())
+	{
+		CurrentAttackType = EAttackType::EAT_None;
+		bIsAttacking = false;
+		StopWeaponTrace();
+	}
 }
 
 void AMultiplayerActionCharacter::OnHeavyAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	OnAttackMontageEnded(Montage, bInterrupted);
-	SetActorRotation(RotationBeforeAttack);
-}
-
-void AMultiplayerActionCharacter::ServerReliableRPC_Block_Implementation()
-{
-	NetMulticastReliableRPC_Block();
-}
-
-void AMultiplayerActionCharacter::NetMulticastReliableRPC_Block_Implementation()
-{
-	if (!IsBlocking && BlockMontage)
+	if (HasAuthority())
 	{
-		IsBlocking = true;
+		OnAttackMontageEnded(Montage, bInterrupted);
 
-		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-		if (AnimInstance)
+		Multicast_ConcludeHeavyAttack(RotationBeforeAttack);
+	}
+}
+
+void AMultiplayerActionCharacter::Server_RequestBlock_Implementation()
+{
+	if (!bIsBlocking && BlockMontage)
+	{
+		bIsBlocking = true;
+
+		Multicast_PlayBlockEffects();
+	}
+}
+
+void AMultiplayerActionCharacter::Multicast_PlayBlockEffects_Implementation()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && BlockMontage)
+	{
+		AnimInstance->Montage_Play(BlockMontage);
+
+		if (HasAuthority())
 		{
 			if (!BlockMontageEndedDelegate.IsBound())
 			{
 				BlockMontageEndedDelegate.BindUObject(this, &AMultiplayerActionCharacter::OnBlockMontageEnded);
 			}
-
-			AnimInstance->Montage_Play(BlockMontage);
 			AnimInstance->Montage_SetEndDelegate(BlockMontageEndedDelegate, BlockMontage);
 		}
 	}
@@ -776,7 +848,10 @@ void AMultiplayerActionCharacter::NetMulticastReliableRPC_Block_Implementation()
 
 void AMultiplayerActionCharacter::OnBlockMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	IsBlocking = false;
+	if (HasAuthority())
+	{
+		bIsBlocking = false;
+	}
 }
 
 void AMultiplayerActionCharacter::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -926,15 +1001,12 @@ void AMultiplayerActionCharacter::Client_OnBecameGroupLeader_Implementation()
 {
 	UE_LOG(LogTemplateCharacter, Log, TEXT("CLIENT received OnBecameGroupLeader notification."));
 
-	// Now that we are on the client, we can safely access the local HUD.
 	if (ADefaultPlayerController* PC = GetController<ADefaultPlayerController>())
 	{
-		// This check is an extra layer of safety.
 		if (PC->IsLocalController())
 		{
 			if (UPlayerHUDWidget* HUD = PC->GetHUD())
 			{
-				// This will now work correctly!
 				HUD->PlayerGetsFollowers();
 			}
 			else
@@ -949,11 +1021,8 @@ void AMultiplayerActionCharacter::Server_RequestToggleGroupCombat_Implementation
 {
 	if (AIGroupManager)
 	{
-		// Toggle the state
-		allowCombat = !allowCombat;
-
-		// Call the manager's function with the new state
-		AIGroupManager->AllowCombat(this, allowCombat);
+		bfollowMode = !bfollowMode;
+		AIGroupManager->AllowCombat(this, bfollowMode);
 	}
 	else
 	{
@@ -974,14 +1043,6 @@ void AMultiplayerActionCharacter::InitializeGroupMembership(TObjectPtr<class AAI
 		AIGroupManager = GroupManager;
 
 		Client_OnBecameGroupLeader();
-
-		//if (ADefaultPlayerController* PC = GetController<ADefaultPlayerController>())
-		//{
-		//	if (UPlayerHUDWidget* HUD = PC->GetHUD())
-		//	{
-		//		HUD->PlayerGetsFollowers();
-		//	}
-		//}
 	}
 	else
 	{

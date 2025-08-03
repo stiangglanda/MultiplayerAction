@@ -39,11 +39,11 @@ EBTNodeResult::Type UBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerCom
 	switch (AttackType)
 	{
 	case EAttackType::EAT_Regular:
-		charackter->ServerReliableRPC_Attack();
+		charackter->Server_RequestAttack();
 		bAttackStarted = true;
 		break;
 	case EAttackType::EAT_Heavy:
-		charackter->ServerReliableRPC_HeavyAttack();
+		charackter->Server_RequestHeavyAttack();
 		bAttackStarted = true;
 		break;
 	case EAttackType::EAT_None:

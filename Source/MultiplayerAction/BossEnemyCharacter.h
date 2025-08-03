@@ -28,5 +28,8 @@ protected:
 	float KnockbackUpwardForce = 500.0f;
 
 	UPROPERTY(EditAnywhere)
-	float BossDamage = 20;
+	float BossDamage = 50;
+
+	UPROPERTY(EditAnywhere)
+	float BossHeavyDamage = 60;
 };

@@ -56,7 +56,7 @@ protected:
 	FTimerHandle InteractionTimerHandle;
 
 	UPROPERTY(EditAnywhere, Category = "Interaction")
-	float InteractionDuration = 30.0f;
+	float InteractionDuration = 20.0f;
 
 	UPROPERTY(ReplicatedUsing = OnRep_KeyTaken)
 	bool bIsKeyTaken = false;

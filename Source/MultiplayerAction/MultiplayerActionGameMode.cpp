@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpectatorPawn.h"
+#include "DefaultPlayerController.h"
 
 AMultiplayerActionGameMode::AMultiplayerActionGameMode()
 {
@@ -92,6 +93,12 @@ void AMultiplayerActionGameMode::OnPlayerDied(AMultiplayerActionCharacter* DeadP
 		PC->ChangeState(NAME_Spectating);
 	}
 
+	ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC);
+	if (MyPC)
+	{
+		MyPC->Client_ShowSpectatorUI();
+	}
+
 	ActivePlayerControllers.Remove(PC);
 	UE_LOG(LogTemp, Log, TEXT("Player died and is now spectating. Players remaining: %d"), ActivePlayerControllers.Num());
 
@@ -148,7 +155,13 @@ void AMultiplayerActionGameMode::EndGame(bool bPlayersWon)
 
 	for (APlayerController* PC : ActivePlayerControllers)
 	{
-		PC->DisableInput(nullptr);
+		ACharacter* PlayerCharacter = PC->GetCharacter();
+		if (PlayerCharacter)
+		{
+			PlayerCharacter->GetCharacterMovement()->StopMovementImmediately();
+
+			PlayerCharacter->DisableInput(PC);
+		}
 	}
 
 	FTimerHandle TimerHandle_ReturnToMenu;

@@ -2,7 +2,7 @@
 
 UWeapon::UWeapon()
 {
-	WeaponData = FWeaponData(nullptr, FText::FromString(TEXT("Weapon")), FText::FromString(TEXT("A weapon description")), 20);
+	WeaponData = FWeaponData(nullptr, FText::FromString(TEXT("Weapon")), FText::FromString(TEXT("A weapon description")), 25, 50);
 }
 
 void UWeapon::BeginPlay()

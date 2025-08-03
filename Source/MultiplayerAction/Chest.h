@@ -65,7 +65,7 @@ protected:
 	UChestWidget* ChestMenuWidget;
 
 	UPROPERTY(EditAnywhere, Category = "Interaction")
-	float UnlockDuration = 5.0f;
+	float UnlockDuration = 15.0f;
 
 	FTimerHandle UnlockTimerHandle;
 

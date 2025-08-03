@@ -22,6 +22,14 @@ public:
 	UFUNCTION(Client, Reliable)
 	void Client_SetGameInputMode();
 
+	UFUNCTION(Client, Reliable)
+	void Client_ShowSpectatorUI();
+
+	UFUNCTION(Client, Reliable)
+	void Client_HideSpectatorUI();
+
+	void ClearAllGameplayWidgets();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -31,6 +39,12 @@ protected:
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UUserWidget> WelcomeWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> SpectatorWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<UUserWidget> SpectatorWidgetInstance;
 
 	UPROPERTY()
 	TObjectPtr<UUserWidget> WelcomeWidgetInstance;

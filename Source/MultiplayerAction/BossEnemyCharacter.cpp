@@ -59,8 +59,25 @@ void ABossEnemyCharacter::PerformWeaponTrace()
 				AMultiplayerActionCharacter* unit = Cast<AMultiplayerActionCharacter>(hits[i].GetActor());
 				if (unit && unit->GetTeam() != GetTeam())
 				{
-					FPointDamageEvent DamageEvent(BossDamage, hits[i], -GetActorLocation(), nullptr);
-					unit->TakeDamage(BossDamage, DamageEvent, GetController(), this);
+					float Damage = 0.0f;
+
+					switch (CurrentAttackType)
+					{
+					case EAttackType::EAT_None:
+						Damage = 0.0f;
+						break;
+					case EAttackType::EAT_Regular:
+						Damage = BossDamage;
+						break;
+					case EAttackType::EAT_Heavy:
+						Damage = BossHeavyDamage;
+						break;
+					default:
+						break;
+					}
+
+					FPointDamageEvent DamageEvent(Damage, hits[i], -GetActorLocation(), nullptr);
+					unit->TakeDamage(Damage, DamageEvent, GetController(), this);
 					ActorsHit.Add(unit);
 					ApplyKnockbackToPlayer(unit, hits[i]);
 				}

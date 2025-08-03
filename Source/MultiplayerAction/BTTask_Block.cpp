@@ -29,7 +29,7 @@ EBTNodeResult::Type UBTTask_Block::ExecuteTask(UBehaviorTreeComponent& OwnerComp
 		return EBTNodeResult::Failed;
 	}
 
-	charackter->ServerReliableRPC_Block();
+	charackter->Server_RequestBlock();
 
 	return EBTNodeResult::Succeeded;
 }
