@@ -432,7 +432,7 @@ void AMultiplayerActionCharacter::Escape(const FInputActionValue& Value)
 	else
 	{
 		EscapeWidget->AddToViewport();
-		PC->SetInputMode(FInputModeGameAndUI());
+		PC->SetInputMode(FInputModeUIOnly());
 		PC->bShowMouseCursor = true;
 		return;
 	}
