@@ -23,6 +23,12 @@ void ABossEnemyCharacter::BeginPlay()
 	}
 }
 
+void ABossEnemyCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	Health = MaxHealth;
+}
+
 void ABossEnemyCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if (HasAuthority())
