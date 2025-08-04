@@ -8,6 +8,12 @@ UCLASS()
 class MULTIPLAYERACTION_API ABossEnemyCharacter : public AMultiplayerActionCharacter
 {
 	GENERATED_BODY()
+public:
+	ABossEnemyCharacter()
+	{
+		bAlwaysRelevant = true;
+		NetUpdateFrequency = 100.0f;
+	}
 
 protected:
 	virtual void BeginPlay() override;

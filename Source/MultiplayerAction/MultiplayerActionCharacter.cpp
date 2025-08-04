@@ -493,10 +493,7 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 
 	if (bIsBlocking)
 	{
-		if (BlockSound)
-		{
-			UGameplayStatics::PlaySoundAtLocation(this, BlockSound, GetActorLocation());
-		}
+		Multicast_PlayBlockSound();
 		return 0;
 	}
 
@@ -519,18 +516,18 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 		}
 	}
 
-	if (DamageSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(this, DamageSound, GetActorLocation());
-	}
-
-	if (ImpactMontage)
-	{
-		PlayAnimMontage(ImpactMontage);
-	}
+	Multicast_PlayDamageEffects();
 
 	if (IsDead())
 	{
+		GetWorld()->GetTimerManager().ClearTimer(WeaponTraceTimer);
+
+		UAnimInstance* AnimInstance = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr;
+		if (AnimInstance)
+		{
+			AnimInstance->OnMontageEnded.Clear();
+		}
+
 		if (HasAuthority())
 		{
 			AMultiplayerActionGameMode* GameMode = GetWorld()->GetAuthGameMode<AMultiplayerActionGameMode>();
@@ -547,13 +544,9 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 			}
 		}
 
-		if (DeathSound)
-		{
-			UGameplayStatics::PlaySoundAtLocation(this, DeathSound, GetActorLocation());
-		}
+		Multicast_PlayDeathEffects();
 
 		GetCharacterMovement()->DisableMovement();
-		GetMesh()->SetSimulatePhysics(true);// Ragdoll
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		SetLifeSpan(10.0f);
 	}
@@ -696,31 +689,31 @@ void AMultiplayerActionCharacter::PerformWeaponTrace()
 				AMultiplayerActionCharacter* unit = Cast<AMultiplayerActionCharacter>(hits[i].GetActor());
 				if (unit && unit->GetTeam() != GetTeam())
 				{
-					if (AttackSound)
+					if (!ActorsHit.Contains(unit))
 					{
-						UGameplayStatics::PlaySoundAtLocation(this, AttackSound, GetActorLocation());
+						Multicast_PlayImpactSound(hits[i].ImpactPoint);
+
+						float Damage = 0.0f;
+
+						switch (CurrentAttackType)	
+						{
+						case EAttackType::EAT_None:
+							Damage = 0.0f;
+							break;
+						case EAttackType::EAT_Regular:
+							Damage = Weapon->WeaponData.WeaponDamage;
+							break;
+						case EAttackType::EAT_Heavy:
+							Damage = Weapon->WeaponData.WeaponHeavyDamage;
+							break;
+						default:
+							break;
+						}
+
+						FPointDamageEvent DamageEvent(Damage, hits[i], -GetActorLocation(), nullptr);
+						unit->TakeDamage(Damage, DamageEvent, GetController(), this);
+						ActorsHit.Add(unit);
 					}
-
-					float Damage = 0.0f;
-
-					switch (CurrentAttackType)	
-					{
-					case EAttackType::EAT_None:
-						Damage = 0.0f;
-						break;
-					case EAttackType::EAT_Regular:
-						Damage = Weapon->WeaponData.WeaponDamage;
-						break;
-					case EAttackType::EAT_Heavy:
-						Damage = Weapon->WeaponData.WeaponHeavyDamage;
-						break;
-					default:
-						break;
-					}
-
-					FPointDamageEvent DamageEvent(Damage, hits[i], -GetActorLocation(), nullptr);
-					unit->TakeDamage(Damage, DamageEvent, GetController(), this);
-					ActorsHit.Add(unit);
 				}
 			}
 		}
@@ -732,7 +725,14 @@ void AMultiplayerActionCharacter::StartWeaponTrace()
 	if (HasAuthority())
 	{
 		ActorsHit.Empty();
-		GetWorld()->GetTimerManager().SetTimer(WeaponTraceTimer, this, &AMultiplayerActionCharacter::PerformWeaponTrace, WeaponTraceInterval, true);
+		FTimerDelegate TimerDelegate;
+
+		TimerDelegate.BindLambda([this]()
+		{
+			this->PerformWeaponTrace();
+		});
+
+		GetWorld()->GetTimerManager().SetTimer(WeaponTraceTimer, TimerDelegate, WeaponTraceInterval, true);
 	}
 }
 
@@ -1028,6 +1028,48 @@ void AMultiplayerActionCharacter::Server_RequestToggleGroupCombat_Implementation
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Server: Player %s tried to toggle group combat but has no Group Manager."), *GetName());
 	}
+}
+
+void AMultiplayerActionCharacter::Multicast_PlayImpactSound_Implementation(FVector ImpactLocation)
+{
+	if (AttackSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			GetWorld(),
+			AttackSound,
+			ImpactLocation
+		);
+	}
+}
+
+void AMultiplayerActionCharacter::Multicast_PlayBlockSound_Implementation()
+{
+	if (BlockSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, BlockSound, GetActorLocation());
+	}
+}
+
+void AMultiplayerActionCharacter::Multicast_PlayDamageEffects_Implementation()
+{
+	if (DamageSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, DamageSound, GetActorLocation());
+	}
+	if (ImpactMontage)
+	{
+		PlayAnimMontage(ImpactMontage);
+	}
+}
+
+void AMultiplayerActionCharacter::Multicast_PlayDeathEffects_Implementation()
+{
+	if (DeathSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, DeathSound, GetActorLocation());
+	}
+
+	GetMesh()->SetSimulatePhysics(true);
 }
 
 void AMultiplayerActionCharacter::InitializeGroupMembership(TObjectPtr<class AAIGroupManager> GroupManager)

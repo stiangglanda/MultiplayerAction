@@ -105,6 +105,18 @@ protected:
     UPROPERTY(Category = Chest, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
     TObjectPtr<USphereComponent> SphereCollider;
 
+    UFUNCTION(NetMulticast, Unreliable)
+    void Multicast_PlayImpactSound(FVector ImpactLocation);
+
+    UFUNCTION(NetMulticast, Unreliable)
+    void Multicast_PlayBlockSound();
+
+    UFUNCTION(NetMulticast, Unreliable)
+    void Multicast_PlayDamageEffects();
+
+    UFUNCTION(NetMulticast, Unreliable)
+    void Multicast_PlayDeathEffects();
+
     UPROPERTY(EditAnywhere, Category = "Chest")
     float SphereColliderRadius = 200.0f;
     UPROPERTY(Replicated)

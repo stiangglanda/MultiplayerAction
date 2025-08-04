@@ -48,7 +48,7 @@ void ABossEnemyCharacter::PerformWeaponTrace()
 
 	bool bSuccess = UKismetSystemLibrary::SphereTraceMulti(GetWorld(), WeaponStart, WeaponEnd, SphereTraceRadiusWeapon,
 		UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_GameTraceChannel1), false, ignore,
-		EDrawDebugTrace::None, hits, true, FLinearColor::Red, FLinearColor::Blue, 10.0f);
+		EDrawDebugTrace::ForDuration, hits, true, FLinearColor::Red, FLinearColor::Blue, 10.0f);
 
 	if (bSuccess)
 	{
@@ -59,27 +59,32 @@ void ABossEnemyCharacter::PerformWeaponTrace()
 				AMultiplayerActionCharacter* unit = Cast<AMultiplayerActionCharacter>(hits[i].GetActor());
 				if (unit && unit->GetTeam() != GetTeam())
 				{
-					float Damage = 0.0f;
-
-					switch (CurrentAttackType)
+					if (!ActorsHit.Contains(unit))
 					{
-					case EAttackType::EAT_None:
-						Damage = 0.0f;
-						break;
-					case EAttackType::EAT_Regular:
-						Damage = BossDamage;
-						break;
-					case EAttackType::EAT_Heavy:
-						Damage = BossHeavyDamage;
-						break;
-					default:
-						break;
-					}
+						Multicast_PlayImpactSound(hits[i].ImpactPoint);
 
-					FPointDamageEvent DamageEvent(Damage, hits[i], -GetActorLocation(), nullptr);
-					unit->TakeDamage(Damage, DamageEvent, GetController(), this);
-					ActorsHit.Add(unit);
-					ApplyKnockbackToPlayer(unit, hits[i]);
+						float Damage = 0.0f;
+
+						switch (CurrentAttackType)
+						{
+						case EAttackType::EAT_None:
+							Damage = 0.0f;
+							break;
+						case EAttackType::EAT_Regular:
+							Damage = BossDamage;
+							break;
+						case EAttackType::EAT_Heavy:
+							Damage = BossHeavyDamage;
+							break;
+						default:
+							break;
+						}
+
+						FPointDamageEvent DamageEvent(Damage, hits[i], -GetActorLocation(), nullptr);
+						unit->TakeDamage(Damage, DamageEvent, GetController(), this);
+						ActorsHit.Add(unit);
+						ApplyKnockbackToPlayer(unit, hits[i]);
+					}
 				}
 			}
 		}
