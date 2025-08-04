@@ -12,7 +12,6 @@ public:
 	ABossEnemyCharacter()
 	{
 		bAlwaysRelevant = true;
-		NetUpdateFrequency = 100.0f;
 	}
 
 protected:

@@ -152,26 +152,60 @@ void AMultiplayerActionCharacter::Tick(float DeltaTime)
 		AddMovementInput(ForwardVector, 1.0f);
 	}
 
-	if (IsLockedOn)
+
+	// This logic needs to run for the local player for camera control,
+	// and on the server for authoritative rotation.
+	if (bIsLockedOn && (IsLocallyControlled() || HasAuthority()))
 	{
-		if (LockedOnTarget == nullptr || LockedOnTarget->IsDead())
+		if (IsValid(LockedOnTarget) && !LockedOnTarget->IsDead())
 		{
-			IsLockedOn = false;
-			GetController()->ResetIgnoreLookInput();
+			FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(FollowCamera->GetComponentLocation(), LockedOnTarget->GetActorLocation());
+
+			// --- THE FIX ---
+			// We remove the HasAuthority() check.
+			// Both the server and the owning client will now calculate and set this rotation.
+			// The client gets instant feedback.
+			// The server sets the authoritative rotation which gets replicated to other clients.
+			if (!bIsRolling)
+			{
+				// Use RInterpTo for smooth turning
+				FRotator TargetYawRotation = FRotator(0, LookAtRotation.Yaw, 0);
+				SetActorRotation(FMath::RInterpTo(GetActorRotation(), TargetYawRotation, DeltaTime, 15.0f));
+			}
+
+			// The client is responsible for aiming its own camera.
+			if (IsLocallyControlled())
+			{
+				GetController()->SetControlRotation(FMath::RInterpTo(GetController()->GetControlRotation(), LookAtRotation, DeltaTime, 15.0f));
+			}
 		}
 		else
 		{
-			FVector LookAtVector = LockedOnTarget->GetActorLocation();
-			LookAtVector.Z -= 90;
-			FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), LookAtVector);
-			FRotator LookAtYawRotation = FRotator(0, LookAtRotation.Yaw, 0);
-
-			if (!bIsRolling)
+			// Only the server can authoritatively break the lock.
+			if (HasAuthority())
 			{
-				SetActorRotation(LookAtYawRotation);
+				bIsLockedOn = false;
+				LockedOnTarget = nullptr;
 			}
-			GetController()->SetControlRotation(LookAtRotation);
 		}
+	}
+
+	if (IsLocallyControlled() && CameraBoom)
+	{
+		FVector TargetSocketOffset = DefaultSocketOffset;
+
+		if (bIsLockedOn)
+		{
+			const float MoveRightInput = MoveRightAxisValue;
+			TargetSocketOffset.Y = MoveRightInput * LockOnCameraHorizontalOffset;
+		}
+
+		CameraBoom->SocketOffset = FMath::VInterpTo(
+			CameraBoom->SocketOffset,
+			TargetSocketOffset,
+			DeltaTime,
+			LockOnCameraShiftSpeed
+		);
 	}
 }
 
@@ -220,6 +254,7 @@ void AMultiplayerActionCharacter::Move(const FInputActionValue& Value)
 
 		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
+		MoveRightAxisValue = MovementVector.X;//for locking system
 		AddMovementInput(ForwardDirection, MovementVector.Y);
 		AddMovementInput(RightDirection, MovementVector.X);
 	}
@@ -293,43 +328,7 @@ void AMultiplayerActionCharacter::OnRollMontageEnded(UAnimMontage* Montage, bool
 
 void AMultiplayerActionCharacter::Lock(const FInputActionValue& Value)
 {
-	if (IsLockedOn == true)
-	{
-		GetController()->ResetIgnoreLookInput();
-		IsLockedOn = false;
-		LockedOnTarget = nullptr;
-		return;
-	}
-
-	TArray<FHitResult> hits;
-	TArray<AActor*> ignore;
-	ignore.Add(this);
-
-	bool bSuccess = UKismetSystemLibrary::SphereTraceMulti(GetWorld(), GetActorLocation(), GetActorLocation(), SphereTraceRadiusLockOn,
-		UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_GameTraceChannel1), false, ignore,
-		EDrawDebugTrace::None, hits, true, FLinearColor::Red, FLinearColor::Blue, 10.0f);
-
-	if (bSuccess)
-	{
-		for (int i = hits.Num() - 1; i >= 0; i--)
-		{
-			if (hits[i].GetActor() != nullptr)
-			{
-				AMultiplayerActionCharacter* unit = Cast<AMultiplayerActionCharacter>(hits[i].GetActor());
-				if (unit && unit->GetTeam() != GetTeam())
-				{
-					SetLockedOnTarget(unit);
-				}
-			}
-		}
-	}
-}
-
-void AMultiplayerActionCharacter::SetLockedOnTarget(AMultiplayerActionCharacter* unit)
-{
-	IsLockedOn = true;
-	GetController()->SetIgnoreLookInput(true);
-	LockedOnTarget = unit;
+	Server_RequestLockOn();
 }
 
 void AMultiplayerActionCharacter::Block(const FInputActionValue& Value)
@@ -568,6 +567,8 @@ void AMultiplayerActionCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePro
 	DOREPLIFETIME(AMultiplayerActionCharacter, AttackAnim);
 	DOREPLIFETIME(AMultiplayerActionCharacter, bIsBlocking);
 	DOREPLIFETIME_CONDITION(AMultiplayerActionCharacter, bIsRolling, COND_SkipOwner);
+	DOREPLIFETIME(AMultiplayerActionCharacter, bIsLockedOn);
+	DOREPLIFETIME(AMultiplayerActionCharacter, LockedOnTarget);
 }
 
 bool AMultiplayerActionCharacter::IsDead()
@@ -620,6 +621,41 @@ TSubclassOf<UWeapon> AMultiplayerActionCharacter::SwapWeapon(TSubclassOf<UWeapon
 
 	NetMulticastReliableRPC_SwapWeapon(NewWeaponClass);
 	return OldWeaponClass;
+}
+
+void AMultiplayerActionCharacter::Server_RequestLockOn_Implementation()
+{
+	if (bIsLockedOn)
+	{
+		bIsLockedOn = false;
+		LockedOnTarget = nullptr;
+		return;
+	}
+
+	TArray<FHitResult> hits;
+	TArray<AActor*> ignore;
+	ignore.Add(this);
+
+	bool bSuccess = UKismetSystemLibrary::SphereTraceMulti(GetWorld(), GetActorLocation(), GetActorLocation(), SphereTraceRadiusLockOn,
+		UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_GameTraceChannel1), false, ignore,
+		EDrawDebugTrace::None, hits, true);
+
+	if (bSuccess)
+	{
+		for (int i = hits.Num() - 1; i >= 0; i--)
+		{
+			if (hits[i].GetActor() != nullptr)
+			{
+				AMultiplayerActionCharacter* unit = Cast<AMultiplayerActionCharacter>(hits[i].GetActor());
+				if (unit && unit->GetTeam() != GetTeam())
+				{
+					bIsLockedOn = true;
+					LockedOnTarget = unit;
+					break;
+				}
+			}
+		}
+	}
 }
 
 void AMultiplayerActionCharacter::ServerReliableRPC_SwapWeapon_Implementation(TSubclassOf<UWeapon> NewWeaponClass)

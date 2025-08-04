@@ -93,6 +93,16 @@ protected:
     UPROPERTY(Replicated)
     TObjectPtr<UAnimMontage> CurrentInteractionMontage;
 
+    UPROPERTY(EditDefaultsOnly, Category = "LockOn|Camera")
+    float LockOnCameraHorizontalOffset = 100.0f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "LockOn|Camera")
+    float LockOnCameraShiftSpeed = 5.0f;
+
+    FVector DefaultSocketOffset;
+
+    float MoveRightAxisValue = 0.f;
+
     UPROPERTY(EditAnywhere)
     float SphereTraceRadiusWeapon = 20;
 
@@ -175,7 +185,8 @@ public:
     UFUNCTION()
     TSubclassOf<UWeapon> SwapWeapon(TSubclassOf<UWeapon> NewWeaponClass);
 
-    void SetLockedOnTarget(AMultiplayerActionCharacter* unit);
+    UFUNCTION(Server, Reliable)
+    void Server_RequestLockOn();
 
     UAudioComponent* GetMovementAudioComponent() const { return MovementAudioComponent; }
 
@@ -257,11 +268,13 @@ protected:
     UPROPERTY(Replicated)
     bool bIsBlocking;
 
-    bool IsLockedOn = false;
+    UPROPERTY(Replicated)
+    bool bIsLockedOn = false;
 
 	FRotator RotationBeforeAttack;// Root moten messes with the rotation, so we store the rotation before attack to restore it after the attack animation ends.
 
-	AMultiplayerActionCharacter* LockedOnTarget;
+    UPROPERTY(Replicated)
+    TObjectPtr<AMultiplayerActionCharacter> LockedOnTarget;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
     TScriptInterface<IOutpostInteractable> CurrentInteractable;
