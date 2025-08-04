@@ -50,6 +50,11 @@ void AMultiplayerActionGameMode::StartPlay()
 void AMultiplayerActionGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	//Super::PostLogin(NewPlayer);
+	ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(NewPlayer);
+	if (MyPC)
+	{
+		MyPC->Client_ShowWelcomeScreen();
+	}
 
 	// Add the new player to our tracking list.
 	if (NewPlayer)
@@ -151,17 +156,6 @@ void AMultiplayerActionGameMode::EndGame(bool bPlayersWon)
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("GAMEMODE (SERVER): FAILED to get GameState in EndGame!"));
-	}
-
-	for (APlayerController* PC : ActivePlayerControllers)
-	{
-		ACharacter* PlayerCharacter = PC->GetCharacter();
-		if (PlayerCharacter)
-		{
-			PlayerCharacter->GetCharacterMovement()->StopMovementImmediately();
-
-			PlayerCharacter->DisableInput(PC);
-		}
 	}
 
 	FTimerHandle TimerHandle_ReturnToMenu;

@@ -20,6 +20,9 @@ public:
 	void OnWelcomeScreenDismissed();
 
 	UFUNCTION(Client, Reliable)
+	void Client_ShowWelcomeScreen();
+
+	UFUNCTION(Client, Reliable)
 	void Client_SetGameInputMode();
 
 	UFUNCTION(Client, Reliable)

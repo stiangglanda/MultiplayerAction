@@ -1,9 +1,23 @@
 #include "DefaultPlayerController.h"
 #include <Blueprint/WidgetLayoutLibrary.h>
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 void ADefaultPlayerController::ShowEndOfMatchUI(EMatchState MatchResult)
 {
 	//ClearAllGameplayWidgets();
+
+	ACharacter* MyCharacter = GetCharacter();
+	if (MyCharacter && MyCharacter->GetCharacterMovement())
+	{
+		MyCharacter->GetCharacterMovement()->StopMovementImmediately();
+	}
+
+	if (MyCharacter)
+	{
+		MyCharacter->DisableInput(this);
+	}
+
 	Client_HideSpectatorUI();
 
 	TSubclassOf<UUserWidget> WidgetToShowClass = nullptr;
@@ -42,6 +56,23 @@ void ADefaultPlayerController::OnWelcomeScreenDismissed()
 	}
 
 	Server_RequestBeginPlay();
+}
+
+void ADefaultPlayerController::Client_ShowWelcomeScreen_Implementation()
+{
+	if (IsLocalController() && WelcomeWidgetClass)
+	{
+		WelcomeWidgetInstance = CreateWidget<UUserWidget>(this, WelcomeWidgetClass);
+		if (WelcomeWidgetInstance)
+		{
+			WelcomeWidgetInstance->AddToViewport();
+
+			FInputModeUIOnly InputMode;
+			InputMode.SetWidgetToFocus(WelcomeWidgetInstance->TakeWidget());
+			SetInputMode(InputMode);
+			bShowMouseCursor = true;
+		}
+	}
 }
 
 void ADefaultPlayerController::Client_ShowSpectatorUI_Implementation()
@@ -85,25 +116,14 @@ void ADefaultPlayerController::BeginPlay()
 {
     Super::BeginPlay();
 
-	if (IsLocalController() && WelcomeWidgetClass)
+	if (IsLocalController() && CrossHairHUD)
 	{
-		WelcomeWidgetInstance = CreateWidget<UUserWidget>(this, WelcomeWidgetClass);
-		if (WelcomeWidgetInstance)
+		HUD = CreateWidget<UPlayerHUDWidget>(this, CrossHairHUD);
+		if (HUD != nullptr)
 		{
-			WelcomeWidgetInstance->AddToViewport();
-
-			FInputModeUIOnly InputMode;
-			InputMode.SetWidgetToFocus(WelcomeWidgetInstance->TakeWidget());
-			SetInputMode(InputMode);
-			bShowMouseCursor = true;
+			HUD->AddToViewport();
 		}
 	}
-
-    HUD = CreateWidget<UPlayerHUDWidget>(this, CrossHairHUD);
-    if (HUD != nullptr)
-    {
-        HUD->AddToViewport();
-    }
 }
 
 void ADefaultPlayerController::Server_RequestBeginPlay_Implementation()

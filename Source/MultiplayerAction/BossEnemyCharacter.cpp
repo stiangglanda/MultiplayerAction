@@ -48,7 +48,7 @@ void ABossEnemyCharacter::PerformWeaponTrace()
 
 	bool bSuccess = UKismetSystemLibrary::SphereTraceMulti(GetWorld(), WeaponStart, WeaponEnd, SphereTraceRadiusWeapon,
 		UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_GameTraceChannel1), false, ignore,
-		EDrawDebugTrace::ForDuration, hits, true, FLinearColor::Red, FLinearColor::Blue, 10.0f);
+		EDrawDebugTrace::None, hits, true, FLinearColor::Red, FLinearColor::Blue, 10.0f);
 
 	if (bSuccess)
 	{
