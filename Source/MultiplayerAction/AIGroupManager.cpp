@@ -142,6 +142,8 @@ void AAIGroupManager::SetGroupLeader(class AMultiplayerActionCharacter* NewLeade
             MemberController->GetBlackboardComponent()->SetValueAsBool(IsLeaderKeyName, false);
             MemberController->GetBlackboardComponent()->SetValueAsObject(PatrolLeaderKeyName, NewLeaderPawn);
             MemberController->GetBlackboardComponent()->ClearValue(PatrolPathKeyName);
+            MemberController->GetBlackboardComponent()->ClearValue(PlayerKeyName);
+            MemberController->GetBlackboardComponent()->ClearValue(LastKnownPlayerLocationKeyName);
 
             if (FormationOffsets.IsValidIndex(OriginalIndex))
             {

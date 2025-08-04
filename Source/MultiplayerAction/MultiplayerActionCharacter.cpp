@@ -152,28 +152,18 @@ void AMultiplayerActionCharacter::Tick(float DeltaTime)
 		AddMovementInput(ForwardVector, 1.0f);
 	}
 
-
-	// This logic needs to run for the local player for camera control,
-	// and on the server for authoritative rotation.
 	if (bIsLockedOn && (IsLocallyControlled() || HasAuthority()))
 	{
 		if (IsValid(LockedOnTarget) && !LockedOnTarget->IsDead())
 		{
 			FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(FollowCamera->GetComponentLocation(), LockedOnTarget->GetActorLocation());
 
-			// --- THE FIX ---
-			// We remove the HasAuthority() check.
-			// Both the server and the owning client will now calculate and set this rotation.
-			// The client gets instant feedback.
-			// The server sets the authoritative rotation which gets replicated to other clients.
 			if (!bIsRolling)
 			{
-				// Use RInterpTo for smooth turning
 				FRotator TargetYawRotation = FRotator(0, LookAtRotation.Yaw, 0);
 				SetActorRotation(FMath::RInterpTo(GetActorRotation(), TargetYawRotation, DeltaTime, 15.0f));
 			}
 
-			// The client is responsible for aiming its own camera.
 			if (IsLocallyControlled())
 			{
 				GetController()->SetControlRotation(FMath::RInterpTo(GetController()->GetControlRotation(), LookAtRotation, DeltaTime, 15.0f));
@@ -181,7 +171,6 @@ void AMultiplayerActionCharacter::Tick(float DeltaTime)
 		}
 		else
 		{
-			// Only the server can authoritatively break the lock.
 			if (HasAuthority())
 			{
 				bIsLockedOn = false;

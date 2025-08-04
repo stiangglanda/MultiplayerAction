@@ -38,6 +38,12 @@ protected:
 	FName IsLeaderKeyName = "IsLeader";
 
 	UPROPERTY(EditDefaultsOnly, Category = "AI Group|Blackboard")
+	FName LastKnownPlayerLocationKeyName = "Last Known Player Location";
+
+	UPROPERTY(EditDefaultsOnly, Category = "AI Group|Blackboard")
+	FName PlayerKeyName = "Player";
+
+	UPROPERTY(EditDefaultsOnly, Category = "AI Group|Blackboard")
 	FName PatrolPathKeyName = "PatrolPath";
 
 	UPROPERTY(EditDefaultsOnly, Category = "AI Group|Blackboard")
