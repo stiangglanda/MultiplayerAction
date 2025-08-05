@@ -207,11 +207,6 @@ void AKingsShrine::OnInteractionComplete()
 
 	OnRep_KeyTaken();
 
-	if (InteractingPlayer)
-	{
-		// Add logic to give item to InteractingPlayer
-	}
-
 	InteractingPlayer = nullptr;
 }
 

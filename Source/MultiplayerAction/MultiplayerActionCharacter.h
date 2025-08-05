@@ -158,6 +158,8 @@ public:
 
     AMultiplayerActionCharacter();
 
+    ~AMultiplayerActionCharacter();
+
     UFUNCTION(BlueprintPure)
     bool IsDead();
 
@@ -240,6 +242,12 @@ protected:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
     TObjectPtr<USoundBase> WeaponSwapSound;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+    TObjectPtr<USoundBase> HealthShrineComplete;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+    TObjectPtr<USoundBase> KeyShrineComplete;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<UUserWidget> EscapeWidgetClass;

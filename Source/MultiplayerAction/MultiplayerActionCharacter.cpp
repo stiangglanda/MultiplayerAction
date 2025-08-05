@@ -82,6 +82,10 @@ AMultiplayerActionCharacter::AMultiplayerActionCharacter()
 	ShieldMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
+AMultiplayerActionCharacter::~AMultiplayerActionCharacter()
+{
+}
+
 void AMultiplayerActionCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -200,6 +204,11 @@ void AMultiplayerActionCharacter::Tick(float DeltaTime)
 
 void AMultiplayerActionCharacter::OnRep_MaxHealth()
 {
+	if (HealthShrineComplete)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, HealthShrineComplete, GetActorLocation());
+	}
+
 	if (ADefaultPlayerController* PC = GetController<ADefaultPlayerController>())
 	{
 		if (UPlayerHUDWidget* HUD = PC->GetHUD())
@@ -1025,6 +1034,11 @@ void AMultiplayerActionCharacter::Client_OnInteractionSuccess_Implementation()
 void AMultiplayerActionCharacter::Client_OnBecameGroupLeader_Implementation()
 {
 	UE_LOG(LogTemplateCharacter, Log, TEXT("CLIENT received OnBecameGroupLeader notification."));
+
+	if (KeyShrineComplete)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, KeyShrineComplete, GetActorLocation());
+	}
 
 	if (ADefaultPlayerController* PC = GetController<ADefaultPlayerController>())
 	{
