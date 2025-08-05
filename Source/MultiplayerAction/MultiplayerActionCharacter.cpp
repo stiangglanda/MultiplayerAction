@@ -104,6 +104,19 @@ void AMultiplayerActionCharacter::BeginPlay()
 	}
 }
 
+void AMultiplayerActionCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
+
+	UAnimInstance* AnimInstance = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr;
+	if (AnimInstance)
+	{
+		AnimInstance->OnMontageEnded.Clear();
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
 void AMultiplayerActionCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
