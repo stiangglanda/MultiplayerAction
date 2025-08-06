@@ -12,7 +12,7 @@ class MULTIPLAYERACTION_API ADefaultPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 public:
-	void ShowEndOfMatchUI(EMatchState MatchResult);
+	void ShowEndOfMatchUI(ECustomMatchState  MatchResult);
 
 	UPlayerHUDWidget* GetHUD();
 

@@ -138,6 +138,9 @@ protected:
     UFUNCTION(Server, Reliable)
     void Server_RequestToggleGroupCombat();
 
+    UFUNCTION(BlueprintPure, Category = "State")
+    bool IsBusy() const;
+
 public:
     UFUNCTION(Client, Reliable)
     void Client_OnInteractionSuccess();

@@ -3,7 +3,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
-void ADefaultPlayerController::ShowEndOfMatchUI(EMatchState MatchResult)
+void ADefaultPlayerController::ShowEndOfMatchUI(ECustomMatchState  MatchResult)
 {
 	//ClearAllGameplayWidgets();
 
@@ -21,11 +21,11 @@ void ADefaultPlayerController::ShowEndOfMatchUI(EMatchState MatchResult)
 	Client_HideSpectatorUI();
 
 	TSubclassOf<UUserWidget> WidgetToShowClass = nullptr;
-	if (MatchResult == EMatchState::Victory)
+	if (MatchResult == ECustomMatchState::Victory)
 	{
 		WidgetToShowClass = VictoryWidgetClass;
 	}
-	else if (MatchResult == EMatchState::Defeat)
+	else if (MatchResult == ECustomMatchState::Defeat)
 	{
 		WidgetToShowClass = DefeatWidgetClass;
 	}

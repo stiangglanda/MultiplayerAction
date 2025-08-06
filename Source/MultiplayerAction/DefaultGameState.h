@@ -1,11 +1,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameStateBase.h"
+#include "GameFramework/GameState.h"
 #include "DefaultGameState.generated.h"
 
 UENUM(BlueprintType)
-enum class EMatchState : uint8
+enum class ECustomMatchState : uint8
 {
 	InProgress	UMETA(DisplayName = "In Progress"),
 	Victory		UMETA(DisplayName = "Victory"),
@@ -13,7 +13,7 @@ enum class EMatchState : uint8
 };
 
 UCLASS()
-class MULTIPLAYERACTION_API ADefaultGameState : public AGameStateBase
+class MULTIPLAYERACTION_API ADefaultGameState : public AGameState
 {
 	GENERATED_BODY()
 public:
@@ -35,13 +35,13 @@ public:
 
 	void SetStartedUnlockingChest(bool bNewState);
 
-	UPROPERTY(ReplicatedUsing = OnRep_MatchState)
-	EMatchState MatchState = EMatchState::InProgress;
+	void SetCustomMatchState(ECustomMatchState NewState);
+
+	UPROPERTY(ReplicatedUsing = OnRep_CustomMatchState)
+	ECustomMatchState  CustomMatchState = ECustomMatchState::InProgress;
 
 	UFUNCTION()
-	void OnRep_MatchState();
-
-	void SetMatchState(EMatchState NewState);
+	void OnRep_CustomMatchState();
 
 	// Delegate that other actors (like the Chest) can subscribe to.
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnKingsKeyAcquired);

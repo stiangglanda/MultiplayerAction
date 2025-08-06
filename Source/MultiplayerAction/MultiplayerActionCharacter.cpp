@@ -106,7 +106,11 @@ void AMultiplayerActionCharacter::BeginPlay()
 
 void AMultiplayerActionCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
+	UE_LOG(LogTemp, Error, TEXT("'%s' is calling EndPlay. Cleaning up timers and delegates."), *GetName());
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearAllTimersForObject(this);
+	}
 
 	UAnimInstance* AnimInstance = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr;
 	if (AnimInstance)
@@ -284,6 +288,11 @@ void AMultiplayerActionCharacter::Look(const FInputActionValue& Value)
 
 void AMultiplayerActionCharacter::Roll(const FInputActionValue& Value)
 {
+	if (IsBusy())
+	{
+		return;
+	}
+
 	if (!bIsRolling && RollMontage)
 	{
 		bIsRolling = true;
@@ -311,6 +320,11 @@ void AMultiplayerActionCharacter::Roll(const FInputActionValue& Value)
 
 void AMultiplayerActionCharacter::Server_RequestRoll_Implementation()
 {
+	if (IsBusy())
+	{
+		return;
+	}
+
 	if (!bIsRolling && RollMontage)
 	{
 		bIsRolling = true;
@@ -354,6 +368,11 @@ void AMultiplayerActionCharacter::HeavyAttack(const FInputActionValue& Value)
 
 void AMultiplayerActionCharacter::Server_RequestHeavyAttack_Implementation()
 {
+	if (IsBusy())
+	{
+		return;
+	}
+
 	if (!bIsAttacking && HeavyAttackMontage)
 	{
 		bIsAttacking = true;
@@ -769,17 +788,40 @@ void AMultiplayerActionCharacter::PerformWeaponTrace()
 
 void AMultiplayerActionCharacter::StartWeaponTrace()
 {
+	//if (HasAuthority())
+	//{
+	//	ActorsHit.Empty();
+	//	FTimerDelegate TimerDelegate;
+
+	//	TimerDelegate.BindLambda([this]()
+	//	{
+	//		this->PerformWeaponTrace();
+	//	});
+
+	//	GetWorld()->GetTimerManager().SetTimer(WeaponTraceTimer, TimerDelegate, WeaponTraceInterval, true);
+	//}
+
 	if (HasAuthority())
 	{
 		ActorsHit.Empty();
-		FTimerDelegate TimerDelegate;
 
-		TimerDelegate.BindLambda([this]()
+		FTimerDelegate TimerDelegate;
+		TWeakObjectPtr<AMultiplayerActionCharacter> WeakThis(this);
+
+		TimerDelegate.BindLambda([WeakThis]()
 		{
-			this->PerformWeaponTrace();
+			if (WeakThis.IsValid())
+			{
+				WeakThis->PerformWeaponTrace();
+			}
 		});
 
-		GetWorld()->GetTimerManager().SetTimer(WeaponTraceTimer, TimerDelegate, WeaponTraceInterval, true);
+		GetWorld()->GetTimerManager().SetTimer(
+			WeaponTraceTimer,
+			TimerDelegate,
+			WeaponTraceInterval,
+			true
+		);
 	}
 }
 
@@ -799,6 +841,11 @@ void AMultiplayerActionCharacter::AttackInputMapping(const FInputActionValue& Va
 
 void AMultiplayerActionCharacter::Server_RequestAttack_Implementation()
 {
+	if (IsBusy())
+	{
+		return;
+	}
+
 	if (!bIsAttacking && CombatMontage && CombatMontageAlt)
 	{
 		bIsAttacking = true;
@@ -867,6 +914,11 @@ void AMultiplayerActionCharacter::OnHeavyAttackMontageEnded(UAnimMontage* Montag
 
 void AMultiplayerActionCharacter::Server_RequestBlock_Implementation()
 {
+	if (IsBusy())
+	{
+		return;
+	}
+
 	if (!bIsBlocking && BlockMontage)
 	{
 		bIsBlocking = true;
@@ -1142,4 +1194,9 @@ void AMultiplayerActionCharacter::InitializeGroupMembership(TObjectPtr<class AAI
 	{
 		UE_LOG(LogTemplateCharacter, Log, TEXT("GroupManager is null"));
 	}
+}
+
+bool AMultiplayerActionCharacter::IsBusy() const
+{
+	return bIsAttacking || bIsRolling;
 }

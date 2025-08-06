@@ -10,7 +10,6 @@
 
 AMultiplayerActionGameMode::AMultiplayerActionGameMode()
 {
-	// set default pawn class to our Blueprinted character
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/dynamic/BP_ThirdPersonCharacter"));
 	if (PlayerPawnBPClass.Class != NULL)
 	{
@@ -146,23 +145,12 @@ void AMultiplayerActionGameMode::CheckWinLossConditions()
 
 void AMultiplayerActionGameMode::EndGame(bool bPlayersWon)
 {
+	EndMatch();
+
 	ADefaultGameState* MyGameState = GetGameState<ADefaultGameState>();
 	if (MyGameState)
 	{
-		EMatchState NewState = bPlayersWon ? EMatchState::Victory : EMatchState::Defeat;
-		UE_LOG(LogTemp, Error, TEXT("GAMEMODE (SERVER): Ending game. Setting MatchState to: %s"), *UEnum::GetValueAsString(NewState));
-		MyGameState->SetMatchState(NewState);
+		ECustomMatchState  NewCustomState = bPlayersWon ? ECustomMatchState::Victory : ECustomMatchState::Defeat;
+		MyGameState->SetCustomMatchState(NewCustomState);
 	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("GAMEMODE (SERVER): FAILED to get GameState in EndGame!"));
-	}
-
-	FTimerHandle TimerHandle_ReturnToMenu;
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_ReturnToMenu, this, &AMultiplayerActionGameMode::ReturnToMainMenu, 5.0f, false);
-}
-
-void AMultiplayerActionGameMode::ReturnToMainMenu()
-{
-	//UGameplayStatics::OpenLevel(GetWorld(), FName("Minimal_Default"), true);
 }

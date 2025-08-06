@@ -1,14 +1,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameModeBase.h"
+#include "GameFramework/GameMode.h"
 #include "MultiplayerActionGameMode.generated.h"
 
 class AMultiplayerActionCharacter;
 class ABossEnemyCharacter;
 
 UCLASS(minimalapi)
-class AMultiplayerActionGameMode : public AGameModeBase
+class AMultiplayerActionGameMode : public AGameMode
 {
 	GENERATED_BODY()
 
@@ -42,8 +42,6 @@ private:
 	void EndGame(bool bPlayersWon);
 
 	APawn* FindNextSpectatorTarget(APlayerController* DeadPlayerController);
-
-	void ReturnToMainMenu();
 };
 
 

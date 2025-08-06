@@ -14,7 +14,7 @@ void ADefaultGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(ADefaultGameState, bHasKingsKey);
     DOREPLIFETIME(ADefaultGameState, bStartedUnlockingChest);
-    DOREPLIFETIME(ADefaultGameState, MatchState);
+    DOREPLIFETIME(ADefaultGameState, CustomMatchState);
 }
 
 void ADefaultGameState::SetHasKingsKey(bool bNewState)
@@ -59,29 +59,20 @@ void ADefaultGameState::OnRep_StartedUnlockingChest()
     }
 }
 
-void ADefaultGameState::SetMatchState(EMatchState NewState)
+void ADefaultGameState::SetCustomMatchState(ECustomMatchState  NewState)
 {
     if (HasAuthority())
     {
-        if (MatchState != NewState)
-        {
-            MatchState = NewState;
-            OnRep_MatchState();
-        }
+        CustomMatchState = NewState;
+        OnRep_CustomMatchState();
     }
 }
 
-void ADefaultGameState::OnRep_MatchState()
+void ADefaultGameState::OnRep_CustomMatchState()
 {
-    UE_LOG(LogTemp, Warning, TEXT("GAMESTATE (CLIENT): OnRep_MatchState FIRED!"));
-
-    APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-    if (PC && PC->IsLocalController())
+    ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+    if (MyPC && MyPC->IsLocalController())
     {
-        ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC);
-        if (MyPC)
-        {
-            MyPC->ShowEndOfMatchUI(MatchState);
-        }
+        MyPC->ShowEndOfMatchUI(CustomMatchState);
     }
 }
