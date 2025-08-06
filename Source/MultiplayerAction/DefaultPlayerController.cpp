@@ -1,6 +1,8 @@
 #include "DefaultPlayerController.h"
 #include <Blueprint/WidgetLayoutLibrary.h>
 #include "GameFramework/Character.h"
+#include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 void ADefaultPlayerController::ShowEndOfMatchUI(ECustomMatchState  MatchResult)
@@ -122,6 +124,22 @@ void ADefaultPlayerController::BeginPlay()
 		if (HUD != nullptr)
 		{
 			HUD->AddToViewport();
+		}
+	}
+
+	if (IsLocalController())
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+		{
+			if (DefaultMappingContext)
+			{
+				Subsystem->AddMappingContext(DefaultMappingContext, 0);
+				UE_LOG(LogTemp, Log, TEXT("DefaultMappingContext added to subsystem."));
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("DefaultMappingContext is NOT SET on the PlayerController!"));
+			}
 		}
 	}
 }

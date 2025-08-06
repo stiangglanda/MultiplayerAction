@@ -5,6 +5,7 @@
 #include "Blueprint/UserWidget.h"
 #include "DefaultGameState.h"
 #include "PlayerHUDWidget.h"
+#include "InputMappingContext.h"
 #include "DefaultPlayerController.generated.h"
 
 UCLASS()
@@ -38,6 +39,9 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void Server_RequestBeginPlay();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
+	TObjectPtr<UInputMappingContext> DefaultMappingContext;
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
