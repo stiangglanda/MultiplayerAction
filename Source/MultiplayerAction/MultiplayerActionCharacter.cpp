@@ -102,6 +102,21 @@ void AMultiplayerActionCharacter::BeginPlay()
 			Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, TEXT("WeaponSocket"));
 		}
 	}
+
+
+	if (GetMesh())
+	{
+		const int32 MaterialCount = GetMesh()->GetNumMaterials();
+
+		for (int32 i = 0; i < MaterialCount; ++i)
+		{
+			UMaterialInstanceDynamic* DMI = GetMesh()->CreateAndSetMaterialInstanceDynamic(i);
+			if (DMI)
+			{
+				BodyMaterialInstances.Add(DMI);
+			}
+		}
+	}
 }
 
 void AMultiplayerActionCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -1164,6 +1179,8 @@ void AMultiplayerActionCharacter::Multicast_PlayDamageEffects_Implementation()
 	{
 		PlayAnimMontage(ImpactMontage);
 	}
+
+	PlayHitFlash();
 }
 
 void AMultiplayerActionCharacter::Multicast_PlayDeathEffects_Implementation()
@@ -1174,6 +1191,39 @@ void AMultiplayerActionCharacter::Multicast_PlayDeathEffects_Implementation()
 	}
 
 	GetMesh()->SetSimulatePhysics(true);
+}
+
+void AMultiplayerActionCharacter::PlayHitFlash()
+{
+	if (BodyMaterialInstances.Num() > 0)
+	{
+		for (UMaterialInstanceDynamic* DMI : BodyMaterialInstances)
+		{
+			if (DMI)
+			{
+				DMI->SetScalarParameterValue(FlashIntensityParameterName, 1.0f);
+			}
+		}
+
+		GetWorld()->GetTimerManager().SetTimer(
+			HitFlashTimer,
+			this,
+			&AMultiplayerActionCharacter::StopHitFlash,
+			0.1f,
+			false
+		);
+	}
+}
+
+void AMultiplayerActionCharacter::StopHitFlash()
+{
+	for (UMaterialInstanceDynamic* DMI : BodyMaterialInstances)
+	{
+		if (DMI)
+		{
+			DMI->SetScalarParameterValue(FlashIntensityParameterName, 0.0f);
+		}
+	}
 }
 
 void AMultiplayerActionCharacter::InitializeGroupMembership(TObjectPtr<class AAIGroupManager> GroupManager)

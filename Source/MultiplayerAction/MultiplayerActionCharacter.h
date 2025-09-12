@@ -141,7 +141,19 @@ protected:
     UFUNCTION(BlueprintPure, Category = "State")
     bool IsBusy() const;
 
+    UPROPERTY()
+    TArray<TObjectPtr<UMaterialInstanceDynamic>> BodyMaterialInstances;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Effects")
+    FName FlashIntensityParameterName = FName("FlashIntensity");
+
+    FTimerHandle HitFlashTimer;
+
 public:
+    void PlayHitFlash();
+
+    void StopHitFlash();
+
     UFUNCTION(Client, Reliable)
     void Client_OnInteractionSuccess();
 
