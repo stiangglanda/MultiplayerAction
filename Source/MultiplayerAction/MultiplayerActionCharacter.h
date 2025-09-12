@@ -239,6 +239,9 @@ public:
     void SetMaxHealth(float NewValue);
     void SetHealth(float NewValue);
 
+    void StartWeaponTrace();
+    void StopWeaponTrace();
+
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio")
     TObjectPtr<UAudioComponent> MovementAudioComponent;
@@ -360,8 +363,6 @@ protected:
 
     FTimerHandle WeaponTraceTimer;
     virtual void PerformWeaponTrace();
-    void StartWeaponTrace();
-    void StopWeaponTrace();
     const float WeaponTraceInterval = 0.01f;// 100 traces per second
 
 	EAttackType CurrentAttackType = EAttackType::EAT_None;

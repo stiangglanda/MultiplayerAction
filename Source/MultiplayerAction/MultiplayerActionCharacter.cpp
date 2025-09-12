@@ -398,7 +398,7 @@ void AMultiplayerActionCharacter::Server_RequestHeavyAttack_Implementation()
 
 		Multicast_PlayHeavyAttackEffects();
 
-		StartWeaponTrace();
+		//StartWeaponTrace();
 	}
 }
 
@@ -845,19 +845,6 @@ void AMultiplayerActionCharacter::PerformWeaponTrace()
 
 void AMultiplayerActionCharacter::StartWeaponTrace()
 {
-	//if (HasAuthority())
-	//{
-	//	ActorsHit.Empty();
-	//	FTimerDelegate TimerDelegate;
-
-	//	TimerDelegate.BindLambda([this]()
-	//	{
-	//		this->PerformWeaponTrace();
-	//	});
-
-	//	GetWorld()->GetTimerManager().SetTimer(WeaponTraceTimer, TimerDelegate, WeaponTraceInterval, true);
-	//}
-
 	if (HasAuthority())
 	{
 		ActorsHit.Empty();
@@ -914,7 +901,7 @@ void AMultiplayerActionCharacter::Server_RequestAttack_Implementation()
 
 		Multicast_PlayAttackEffects(MontageToPlay);
 
-		StartWeaponTrace();
+		//StartWeaponTrace();
 	}
 }
 
@@ -955,7 +942,7 @@ void AMultiplayerActionCharacter::OnAttackMontageEnded(UAnimMontage* Montage, bo
 	{
 		CurrentAttackType = EAttackType::EAT_None;
 		bIsAttacking = false;
-		StopWeaponTrace();
+		//StopWeaponTrace();
 	}
 }
 
