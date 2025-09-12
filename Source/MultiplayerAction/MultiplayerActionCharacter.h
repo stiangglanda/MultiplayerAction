@@ -116,9 +116,6 @@ protected:
     TObjectPtr<USphereComponent> SphereCollider;
 
     UFUNCTION(NetMulticast, Unreliable)
-    void Multicast_PlayImpactSound(FVector ImpactLocation);
-
-    UFUNCTION(NetMulticast, Unreliable)
     void Multicast_PlayBlockSound();
 
     UFUNCTION(NetMulticast, Unreliable)
@@ -148,6 +145,21 @@ protected:
     FName FlashIntensityParameterName = FName("FlashIntensity");
 
     FTimerHandle HitFlashTimer;
+
+    UFUNCTION(NetMulticast, Unreliable)
+    void Multicast_PlayImpactEffects(EImpactType ImpactType, FVector ImpactLocation);
+
+    UPROPERTY(EditDefaultsOnly, Category = "Effects|Impact")
+    TObjectPtr<UParticleSystem> FleshImpactVFX;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Effects|Impact")
+    TObjectPtr<USoundBase> FleshImpactSound;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Effects|Impact")
+    TObjectPtr<UParticleSystem> StoneImpactVFX;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Effects|Impact")
+    TObjectPtr<USoundBase> StoneImpactSound;
 
 public:
     void PlayHitFlash();
@@ -239,9 +251,6 @@ protected:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
     TObjectPtr<USoundBase> BlockSound;
-
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
-    TObjectPtr<USoundBase> AttackSound;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
     TObjectPtr<USoundBase> DeathSound;

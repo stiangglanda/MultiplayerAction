@@ -11,3 +11,11 @@ enum class EAttackType : uint8
 	EAT_Regular		UMETA(DisplayName = "Regular Attack"),
 	EAT_Heavy		UMETA(DisplayName = "Heavy Attack")
 };
+
+UENUM(BlueprintType)
+enum class EImpactType : uint8
+{
+	EIT_Flesh		UMETA(DisplayName = "Flesh"),
+	EIT_Stone		UMETA(DisplayName = "Stone"),
+	EIT_Metal		UMETA(DisplayName = "Metal")
+};

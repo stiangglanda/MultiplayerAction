@@ -772,7 +772,14 @@ void AMultiplayerActionCharacter::PerformWeaponTrace()
 				{
 					if (!ActorsHit.Contains(unit))
 					{
-						Multicast_PlayImpactSound(hits[i].ImpactPoint);
+						EImpactType ImpactTypeToPlay = EImpactType::EIT_Flesh;
+
+						if (Cast<ABossEnemyCharacter>(unit))
+						{
+							ImpactTypeToPlay = EImpactType::EIT_Stone;
+						}
+
+						Multicast_PlayImpactEffects(ImpactTypeToPlay, hits[i].ImpactPoint);
 
 						float Damage = 0.0f;
 
@@ -1149,18 +1156,6 @@ void AMultiplayerActionCharacter::Server_RequestToggleGroupCombat_Implementation
 	}
 }
 
-void AMultiplayerActionCharacter::Multicast_PlayImpactSound_Implementation(FVector ImpactLocation)
-{
-	if (AttackSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(
-			GetWorld(),
-			AttackSound,
-			ImpactLocation
-		);
-	}
-}
-
 void AMultiplayerActionCharacter::Multicast_PlayBlockSound_Implementation()
 {
 	if (BlockSound)
@@ -1249,4 +1244,35 @@ void AMultiplayerActionCharacter::InitializeGroupMembership(TObjectPtr<class AAI
 bool AMultiplayerActionCharacter::IsBusy() const
 {
 	return bIsAttacking || bIsRolling;
+}
+
+void AMultiplayerActionCharacter::Multicast_PlayImpactEffects_Implementation(EImpactType ImpactType, FVector ImpactLocation)
+{
+	UParticleSystem* EffectToSpawn = nullptr;
+	USoundBase* SoundToPlay = nullptr;
+
+	switch (ImpactType)
+	{
+	case EImpactType::EIT_Flesh:
+		EffectToSpawn = FleshImpactVFX;
+		SoundToPlay = FleshImpactSound;
+		break;
+	case EImpactType::EIT_Stone:
+		EffectToSpawn = StoneImpactVFX;
+		SoundToPlay = StoneImpactSound;
+		break;
+	default:
+		EffectToSpawn = FleshImpactVFX;
+		SoundToPlay = FleshImpactSound;
+		break;
+	}
+
+	if (EffectToSpawn)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EffectToSpawn, ImpactLocation);
+	}
+	if (SoundToPlay)
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), SoundToPlay, ImpactLocation);
+	}
 }

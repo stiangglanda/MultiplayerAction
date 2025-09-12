@@ -67,7 +67,14 @@ void ABossEnemyCharacter::PerformWeaponTrace()
 				{
 					if (!ActorsHit.Contains(unit))
 					{
-						Multicast_PlayImpactSound(hits[i].ImpactPoint);
+						EImpactType ImpactTypeToPlay = EImpactType::EIT_Flesh;
+
+						if (Cast<ABossEnemyCharacter>(unit))
+						{
+							ImpactTypeToPlay = EImpactType::EIT_Stone;
+						}
+
+						Multicast_PlayImpactEffects(ImpactTypeToPlay, hits[i].ImpactPoint);
 
 						float Damage = 0.0f;
 
