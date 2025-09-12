@@ -542,6 +542,8 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 	}
 
 	DamageApplied = FMath::Min(Health, DamageApplied);
+	Health -= DamageApplied;
+	UE_LOG(LogTemp, Display, TEXT("Health: %f"), Health);
 
 	if (DamageApplied > 0)
 	{
@@ -568,9 +570,6 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 		}
 	}
 
-
-	Health -= DamageApplied;
-	UE_LOG(LogTemp, Display, TEXT("Health: %f"), Health);
 	OnRep_CurrentHealth();
 
 	if (EventInstigator != nullptr && DamageCauser != nullptr)
@@ -613,13 +612,22 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 					GameMode->OnPlayerDied(this);
 				}
 			}
+
+			FVector ImpulseDir = FVector::ZeroVector;
+			const float ImpulseStrength = 10000.0f;
+			if (DamageCauser)
+			{
+				ImpulseDir = GetActorLocation() - DamageCauser->GetActorLocation();
+				ImpulseDir.Normalize();
+				ImpulseDir.Z = 0.5f;
+			}
+
+			Multicast_PlayDeathEffects(ImpulseDir, ImpulseStrength);
+
+			GetCharacterMovement()->DisableMovement();
+			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			SetLifeSpan(10.0f);
 		}
-
-		Multicast_PlayDeathEffects();
-
-		GetCharacterMovement()->DisableMovement();
-		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		SetLifeSpan(10.0f);
 	}
 
 	return DamageApplied;
@@ -1205,14 +1213,23 @@ void AMultiplayerActionCharacter::Multicast_PlayDamageEffects_Implementation()
 	PlayHitFlash();
 }
 
-void AMultiplayerActionCharacter::Multicast_PlayDeathEffects_Implementation()
+void AMultiplayerActionCharacter::Multicast_PlayDeathEffects_Implementation(FVector ImpulseDirection, float ImpulseStrength)
 {
 	if (DeathSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, DeathSound, GetActorLocation());
 	}
 
-	GetMesh()->SetSimulatePhysics(true);
+	if (USkeletalMeshComponent* MeshComp = GetMesh())
+	{
+		MeshComp->SetSimulatePhysics(true);
+
+		if (!ImpulseDirection.IsNearlyZero())
+		{
+			FVector FinalImpulse = ImpulseDirection * ImpulseStrength;
+			MeshComp->AddImpulse(FinalImpulse, NAME_None, true);
+		}
+	}
 }
 
 void AMultiplayerActionCharacter::Multicast_TriggerHitStop_Implementation(AActor* Attacker, AActor* Victim, float HitStopDuration)

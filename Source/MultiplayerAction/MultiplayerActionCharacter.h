@@ -122,7 +122,7 @@ protected:
     void Multicast_PlayDamageEffects();
 
     UFUNCTION(NetMulticast, Unreliable)
-    void Multicast_PlayDeathEffects();
+    void Multicast_PlayDeathEffects(FVector ImpulseDirection, float ImpulseStrength);
 
     UPROPERTY(EditAnywhere, Category = "Chest")
     float SphereColliderRadius = 200.0f;
