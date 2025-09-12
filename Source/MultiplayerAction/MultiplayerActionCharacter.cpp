@@ -542,6 +542,33 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 	}
 
 	DamageApplied = FMath::Min(Health, DamageApplied);
+
+	if (DamageApplied > 0)
+	{
+		if (AMultiplayerActionCharacter* Attacker = Cast<AMultiplayerActionCharacter>(DamageCauser))
+		{
+			float HitStopDuration = 0.0f;
+
+			// A light attack (25 dmg) might get 0.08s.
+			// A heavy attack (50 dmg) might get 0.15s.
+			// A boss slam (100 dmg) could be a huge 0.25s.
+			if (DamageApplied > 75.f)
+			{
+				HitStopDuration = 0.25f; // Huge hit
+			}
+			else if (DamageApplied > 40.f)
+			{
+				HitStopDuration = 0.15f; // Heavy hit
+			}
+			else
+			{
+				HitStopDuration = 0.08f; // Light hit
+			}
+			Attacker->Multicast_TriggerHitStop(DamageCauser, this, HitStopDuration);
+		}
+	}
+
+
 	Health -= DamageApplied;
 	UE_LOG(LogTemp, Display, TEXT("Health: %f"), Health);
 	OnRep_CurrentHealth();
@@ -1186,6 +1213,43 @@ void AMultiplayerActionCharacter::Multicast_PlayDeathEffects_Implementation()
 	}
 
 	GetMesh()->SetSimulatePhysics(true);
+}
+
+void AMultiplayerActionCharacter::Multicast_TriggerHitStop_Implementation(AActor* Attacker, AActor* Victim, float HitStopDuration)
+{
+	if (ACharacter* AttackerCharacter = Cast<ACharacter>(Attacker))
+	{
+		AttackerCharacter->CustomTimeDilation = 0.1f;
+	}
+	if (ACharacter* VictimCharacter = Cast<ACharacter>(Victim))
+	{
+		VictimCharacter->CustomTimeDilation = 0.1f;
+	}
+
+	FTimerHandle TimerHandle_EndHitStop;
+	FTimerDelegate TimerDelegate;
+
+	TWeakObjectPtr<UWorld> WeakWorld = GetWorld();
+
+	TWeakObjectPtr<AActor> WeakAttacker = Attacker;
+	TWeakObjectPtr<AActor> WeakVictim = Victim;
+
+	TimerDelegate.BindLambda([WeakWorld, WeakAttacker, WeakVictim]()
+		{
+			if (WeakWorld.IsValid())
+			{
+				if (WeakAttacker.IsValid())
+				{
+					WeakAttacker->CustomTimeDilation = 1.0f;
+				}
+				if (WeakVictim.IsValid())
+				{
+					WeakVictim->CustomTimeDilation = 1.0f;
+				}
+			}
+		});
+
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle_EndHitStop, TimerDelegate, HitStopDuration, false);
 }
 
 void AMultiplayerActionCharacter::PlayHitFlash()

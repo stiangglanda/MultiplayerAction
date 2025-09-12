@@ -161,6 +161,9 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category = "Effects|Impact")
     TObjectPtr<USoundBase> StoneImpactSound;
 
+    UFUNCTION(NetMulticast, Unreliable)
+    void Multicast_TriggerHitStop(AActor* Attacker, AActor* Victim, float HitStopDuration);
+
 public:
     void PlayHitFlash();
 
