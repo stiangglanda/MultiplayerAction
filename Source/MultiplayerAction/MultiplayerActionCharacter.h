@@ -17,6 +17,7 @@ class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
+class UWidgetComponent;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -164,7 +165,15 @@ protected:
     UFUNCTION(NetMulticast, Unreliable)
     void Multicast_TriggerHitStop(AActor* Attacker, AActor* Victim, float HitStopDuration);
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+    TObjectPtr<UWidgetComponent> HealthBarWidgetComponent;
+
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UUserWidget> HealthBarWidgetClass;
+
 public:
+    UWidgetComponent* GetHealthBarWidgetComponent() const { return HealthBarWidgetComponent; }
+
     void PlayHitFlash();
 
     void StopHitFlash();

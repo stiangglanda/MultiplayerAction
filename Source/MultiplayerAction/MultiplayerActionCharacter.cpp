@@ -24,6 +24,8 @@
 #include "MultiplayerActionGameMode.h"
 #include "BossEnemyCharacter.h"
 #include "DefaultPlayerController.h"
+#include <Components/WidgetComponent.h>
+#include "HealthBarWidget.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -80,6 +82,12 @@ AMultiplayerActionCharacter::AMultiplayerActionCharacter()
 	ShieldMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ShieldMesh"));
 	ShieldMesh->SetupAttachment(GetMesh(), TEXT("ShieldSocket"));
 	ShieldMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	HealthBarWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBarWidget"));
+	HealthBarWidgetComponent->SetupAttachment(GetRootComponent());
+	HealthBarWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
+	HealthBarWidgetComponent->SetDrawAtDesiredSize(true);
+	HealthBarWidgetComponent->SetVisibility(false);
 }
 
 AMultiplayerActionCharacter::~AMultiplayerActionCharacter()
@@ -117,6 +125,18 @@ void AMultiplayerActionCharacter::BeginPlay()
 			}
 		}
 	}
+
+	if (HealthBarWidgetComponent && HealthBarWidgetClass)
+	{
+		HealthBarWidgetComponent->SetWidgetClass(HealthBarWidgetClass);
+		HealthBarWidgetComponent->SetVisibility(false);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("'%s' is missing its HealthBarWidgetClass. Health bar will not be displayed."), *GetName());
+	}
+
+	OnRep_CurrentHealth();
 }
 
 void AMultiplayerActionCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -232,10 +252,34 @@ void AMultiplayerActionCharacter::Tick(float DeltaTime)
 			LockOnCameraShiftSpeed
 		);
 	}
+
+	if (IsLocallyControlled())
+	{
+		static TWeakObjectPtr<AActor> PreviousLockedOnTarget = nullptr;
+
+		AActor* CurrentTarget = LockedOnTarget.Get();
+
+		if (CurrentTarget != PreviousLockedOnTarget.Get())
+		{
+			if (AMultiplayerActionCharacter* OldTargetChar = Cast<AMultiplayerActionCharacter>(PreviousLockedOnTarget.Get()))
+			{
+				OldTargetChar->GetHealthBarWidgetComponent()->SetVisibility(false);
+			}
+
+			if (AMultiplayerActionCharacter* NewTargetChar = Cast<AMultiplayerActionCharacter>(CurrentTarget))
+			{
+				NewTargetChar->GetHealthBarWidgetComponent()->SetVisibility(true);
+			}
+
+			PreviousLockedOnTarget = CurrentTarget;
+		}
+	}
 }
 
 void AMultiplayerActionCharacter::OnRep_MaxHealth()
 {
+	OnRep_CurrentHealth();
+
 	if (HealthShrineComplete)
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, HealthShrineComplete, GetActorLocation());
@@ -252,6 +296,11 @@ void AMultiplayerActionCharacter::OnRep_MaxHealth()
 
 void AMultiplayerActionCharacter::OnRep_CurrentHealth()
 {
+	if (UHealthBarWidget* HealthBar = Cast<UHealthBarWidget>(HealthBarWidgetComponent->GetUserWidgetObject()))
+	{
+		HealthBar->UpdateHealth(GetHeathPercent());
+	}
+
 	if (IsLocallyControlled())
 	{
 		//FString healthMessage = FString::Printf(TEXT("You now have %f health remaining."), Health);
@@ -547,6 +596,14 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 
 	if (DamageApplied > 0)
 	{
+		if (HasAuthority() && HealthBarWidgetComponent && !HealthBarWidgetComponent->IsVisible())
+		{
+			if (!IsPlayerControlled())
+			{
+				HealthBarWidgetComponent->SetVisibility(true);
+			}
+		}
+
 		if (AMultiplayerActionCharacter* Attacker = Cast<AMultiplayerActionCharacter>(DamageCauser))
 		{
 			float HitStopDuration = 0.0f;
@@ -600,6 +657,11 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 
 		if (HasAuthority())
 		{
+			if (HealthBarWidgetComponent)
+			{
+				HealthBarWidgetComponent->SetVisibility(false);
+			}
+
 			AMultiplayerActionGameMode* GameMode = GetWorld()->GetAuthGameMode<AMultiplayerActionGameMode>();
 			if (GameMode)
 			{
@@ -900,8 +962,6 @@ void AMultiplayerActionCharacter::Server_RequestAttack_Implementation()
 		CurrentAttackType = EAttackType::EAT_Regular;
 
 		Multicast_PlayAttackEffects(MontageToPlay);
-
-		//StartWeaponTrace();
 	}
 }
 
@@ -942,7 +1002,6 @@ void AMultiplayerActionCharacter::OnAttackMontageEnded(UAnimMontage* Montage, bo
 	{
 		CurrentAttackType = EAttackType::EAT_None;
 		bIsAttacking = false;
-		//StopWeaponTrace();
 	}
 }
 
