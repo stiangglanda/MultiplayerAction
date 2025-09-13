@@ -5,6 +5,8 @@
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraShakeBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "SettingsSaveGame.h"
+#include <Kismet/GameplayStatics.h>
 
 void ADefaultPlayerController::ShowEndOfMatchUI(ECustomMatchState  MatchResult)
 {
@@ -135,7 +137,10 @@ void ADefaultPlayerController::BeginPlay()
 {
     Super::BeginPlay();
 
-	if (IsLocalController() && CrossHairHUD)
+	if (!IsLocalController())
+		return;
+
+	if (CrossHairHUD)
 	{
 		HUD = CreateWidget<UPlayerHUDWidget>(this, CrossHairHUD);
 		if (HUD != nullptr)
@@ -144,20 +149,31 @@ void ADefaultPlayerController::BeginPlay()
 		}
 	}
 
-	if (IsLocalController())
+	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
 	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+		if (DefaultMappingContext)
 		{
-			if (DefaultMappingContext)
-			{
-				Subsystem->AddMappingContext(DefaultMappingContext, 0);
-				UE_LOG(LogTemp, Log, TEXT("DefaultMappingContext added to subsystem."));
-			}
-			else
-			{
-				UE_LOG(LogTemp, Error, TEXT("DefaultMappingContext is NOT SET on the PlayerController!"));
-			}
+			Subsystem->AddMappingContext(DefaultMappingContext, 0);
+			UE_LOG(LogTemp, Log, TEXT("DefaultMappingContext added to subsystem."));
 		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("DefaultMappingContext is NOT SET on the PlayerController!"));
+		}
+	}
+
+	if (UGameplayStatics::DoesSaveGameExist(TEXT("settings"), 0))
+	{
+		USettingsSaveGame* SaveGameInstance = Cast<USettingsSaveGame>(UGameplayStatics::LoadGameFromSlot(TEXT("settings"), 0));
+		if (SaveGameInstance)
+		{
+			CurrentMouseSensitivity = SaveGameInstance->Sensitivity;
+			UE_LOG(LogTemp, Log, TEXT("Loaded Sensitivity: %f"), CurrentMouseSensitivity);
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("No settings file found. Using default mouse sensitivity."));
 	}
 }
 
@@ -171,3 +187,7 @@ void ADefaultPlayerController::Server_RequestBeginPlay_Implementation()
 	Client_SetGameInputMode();
 }
 
+void ADefaultPlayerController::SetSensitivity(float NewSensitivity)
+{
+	CurrentMouseSensitivity = FMath::Clamp(NewSensitivity, 0.01f, 2.0f);
+}

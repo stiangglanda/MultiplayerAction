@@ -26,6 +26,7 @@
 #include "DefaultPlayerController.h"
 #include <Components/WidgetComponent.h>
 #include "HealthBarWidget.h"
+#include "SettingsSaveGame.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -358,8 +359,13 @@ void AMultiplayerActionCharacter::Look(const FInputActionValue& Value)
 
 	if (Controller != nullptr)
 	{
-		AddControllerYawInput(LookAxisVector.X);
-		AddControllerPitchInput(LookAxisVector.Y);
+		ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(Controller);
+		if (MyPC)
+		{
+			const float Sensitivity = MyPC->GetMouseSensitivity();
+			AddControllerYawInput(LookAxisVector.X * Sensitivity);
+			AddControllerPitchInput(LookAxisVector.Y * Sensitivity);
+		}
 	}
 }
 

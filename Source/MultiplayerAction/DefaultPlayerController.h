@@ -45,6 +45,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Effects|CameraShake")
 	TSubclassOf<UCameraShakeBase> DamageTakenCameraShakeClass;
 
+	float GetMouseSensitivity() const { return CurrentMouseSensitivity; }
+
+	UFUNCTION(BlueprintCallable, Category = "Input")
+	void SetSensitivity(float NewSensitivity);
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -53,6 +58,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	TObjectPtr<UInputMappingContext> DefaultMappingContext;
+
+	float CurrentMouseSensitivity = 1.0f;
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")

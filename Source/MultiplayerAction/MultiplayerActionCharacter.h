@@ -269,6 +269,8 @@ public:
     void StopWeaponTrace();
 
 protected:
+    float CurrentMouseSensitivity = 1.0f;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio")
     TObjectPtr<UAudioComponent> MovementAudioComponent;
 
