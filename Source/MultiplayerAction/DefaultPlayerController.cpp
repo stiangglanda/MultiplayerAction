@@ -3,6 +3,7 @@
 #include "GameFramework/Character.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "Camera/CameraShakeBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 void ADefaultPlayerController::ShowEndOfMatchUI(ECustomMatchState  MatchResult)
@@ -112,6 +113,22 @@ void ADefaultPlayerController::ClearAllGameplayWidgets()
 	if (!IsLocalController()) return;
 
 	UWidgetLayoutLibrary::RemoveAllWidgets(GetWorld());
+}
+
+void ADefaultPlayerController::Client_PlayDamageTakenShake_Implementation(float Scale)
+{
+	if (DamageTakenCameraShakeClass)
+	{
+		PlayerCameraManager->StartCameraShake(DamageTakenCameraShakeClass, Scale);
+	}
+}
+
+void ADefaultPlayerController::Client_PlayCameraShake_Implementation(TSubclassOf<UCameraShakeBase> ShakeClass, float Scale)
+{
+	if (ShakeClass)
+	{
+		PlayerCameraManager->StartCameraShake(ShakeClass, Scale);
+	}
 }
 
 void ADefaultPlayerController::BeginPlay()

@@ -172,6 +172,9 @@ protected:
     TSubclassOf<UUserWidget> HealthBarWidgetClass;
 
 public:
+    UPROPERTY(EditDefaultsOnly, Category = "Effects|CameraShake")
+    TSubclassOf<UCameraShakeBase> HitCameraShakeClass;
+
     UWidgetComponent* GetHealthBarWidgetComponent() const { return HealthBarWidgetComponent; }
 
     void PlayHitFlash();

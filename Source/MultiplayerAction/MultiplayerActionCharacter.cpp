@@ -625,6 +625,37 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 			}
 			Attacker->Multicast_TriggerHitStop(DamageCauser, this, HitStopDuration);
 		}
+
+		if (EventInstigator && DamageCauser)
+		{
+			if (ADefaultPlayerController* AttackerPC = Cast<ADefaultPlayerController>(EventInstigator))
+			{
+				const float ShakeScale = FMath::GetMappedRangeValueClamped(
+					FVector2D(10.f, 100.f), // Input damage range
+					FVector2D(0.5f, 2.0f),  // Output scale range
+					DamageApplied
+				);
+
+				if (AMultiplayerActionCharacter* AttackerChar = Cast<AMultiplayerActionCharacter>(DamageCauser))
+				{
+					AttackerPC->Client_PlayCameraShake(AttackerChar->HitCameraShakeClass, ShakeScale);
+				}
+			}
+		}
+
+		if (IsPlayerControlled())
+		{
+			if (ADefaultPlayerController* MyPC = GetController<ADefaultPlayerController>())
+			{
+				const float ShakeScale = FMath::GetMappedRangeValueClamped(
+					FVector2D(10.f, 100.f),
+					FVector2D(0.4f, 1.5f),
+					DamageApplied
+				);
+
+				MyPC->Client_PlayDamageTakenShake(ShakeScale);
+			}
+		}
 	}
 
 	OnRep_CurrentHealth();

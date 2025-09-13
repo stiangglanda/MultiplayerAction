@@ -8,6 +8,8 @@
 #include "InputMappingContext.h"
 #include "DefaultPlayerController.generated.h"
 
+class UCameraShakeBase;
+
 UCLASS()
 class MULTIPLAYERACTION_API ADefaultPlayerController : public APlayerController
 {
@@ -33,6 +35,15 @@ public:
 	void Client_HideSpectatorUI();
 
 	void ClearAllGameplayWidgets();
+
+	UFUNCTION(Client, Reliable)
+	void Client_PlayCameraShake(TSubclassOf<UCameraShakeBase> ShakeClass, float Scale);
+
+	UFUNCTION(Client, Reliable)
+	void Client_PlayDamageTakenShake(float Scale);
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effects|CameraShake")
+	TSubclassOf<UCameraShakeBase> DamageTakenCameraShakeClass;
 
 protected:
 	virtual void BeginPlay() override;
