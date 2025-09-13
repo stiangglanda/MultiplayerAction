@@ -811,10 +811,17 @@ TSubclassOf<UWeapon> AMultiplayerActionCharacter::SwapWeapon(TSubclassOf<UWeapon
 
 void AMultiplayerActionCharacter::Server_RequestLockOn_Implementation()
 {
+	APlayerController* PC = GetController<APlayerController>();
+	if (!PC)
+	{
+		return;
+	}
+
 	if (bIsLockedOn)
 	{
 		bIsLockedOn = false;
 		LockedOnTarget = nullptr;
+		PC->ResetIgnoreLookInput();
 		return;
 	}
 
@@ -828,18 +835,36 @@ void AMultiplayerActionCharacter::Server_RequestLockOn_Implementation()
 
 	if (bSuccess)
 	{
-		for (int i = hits.Num() - 1; i >= 0; i--)
+		TObjectPtr<AMultiplayerActionCharacter> ClosestTarget = nullptr;
+		float MinDistanceSquared = -1.0f;
+
+		const FVector MyLocation = GetActorLocation();
+
+		for (const FHitResult& Hit : hits)
 		{
-			if (hits[i].GetActor() != nullptr)
+			AActor* HitActor = Hit.GetActor();
+			if (HitActor)
 			{
-				AMultiplayerActionCharacter* unit = Cast<AMultiplayerActionCharacter>(hits[i].GetActor());
-				if (unit && unit->GetTeam() != GetTeam())
+				AMultiplayerActionCharacter* EnemyUnit = Cast<AMultiplayerActionCharacter>(HitActor);
+				if (EnemyUnit && EnemyUnit->GetTeam() != GetTeam() && !EnemyUnit->IsDead())
 				{
-					bIsLockedOn = true;
-					LockedOnTarget = unit;
-					break;
+					const float DistanceSquared = FVector::DistSquared(MyLocation, EnemyUnit->GetActorLocation());
+
+					if (ClosestTarget == nullptr || DistanceSquared < MinDistanceSquared)
+					{
+						ClosestTarget = EnemyUnit;
+						MinDistanceSquared = DistanceSquared;
+					}
 				}
 			}
+		}
+
+		if (ClosestTarget)
+		{
+			bIsLockedOn = true;
+			LockedOnTarget = ClosestTarget;
+			PC->SetIgnoreLookInput(true);
+			UE_LOG(LogTemp, Log, TEXT("Locked on to closest target: %s"), *ClosestTarget->GetName());
 		}
 	}
 }
