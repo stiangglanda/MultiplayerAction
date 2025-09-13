@@ -111,6 +111,11 @@ void AMultiplayerActionCharacter::BeginPlay()
 		}
 	}
 
+	if (CameraBoom)
+	{
+		DefaultArmLength = CameraBoom->TargetArmLength;
+		DefaultSocketOffset = CameraBoom->SocketOffset;
+	}
 
 	if (GetMesh())
 	{
@@ -200,11 +205,10 @@ void AMultiplayerActionCharacter::Tick(float DeltaTime)
 	if (bIsRolling)
 	{
 		FVector ForwardVector = GetCharacterMovement()->GetLastInputVector();
-		if (ForwardVector == FVector::ZeroVector)
+		if (ForwardVector.IsNearlyZero())
 		{
 			ForwardVector = GetActorForwardVector();
 		}
-
 		AddMovementInput(ForwardVector, 1.0f);
 	}
 
@@ -238,19 +242,22 @@ void AMultiplayerActionCharacter::Tick(float DeltaTime)
 	if (IsLocallyControlled() && CameraBoom)
 	{
 		FVector TargetSocketOffset = DefaultSocketOffset;
+		float TargetArmLength = DefaultArmLength;
 
-		if (bIsLockedOn)
+		if (bIsLockedOn && IsValid(LockedOnTarget))
 		{
 			const float MoveRightInput = MoveRightAxisValue;
 			TargetSocketOffset.Y = MoveRightInput * LockOnCameraHorizontalOffset;
+
+			const float DistanceToTarget = FVector::Dist2D(GetActorLocation(), LockedOnTarget->GetActorLocation());
+			const float DistanceAlpha = FMath::Clamp(DistanceToTarget / LockOnDistanceAdjustmentRange, 0.0f, 1.0f);
+
+			TargetArmLength = FMath::Lerp(LockOnMinArmLength, LockOnMaxArmLength, DistanceAlpha);
+			TargetSocketOffset.Z += FMath::Lerp(0.0f, LockOnMaxVerticalOffset, DistanceAlpha);
 		}
 
-		CameraBoom->SocketOffset = FMath::VInterpTo(
-			CameraBoom->SocketOffset,
-			TargetSocketOffset,
-			DeltaTime,
-			LockOnCameraShiftSpeed
-		);
+		CameraBoom->SocketOffset = FMath::VInterpTo(CameraBoom->SocketOffset, TargetSocketOffset, DeltaTime, LockOnCameraShiftSpeed);
+		CameraBoom->TargetArmLength = FMath::FInterpTo(CameraBoom->TargetArmLength, TargetArmLength, DeltaTime, LockOnCameraShiftSpeed);
 	}
 
 	if (IsLocallyControlled())
@@ -263,12 +270,18 @@ void AMultiplayerActionCharacter::Tick(float DeltaTime)
 		{
 			if (AMultiplayerActionCharacter* OldTargetChar = Cast<AMultiplayerActionCharacter>(PreviousLockedOnTarget.Get()))
 			{
-				OldTargetChar->GetHealthBarWidgetComponent()->SetVisibility(false);
+				if (UWidgetComponent* HealthBar = OldTargetChar->GetHealthBarWidgetComponent())
+				{
+					HealthBar->SetVisibility(false);
+				}
 			}
 
 			if (AMultiplayerActionCharacter* NewTargetChar = Cast<AMultiplayerActionCharacter>(CurrentTarget))
 			{
-				NewTargetChar->GetHealthBarWidgetComponent()->SetVisibility(true);
+				if (UWidgetComponent* HealthBar = NewTargetChar->GetHealthBarWidgetComponent())
+				{
+					HealthBar->SetVisibility(true);
+				}
 			}
 
 			PreviousLockedOnTarget = CurrentTarget;

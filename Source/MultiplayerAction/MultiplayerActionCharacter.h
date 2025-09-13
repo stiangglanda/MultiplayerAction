@@ -94,16 +94,6 @@ protected:
     UPROPERTY(Replicated)
     TObjectPtr<UAnimMontage> CurrentInteractionMontage;
 
-    UPROPERTY(EditDefaultsOnly, Category = "LockOn|Camera")
-    float LockOnCameraHorizontalOffset = 100.0f;
-
-    UPROPERTY(EditDefaultsOnly, Category = "LockOn|Camera")
-    float LockOnCameraShiftSpeed = 5.0f;
-
-    FVector DefaultSocketOffset;
-
-    float MoveRightAxisValue = 0.f;
-
     UPROPERTY(EditAnywhere)
     float SphereTraceRadiusWeapon = 20;
 
@@ -170,6 +160,30 @@ protected:
 
     UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<UUserWidget> HealthBarWidgetClass;
+
+    UPROPERTY(EditDefaultsOnly, Category = "LockOn|Camera")
+    float LockOnMinArmLength = 400.0f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "LockOn|Camera")
+    float LockOnMaxArmLength = 400.0f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "LockOn|Camera")
+    float LockOnMaxVerticalOffset = 150.0f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "LockOn|Camera")
+    float LockOnDistanceAdjustmentRange = 900.0f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "LockOn|Camera")
+    float LockOnCameraHorizontalOffset = 150.0f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "LockOn|Camera")
+    float LockOnCameraShiftSpeed = 5.0f;
+
+    FVector DefaultSocketOffset;
+
+    float DefaultArmLength;
+
+    float MoveRightAxisValue = 0.f;
 
 public:
     UPROPERTY(EditDefaultsOnly, Category = "Effects|CameraShake")
