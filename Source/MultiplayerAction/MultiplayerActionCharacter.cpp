@@ -827,7 +827,6 @@ void AMultiplayerActionCharacter::Server_RequestLockOn_Implementation()
 	{
 		bIsLockedOn = false;
 		LockedOnTarget = nullptr;
-		PC->ResetIgnoreLookInput();
 		return;
 	}
 
@@ -869,7 +868,6 @@ void AMultiplayerActionCharacter::Server_RequestLockOn_Implementation()
 		{
 			bIsLockedOn = true;
 			LockedOnTarget = ClosestTarget;
-			PC->SetIgnoreLookInput(true);
 			UE_LOG(LogTemp, Log, TEXT("Locked on to closest target: %s"), *ClosestTarget->GetName());
 		}
 	}
