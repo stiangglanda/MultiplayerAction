@@ -273,7 +273,7 @@ void AMultiplayerActionCharacter::Tick(float DeltaTime)
 			{
 				if (UWidgetComponent* HealthBar = OldTargetChar->GetHealthBarWidgetComponent())
 				{
-					HealthBar->SetVisibility(false);
+					HealthBar->SetVisibility(false);//For instant feedback bHealthBarVisible is not used here
 				}
 			}
 
@@ -281,7 +281,7 @@ void AMultiplayerActionCharacter::Tick(float DeltaTime)
 			{
 				if (UWidgetComponent* HealthBar = NewTargetChar->GetHealthBarWidgetComponent())
 				{
-					HealthBar->SetVisibility(true);
+					HealthBar->SetVisibility(true);//For instant feedback bHealthBarVisible is not used here
 				}
 			}
 
@@ -619,7 +619,8 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 		{
 			if (!IsPlayerControlled())
 			{
-				HealthBarWidgetComponent->SetVisibility(true);
+				bHealthBarVisible = true;
+				OnRep_HealthBarVisible();
 			}
 		}
 
@@ -709,7 +710,8 @@ float AMultiplayerActionCharacter::TakeDamage(float Damage, FDamageEvent const& 
 		{
 			if (HealthBarWidgetComponent)
 			{
-				HealthBarWidgetComponent->SetVisibility(false);
+				bHealthBarVisible = false;
+				OnRep_HealthBarVisible();
 			}
 
 			AMultiplayerActionGameMode* GameMode = GetWorld()->GetAuthGameMode<AMultiplayerActionGameMode>();
@@ -761,6 +763,7 @@ void AMultiplayerActionCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePro
 	DOREPLIFETIME_CONDITION(AMultiplayerActionCharacter, bIsRolling, COND_SkipOwner);
 	DOREPLIFETIME(AMultiplayerActionCharacter, bIsLockedOn);
 	DOREPLIFETIME(AMultiplayerActionCharacter, LockedOnTarget);
+	DOREPLIFETIME(AMultiplayerActionCharacter, bHealthBarVisible);
 }
 
 bool AMultiplayerActionCharacter::IsDead()
@@ -1386,6 +1389,14 @@ void AMultiplayerActionCharacter::Multicast_TriggerHitStop_Implementation(AActor
 		});
 
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle_EndHitStop, TimerDelegate, HitStopDuration, false);
+}
+
+void AMultiplayerActionCharacter::OnRep_HealthBarVisible()
+{
+	if (HealthBarWidgetComponent)
+	{
+		HealthBarWidgetComponent->SetVisibility(bHealthBarVisible);
+	}
 }
 
 void AMultiplayerActionCharacter::PlayHitFlash()

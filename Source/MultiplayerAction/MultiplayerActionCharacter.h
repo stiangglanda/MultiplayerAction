@@ -185,6 +185,12 @@ protected:
 
     float MoveRightAxisValue = 0.f;
 
+    UPROPERTY(ReplicatedUsing = OnRep_HealthBarVisible)
+    bool bHealthBarVisible;
+
+    UFUNCTION()
+    void OnRep_HealthBarVisible();
+
 public:
     UPROPERTY(EditDefaultsOnly, Category = "Effects|CameraShake")
     TSubclassOf<UCameraShakeBase> HitCameraShakeClass;
